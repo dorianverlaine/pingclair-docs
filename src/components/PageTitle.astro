@@ -1,31 +1,92 @@
 ---
 const lang = Astro.locals.starlightRoute?.lang ?? 'en';
 
-const labels: Record<string, { copy: string; copied: string; failed: string }> = {
-	en: { copy: 'Copy page', copied: 'Copied', failed: 'Copy failed' },
-	'zh-TW': { copy: '複製頁面', copied: '已複製', failed: '複製失敗' },
-	'zh-CN': { copy: '复制页面', copied: '已复制', failed: '复制失败' },
-	ja: { copy: 'ページをコピー', copied: 'コピーしました', failed: 'コピーできません' },
-	ko: { copy: '페이지 복사', copied: '복사됨', failed: '복사 실패' },
+type Labels = {
+	title: string;
+	copy: string;
+	copyHint: string;
+	view: string;
+	viewHint: string;
+	copied: string;
+	failed: string;
+	menu: string;
+};
+
+const labels: Record<string, Labels> = {
+	en: {
+		title: 'Copy page',
+		copy: 'Copy page',
+		copyHint: 'Copy page as Markdown for LLMs',
+		view: 'View as Markdown',
+		viewHint: 'View this page as plain text',
+		copied: 'Copied',
+		failed: 'Copy failed',
+		menu: 'Copy options',
+	},
+	'zh-TW': {
+		title: '複製頁面',
+		copy: '複製頁面',
+		copyHint: '以 Markdown 複製本頁，供 LLM 使用',
+		view: '以 Markdown 檢視',
+		viewHint: '以純文字檢視本頁',
+		copied: '已複製',
+		failed: '複製失敗',
+		menu: '複製選項',
+	},
+	'zh-CN': {
+		title: '复制页面',
+		copy: '复制页面',
+		copyHint: '以 Markdown 复制本页，供 LLM 使用',
+		view: '以 Markdown 查看',
+		viewHint: '以纯文本查看本页',
+		copied: '已复制',
+		failed: '复制失败',
+		menu: '复制选项',
+	},
+	ja: {
+		title: 'ページをコピー',
+		copy: 'ページをコピー',
+		copyHint: 'LLM 向けに Markdown でコピー',
+		view: 'Markdown として表示',
+		viewHint: 'このページをプレーンテキストで表示',
+		copied: 'コピーしました',
+		failed: 'コピーできません',
+		menu: 'コピーオプション',
+	},
+	ko: {
+		title: '페이지 복사',
+		copy: '페이지 복사',
+		copyHint: 'LLM용 Markdown으로 복사',
+		view: 'Markdown으로 보기',
+		viewHint: '이 페이지를 일반 텍스트로 보기',
+		copied: '복사됨',
+		failed: '복사 실패',
+		menu: '복사 옵션',
+	},
 };
 
 const t = labels[lang] ?? labels.en;
-const markdownUrl = `${Astro.url.pathname.replace(/\/$/, '')}.md`;
 
 // Starlight anchors the page title with this id (its `PAGE_TITLE_ID`), and the
 // skip link and "back to top" scroll target both point at it. The constant is
 // not part of the package's public exports, so the value is repeated here.
 const PAGE_TITLE_ID = '_top';
+
+// The Markdown endpoint mirrors the route: `/start/quickstart/` is
+// `/start/quickstart.md`, and a directory page such as `/zh-TW/` is
+// `/zh-TW.md`. Entry ids cannot be used here because Astro lowercases them.
+const withoutTrailingSlash = Astro.url.pathname.replace(/\/+$/, '');
+const markdownUrl = `${withoutTrailingSlash === '' ? '' : withoutTrailingSlash}.md`;
 ---
 
 <div class="pc-page-header">
 	<h1 id={PAGE_TITLE_ID}>{Astro.locals.starlightRoute?.entry.data.title}</h1>
-	<div class="pc-page-actions">
+
+	<div class="pc-copy-page" data-copy-page data-markdown-url={markdownUrl}>
 		<button
 			type="button"
-			class="pc-copy-page"
-			data-copy-page
-			data-markdown-url={markdownUrl}
+			class="pc-copy-page__main"
+			data-copy-action
 			data-label-copy={t.copy}
 			data-label-copied={t.copied}
 			data-label-failed={t.failed}
@@ -33,8 +94,8 @@ const PAGE_TITLE_ID = '_top';
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
-				width="18"
-				height="18"
+				width="16"
+				height="16"
 				viewBox="0 0 18 18"
 				fill="none"
 				stroke="currentColor"
@@ -49,6 +110,95 @@ const PAGE_TITLE_ID = '_top';
 			</svg>
 			<span data-copy-label>{t.copy}</span>
 		</button>
+
+		<button
+			type="button"
+			class="pc-copy-page__caret"
+			data-copy-menu-toggle
+			aria-haspopup="true"
+			aria-expanded="false"
+			aria-label={t.menu}
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="14"
+				height="14"
+				viewBox="0 0 18 18"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.8"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M4.5 11.25 9 6.75l4.5 4.5"></path>
+			</svg>
+		</button>
+
+		<div class="pc-copy-menu" data-copy-menu hidden>
+			<button type="button" class="pc-copy-menu__item" data-copy-action>
+				<span class="pc-copy-menu__icon" aria-hidden="true">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="18"
+						height="18"
+						viewBox="0 0 18 18"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<rect x="6.75" y="6.75" width="8.25" height="8.25" rx="2"></rect>
+						<path d="M11.25 6.75V4.5A1.5 1.5 0 0 0 9.75 3h-6A1.5 1.5 0 0 0 2.25 4.5v6a1.5 1.5 0 0 0 1.5 1.5h2.25"
+						></path>
+					</svg>
+				</span>
+				<span class="pc-copy-menu__text">
+					<span class="pc-copy-menu__title">{t.copy}</span>
+					<span class="pc-copy-menu__hint">{t.copyHint}</span>
+				</span>
+			</button>
+
+			<a class="pc-copy-menu__item" href={markdownUrl} target="_blank" rel="noreferrer">
+				<span class="pc-copy-menu__icon" aria-hidden="true">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="18"
+						height="18"
+						viewBox="0 0 18 18"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<rect x="2.25" y="3.75" width="13.5" height="10.5" rx="2"></rect>
+						<path d="M5.25 7.5 3.75 9l1.5 1.5M12.75 7.5 14.25 9l-1.5 1.5M10.5 6l-3 6"></path>
+					</svg>
+				</span>
+				<span class="pc-copy-menu__text">
+					<span class="pc-copy-menu__title">
+						{t.view}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="12"
+							height="12"
+							viewBox="0 0 18 18"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.8"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<path d="M6.75 3.75h7.5v7.5M14.25 3.75 6 12"></path>
+						</svg>
+					</span>
+					<span class="pc-copy-menu__hint">{t.viewHint}</span>
+				</span>
+			</a>
+		</div>
 	</div>
 </div>
 
@@ -68,39 +218,119 @@ const PAGE_TITLE_ID = '_top';
 		color: var(--sl-color-white);
 	}
 
-	.pc-page-actions {
+	/* Split control: copy on the left, menu on the right, one hairline around
+	   both. Values follow the reference: 12px radius, 6px/12px padding, 14px. */
+	.pc-copy-page {
+		position: relative;
 		margin-inline-start: auto;
 		flex-shrink: 0;
-	}
-
-	@media (max-width: 32rem) {
-		.pc-page-actions {
-			display: none;
-		}
-	}
-
-	.pc-copy-page {
 		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.375rem 0.75rem;
+		align-items: stretch;
 		border: 1px solid var(--sl-color-hairline);
 		border-radius: 0.75rem;
 		background-color: var(--sl-color-bg);
 		color: var(--sl-color-gray-2);
-		font-family: var(--sl-font);
 		font-size: var(--sl-text-sm);
 		font-weight: 500;
 		line-height: 1.2;
+	}
+
+	.pc-copy-page button {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: none;
+		border: 0;
+		color: inherit;
+		font: inherit;
 		cursor: pointer;
 	}
 
-	.pc-copy-page:hover {
+	.pc-copy-page__main {
+		padding: 0.375rem 0.75rem;
+		border-start-start-radius: 0.75rem;
+		border-end-start-radius: 0.75rem;
+	}
+
+	.pc-copy-page__caret {
+		padding: 0.375rem 0.5rem;
+		border-inline-start: 1px solid var(--sl-color-hairline);
+		border-start-end-radius: 0.75rem;
+		border-end-end-radius: 0.75rem;
+	}
+
+	.pc-copy-page button:hover,
+	.pc-copy-menu__item:hover {
 		background-color: color-mix(in oklab, var(--sl-color-gray-2) 5%, transparent);
 	}
 
 	.pc-copy-page[data-state='copied'] {
 		color: var(--sl-color-white);
+	}
+
+	.pc-copy-menu {
+		position: absolute;
+		inset-block-start: calc(100% + 0.5rem);
+		inset-inline-end: 0;
+		z-index: 20;
+		display: grid;
+		gap: 0.25rem;
+		min-inline-size: 20rem;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 1rem;
+		background-color: var(--sl-color-bg);
+		box-shadow: 0 16px 32px -12px rgb(14 18 27 / 0.18);
+		text-align: start;
+	}
+
+	.pc-copy-menu[hidden] {
+		display: none;
+	}
+
+	.pc-copy-menu__item {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.625rem 0.75rem;
+		border-radius: 0.75rem;
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.pc-copy-menu__icon {
+		display: grid;
+		place-items: center;
+		inline-size: 2.5rem;
+		block-size: 2.5rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 0.625rem;
+		background-color: var(--sl-color-gray-7, var(--sl-color-bg));
+		color: var(--sl-color-white);
+	}
+
+	.pc-copy-menu__text {
+		display: grid;
+		gap: 0.125rem;
+	}
+
+	.pc-copy-menu__title {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-weight: 600;
+		color: var(--sl-color-white);
+	}
+
+	.pc-copy-menu__hint {
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+
+	@media (max-width: 40rem) {
+		.pc-copy-page {
+			display: none;
+		}
 	}
 </style>
 
@@ -138,32 +368,63 @@ const PAGE_TITLE_ID = '_top';
 		return copied;
 	}
 
-	function copyIconText(button: HTMLElement): string {
-		const url = button.dataset.markdownUrl;
-		const label = button.querySelector<HTMLElement>('[data-copy-label]');
-		const setState = (state: 'idle' | 'copied' | 'failed') => {
-			button.dataset.state = state;
+	function setupCopyPage(root: HTMLElement) {
+		const url = root.dataset.markdownUrl ?? '';
+		const toggle = root.querySelector<HTMLButtonElement>('[data-copy-menu-toggle]');
+		const menu = root.querySelector<HTMLElement>('[data-copy-menu]');
+		const primary = root.querySelector<HTMLButtonElement>('.pc-copy-page__main');
+		const label = primary?.querySelector<HTMLElement>('[data-copy-label]');
+
+		const setLabel = (state: 'idle' | 'copied' | 'failed') => {
+			root.dataset.state = state;
 			if (!label) return;
 			label.textContent =
 				state === 'copied'
-					? (button.dataset.labelCopied ?? 'Copied')
+					? (primary?.dataset.labelCopied ?? 'Copied')
 					: state === 'failed'
-						? (button.dataset.labelFailed ?? 'Copy failed')
-						: (button.dataset.labelCopy ?? 'Copy page');
+						? (primary?.dataset.labelFailed ?? 'Copy failed')
+						: (primary?.dataset.labelCopy ?? 'Copy page');
 		};
 
-		button.addEventListener('click', async () => {
+		const closeMenu = () => {
+			if (!menu) return;
+			menu.hidden = true;
+			toggle?.setAttribute('aria-expanded', 'false');
+		};
+
+		const copy = async () => {
 			try {
-				const response = await fetch(url ?? '');
+				const response = await fetch(url);
 				if (!response.ok) throw new Error(String(response.status));
-				const markdown = await response.text();
-				setState((await writeToClipboard(markdown)) ? 'copied' : 'failed');
+				setLabel((await writeToClipboard(await response.text())) ? 'copied' : 'failed');
 			} catch {
-				setState('failed');
+				setLabel('failed');
 			}
-			window.setTimeout(() => setState('idle'), 2000);
+			window.setTimeout(() => setLabel('idle'), 2000);
+		};
+
+		root.querySelectorAll<HTMLElement>('[data-copy-action]').forEach((action) => {
+			action.addEventListener('click', () => {
+				void copy();
+				closeMenu();
+			});
+		});
+
+		toggle?.addEventListener('click', () => {
+			if (!menu) return;
+			const open = menu.hidden;
+			menu.hidden = !open;
+			toggle.setAttribute('aria-expanded', String(open));
+		});
+
+		document.addEventListener('click', (event) => {
+			if (!root.contains(event.target as Node)) closeMenu();
+		});
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') closeMenu();
 		});
 	}
 
-	document.querySelectorAll<HTMLElement>('[data-copy-page]').forEach(copyIconText);
+	document.querySelectorAll<HTMLElement>('[data-copy-page]').forEach(setupCopyPage);
 </script>

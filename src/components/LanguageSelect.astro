@@ -1,0 +1,197 @@
+---
+import config from 'virtual:starlight/user-config';
+
+const current = Astro.locals.starlightRoute?.locale ?? 'root';
+
+/** Strip the current locale prefix so the same page can be rebuilt for another. */
+function pathWithoutLocale(pathname: string): string {
+	const [, first = '', ...rest] = pathname.split('/');
+	return first in (config.locales ?? {})
+		? `/${rest.join('/')}`
+		: pathname === ''
+			? '/'
+			: pathname;
+}
+
+const base = pathWithoutLocale(Astro.url.pathname);
+const localizedPath = (code: string) =>
+	code === 'root' ? base : `/${code}${base === '/' ? '/' : base}`;
+
+const locales = Object.entries(config.locales ?? {}).map(([code, locale]) => ({
+	code,
+	label: locale?.label ?? code,
+	href: localizedPath(code),
+}));
+---
+
+{
+	config.isMultilingual && (
+		<div class="pc-lang" data-lang-select>
+			<button
+				type="button"
+				class="pc-lang__trigger"
+				data-lang-toggle
+				aria-haspopup="menu"
+				aria-expanded="false"
+				aria-label={Astro.locals.t('languageSelect.accessibleLabel')}
+			>
+				<span class="pc-lang__current">
+					{locales.find((locale) => locale.code === current)?.label ?? 'English'}
+				</span>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="14"
+					height="14"
+					viewBox="0 0 18 18"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.8"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="M4.5 11.25 9 6.75l4.5 4.5"></path>
+				</svg>
+			</button>
+
+			<div class="pc-menu" data-lang-menu hidden role="menu">
+				{locales.map((locale) => (
+					<a
+						class="pc-menu__item"
+						role="menuitemradio"
+						aria-checked={locale.code === current ? 'true' : 'false'}
+						href={locale.href}
+						hreflang={locale.code === 'root' ? 'en' : locale.code}
+					>
+						<span class="pc-menu__label">{locale.label}</span>
+						<span class="pc-menu__check" aria-hidden="true">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 18 18"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.8"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="m4 9.5 3.5 3.5L14 6"></path>
+							</svg>
+						</span>
+					</a>
+				))}
+			</div>
+		</div>
+	)
+}
+
+<style>
+	.pc-lang {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	/* Borderless label + caret, 14px medium, 6px/10px padding, 12px radius. */
+	.pc-lang__trigger {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.375rem 0.625rem;
+		border: 0;
+		border-radius: 0.75rem;
+		background: none;
+		color: var(--sl-color-white);
+		font-family: var(--sl-font);
+		font-size: var(--sl-text-sm);
+		font-weight: 500;
+		line-height: 1.4;
+		cursor: pointer;
+	}
+
+	.pc-lang__trigger:hover {
+		background-color: color-mix(in oklab, var(--sl-color-gray-2) 8%, transparent);
+	}
+
+	.pc-menu {
+		position: absolute;
+		inset-block-start: calc(100% + 0.5rem);
+		inset-inline-end: 0;
+		z-index: 20;
+		display: grid;
+		gap: 0.125rem;
+		min-inline-size: 12rem;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 1rem;
+		background-color: var(--sl-color-bg);
+		box-shadow: 0 16px 32px -12px rgb(14 18 27 / 0.18);
+	}
+
+	.pc-menu[hidden] {
+		display: none;
+	}
+
+	.pc-menu__item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.75rem 0.5rem 0.625rem;
+		border-radius: 0.75rem;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-base);
+		text-decoration: none;
+	}
+
+	.pc-menu__item:hover {
+		background-color: color-mix(in oklab, var(--sl-color-gray-2) 6%, transparent);
+	}
+
+	.pc-menu__label {
+		flex: 1;
+	}
+
+	.pc-menu__check {
+		display: none;
+		color: var(--sl-color-white);
+	}
+
+	.pc-menu__item[aria-checked='true'] {
+		color: var(--sl-color-white);
+	}
+
+	.pc-menu__item[aria-checked='true'] .pc-menu__check {
+		display: grid;
+		place-items: center;
+	}
+</style>
+
+<script>
+	function setupLanguageSelect(root: HTMLElement) {
+		const trigger = root.querySelector<HTMLButtonElement>('[data-lang-toggle]');
+		const menu = root.querySelector<HTMLElement>('[data-lang-menu]');
+
+		const close = () => {
+			if (!menu) return;
+			menu.hidden = true;
+			trigger?.setAttribute('aria-expanded', 'false');
+		};
+
+		trigger?.addEventListener('click', () => {
+			if (!menu) return;
+			const open = menu.hidden;
+			menu.hidden = !open;
+			trigger.setAttribute('aria-expanded', String(open));
+		});
+
+		document.addEventListener('click', (event) => {
+			if (!root.contains(event.target as Node)) close();
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') close();
+		});
+	}
+
+	document.querySelectorAll<HTMLElement>('[data-lang-select]').forEach(setupLanguageSelect);
+</script>

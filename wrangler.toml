@@ -1,0 +1,5 @@
+# Cloudflare Pages project settings. `pnpm build` writes the site to `dist`,
+# and `wrangler pages deploy` (or a Git-connected project) publishes it.
+name = "pingclair-docs"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-01"

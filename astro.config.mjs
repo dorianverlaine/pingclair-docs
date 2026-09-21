@@ -23,6 +23,9 @@ export default defineConfig({
 			components: {
 				// Adds the "Copy page" action next to the page title.
 				PageTitle: './src/components/PageTitle.astro',
+				// Theme and language pickers as menus rather than native selects.
+				ThemeSelect: './src/components/ThemeSelect.astro',
+				LanguageSelect: './src/components/LanguageSelect.astro',
 			},
 			// The default locale lives at the site root, so it is configured under
 			// the `root` key. Listing it as `en` instead would make Starlight look

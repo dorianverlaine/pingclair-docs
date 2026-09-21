@@ -1,0 +1,280 @@
+---
+const lang = Astro.locals.starlightRoute?.lang ?? 'en';
+
+const labels: Record<string, { label: string; system: string; light: string; dark: string }> = {
+	en: { label: 'Change theme preference', system: 'System', light: 'Light', dark: 'Dark' },
+	'zh-TW': { label: '切換佈景主題', system: '跟隨系統', light: '淺色', dark: '深色' },
+	'zh-CN': { label: '切换主题', system: '跟随系统', light: '浅色', dark: '深色' },
+	ja: { label: 'テーマを変更', system: 'システム', light: 'ライト', dark: 'ダーク' },
+	ko: { label: '테마 변경', system: '시스템', light: '라이트', dark: '다크' },
+};
+
+const t = labels[lang] ?? labels.en;
+---
+
+<div class="pc-theme" data-theme-select aria-label={t.label}>
+	<button
+		type="button"
+		class="pc-theme__trigger"
+		data-theme-toggle
+		aria-haspopup="menu"
+		aria-expanded="false"
+		aria-label={t.label}
+	>
+		<span data-theme-icon="system" hidden>
+			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+				stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+			>
+				<rect x="1.75" y="2.75" width="14.5" height="9" rx="2"></rect>
+				<path d="M9 11.75V14.5M4.5 15.5 9 14.5l4.5 1"></path>
+			</svg>
+		</span>
+		<span data-theme-icon="light" hidden>
+			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+				stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+			>
+				<circle cx="9" cy="9" r="3.25"></circle>
+				<path d="M9 1.25v1M9 15.75v1M1.25 9h1M15.75 9h1M3.5 3.5l.75.75M13.75 13.75l.75.75M14.5 3.5l-.75.75M4.25 13.75l-.75.75"
+				></path>
+			</svg>
+		</span>
+		<span data-theme-icon="dark" hidden>
+			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+				stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+			>
+				<path d="M15.25 11.25A6.75 6.75 0 0 1 6.75 2.75a6.75 6.75 0 1 0 8.5 8.5Z"></path>
+			</svg>
+		</span>
+	</button>
+
+	<div class="pc-menu" data-theme-menu hidden role="menu">
+		<button type="button" class="pc-menu__item" role="menuitemradio" data-theme-option="system">
+			<span class="pc-menu__icon" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+					stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+				>
+					<rect x="1.75" y="2.75" width="14.5" height="9" rx="2"></rect>
+					<path d="M9 11.75V14.5M4.5 15.5 9 14.5l4.5 1"></path>
+				</svg>
+			</span>
+			<span class="pc-menu__label">{t.system}</span>
+			<span class="pc-menu__check" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 18 18" fill="none"
+					stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+				>
+					<path d="m4 9.5 3.5 3.5L14 6"></path>
+				</svg>
+			</span>
+		</button>
+
+		<button type="button" class="pc-menu__item" role="menuitemradio" data-theme-option="light">
+			<span class="pc-menu__icon" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+					stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+				>
+					<circle cx="9" cy="9" r="3.25"></circle>
+					<path d="M9 1.25v1M9 15.75v1M1.25 9h1M15.75 9h1M3.5 3.5l.75.75M13.75 13.75l.75.75M14.5 3.5l-.75.75M4.25 13.75l-.75.75"
+					></path>
+				</svg>
+			</span>
+			<span class="pc-menu__label">{t.light}</span>
+			<span class="pc-menu__check" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 18 18" fill="none"
+					stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+				>
+					<path d="m4 9.5 3.5 3.5L14 6"></path>
+				</svg>
+			</span>
+		</button>
+
+		<button type="button" class="pc-menu__item" role="menuitemradio" data-theme-option="dark">
+			<span class="pc-menu__icon" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+					stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+				>
+					<path d="M15.25 11.25A6.75 6.75 0 0 1 6.75 2.75a6.75 6.75 0 1 0 8.5 8.5Z"></path>
+				</svg>
+			</span>
+			<span class="pc-menu__label">{t.dark}</span>
+			<span class="pc-menu__check" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 18 18" fill="none"
+					stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+				>
+					<path d="m4 9.5 3.5 3.5L14 6"></path>
+				</svg>
+			</span>
+		</button>
+	</div>
+</div>
+
+<style>
+	.pc-theme {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	.pc-theme__trigger {
+		display: grid;
+		place-items: center;
+		padding: 0.5rem;
+		border: 0;
+		border-radius: 0.5rem;
+		background: none;
+		color: var(--sl-color-gray-3);
+		cursor: pointer;
+	}
+
+	.pc-theme__trigger:hover {
+		color: var(--sl-color-white);
+		background-color: color-mix(in oklab, var(--sl-color-gray-2) 8%, transparent);
+	}
+
+	.pc-menu {
+		position: absolute;
+		inset-block-start: calc(100% + 0.5rem);
+		inset-inline-end: 0;
+		z-index: 20;
+		display: grid;
+		gap: 0.125rem;
+		min-inline-size: 12rem;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 1rem;
+		background-color: var(--sl-color-bg);
+		box-shadow: 0 16px 32px -12px rgb(14 18 27 / 0.18);
+	}
+
+	.pc-menu[hidden] {
+		display: none;
+	}
+
+	.pc-menu__item {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		padding: 0.5rem 0.625rem;
+		border: 0;
+		border-radius: 0.75rem;
+		background: none;
+		color: var(--sl-color-gray-2);
+		font-family: var(--sl-font);
+		font-size: var(--sl-text-sm);
+		cursor: pointer;
+	}
+
+	.pc-menu__item:hover {
+		background-color: color-mix(in oklab, var(--sl-color-gray-2) 6%, transparent);
+	}
+
+	.pc-menu__icon {
+		display: grid;
+		place-items: center;
+		color: var(--sl-color-gray-3);
+	}
+
+	.pc-menu__label {
+		flex: 1;
+		text-align: start;
+	}
+
+	.pc-menu__check {
+		display: none;
+		color: var(--sl-color-white);
+	}
+
+	.pc-menu__item[aria-checked='true'] {
+		color: var(--sl-color-white);
+	}
+
+	.pc-menu__item[aria-checked='true'] .pc-menu__check {
+		display: grid;
+		place-items: center;
+	}
+
+	.pc-menu__item[aria-checked='true'] .pc-menu__icon {
+		color: var(--sl-color-white);
+	}
+</style>
+
+<script>
+	type Theme = 'auto' | 'light' | 'dark';
+
+	/** Same key Starlight's own theme provider reads, so the choice persists. */
+	const storageKey = 'starlight-theme';
+
+	const parseTheme = (value: unknown): Theme =>
+		value === 'auto' || value === 'dark' || value === 'light' ? value : 'auto';
+
+	const storedTheme = (): Theme =>
+		parseTheme(typeof localStorage === 'undefined' ? null : localStorage.getItem(storageKey));
+
+	function setupThemeSelect(root: HTMLElement) {
+		const trigger = root.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+		const menu = root.querySelector<HTMLElement>('[data-theme-menu]');
+		const icons = root.querySelectorAll<HTMLElement>('[data-theme-icon]');
+		const options = root.querySelectorAll<HTMLElement>('[data-theme-option]');
+
+		const render = (theme: Theme) => {
+			icons.forEach((icon) => {
+				icon.hidden = icon.dataset.themeIcon !== theme;
+			});
+			options.forEach((option) => {
+				option.setAttribute('aria-checked', String(option.dataset.themeOption === theme));
+			});
+		};
+
+		const apply = (theme: Theme) => {
+			const resolved =
+				theme === 'auto'
+					? matchMedia('(prefers-color-scheme: light)').matches
+						? 'light'
+						: 'dark'
+					: theme;
+			document.documentElement.dataset.theme = resolved;
+			if (typeof localStorage !== 'undefined') {
+				localStorage.setItem(storageKey, theme === 'auto' ? '' : theme);
+			}
+			render(theme);
+		};
+
+		const close = () => {
+			if (!menu) return;
+			menu.hidden = true;
+			trigger?.setAttribute('aria-expanded', 'false');
+		};
+
+		render(storedTheme());
+		apply(storedTheme());
+
+		// The painted theme is 'light' or 'dark'; the preference may still be auto.
+		render(storedTheme());
+
+		trigger?.addEventListener('click', () => {
+			if (!menu) return;
+			const open = menu.hidden;
+			menu.hidden = !open;
+			trigger.setAttribute('aria-expanded', String(open));
+		});
+
+		options.forEach((option) => {
+			option.addEventListener('click', () => {
+				apply(parseTheme(option.dataset.themeOption));
+				close();
+			});
+		});
+
+		matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+			if (storedTheme() === 'auto') apply('auto');
+		});
+
+		document.addEventListener('click', (event) => {
+			if (!root.contains(event.target as Node)) close();
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') close();
+		});
+	}
+
+	document.querySelectorAll<HTMLElement>('[data-theme-select]').forEach(setupThemeSelect);
+</script>

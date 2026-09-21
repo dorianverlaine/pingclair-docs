@@ -99,10 +99,37 @@ page it is supposed to match.
 
 ## Deployment
 
-The site is static and is intended to be published to Cloudflare Pages with the
-build command `pnpm build` and the output directory `dist`. A copy served by
-Pingclair itself is a reasonable mirror, but not the primary one: when the
-server is misbehaving, its documentation is exactly what readers need.
+The site is fully static and is published to **Cloudflare Pages**.
+
+Project settings:
+
+| Setting | Value |
+| --- | --- |
+| Build command | `pnpm build` |
+| Output directory | `dist` |
+| Node version | from `.node-version` (24) |
+
+Everything the build produces is a file: the pages, the `.md` endpoint behind
+"Copy page", `llms.txt`, `llms-full.txt`, the Pagefind index, and the sitemap.
+`public/_headers` sets long-lived caching for hashed assets and security headers
+for everything else; `wrangler.toml` records the same output directory for
+`wrangler pages deploy`.
+
+Two things to set when the domain is chosen: `site` in `astro.config.mjs` (it is
+the origin used in canonical URLs, the sitemap, `llms.txt`, and `robots.txt`),
+and the custom domain in the Pages project.
+
+A copy served by Pingclair itself is a reasonable mirror, but not the primary
+one: when the server is misbehaving, its documentation is exactly what readers
+need.
+
+## Files served alongside the pages
+
+| Path | Contents |
+| --- | --- |
+| `/<path>.md` | Raw Markdown for that page, including `/zh-TW.md` for a locale home |
+| `/llms.txt` | English index of every page, linking to its `.md` |
+| `/llms-full.txt` | Every English page concatenated, with source URLs |
 
 ## Related repositories
 
