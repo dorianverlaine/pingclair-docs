@@ -1,0 +1,63 @@
+---
+title: Pingclair
+description: A reverse proxy and static file server written in Rust, with HTTP/1.1, HTTP/2, HTTP/3, automatic HTTPS, and a Caddyfile-compatible configuration language.
+template: splash
+hero:
+  tagline: A reverse proxy and static file server written in Rust, with HTTP/1.1, HTTP/2, HTTP/3, automatic HTTPS, and a Caddyfile-compatible configuration language.
+  actions:
+    - text: Install Pingclair
+      link: /start/install/
+      icon: right-arrow
+    - text: Quickstart
+      link: /start/quickstart/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Pingclair serves HTTP/1.1, HTTP/2, and HTTP/3 from a single configuration,
+obtains and renews public certificates over ACME, and serves static files with
+compression and range requests. Its configuration language, the Pingclairfile,
+follows Caddyfile conventions.
+
+```caddyfile
+example.com {
+    encode zstd gzip
+    reverse_proxy 10.0.0.10:8080 10.0.0.11:8080
+}
+```
+
+## Start here
+
+<CardGrid>
+	<Card title="🚀 Install">
+		From a release binary, from source, or with Docker.
+		[Installation guide](/start/install/)
+	</Card>
+	<Card title="🏃 Quickstart">
+		Write a first Pingclairfile, validate it, and serve traffic.
+		[Quickstart](/start/quickstart/)
+	</Card>
+	<Card title="🧠 Concepts">
+		How a configuration file becomes runtime state, and how a request is
+		handled. [Configuration model](/concepts/configuration/)
+	</Card>
+	<Card title="📖 Reference">
+		The configuration language and the directives it accepts.
+		[Directive reference](/reference/directives/)
+	</Card>
+</CardGrid>
+
+## 📌 Release status
+
+The current release is **v0.2.0-rc.3**, a release candidate. These pages
+describe that release. The `v0.1.x` line is unmaintained and receives no
+security fixes. [Project status](/project/status/) lists what is supported,
+what is refused, and the defects known at tagging time.
+
+## 📊 Performance
+
+Pingclair is measured against nginx and Caddy on the same host, with every
+candidate capped at two CPUs and an identical workload. The measured numbers,
+their conditions, and the rows where Pingclair is slower are published in
+[Benchmarks](/project/benchmarks/).

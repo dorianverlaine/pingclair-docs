@@ -1,0 +1,4 @@
+# pnpm 12 reads build-script approvals from this file, not from package.json.
+# esbuild needs its postinstall step to place the platform binary.
+allowBuilds:
+  esbuild: true
