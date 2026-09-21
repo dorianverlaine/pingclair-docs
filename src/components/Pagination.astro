@@ -1,0 +1,106 @@
+---
+const { dir, pagination } = Astro.locals.starlightRoute;
+const { prev, next } = pagination;
+const isRtl = dir === 'rtl';
+
+/*
+ * Replaces Starlight's two bordered cards with the reference's line: the
+ * neighbouring page's title at 14px/600 with a small chevron, previous on the
+ * left and next pushed to the right. The directional words stay for assistive
+ * technology through `aria-label`, which is where the reference keeps them too.
+ */
+---
+
+<div class="pc-pagination print:hidden" dir={dir}>
+	{
+		prev && (
+			<a
+				href={prev.href}
+				rel="prev"
+				aria-label={`${Astro.locals.t('page.previousLink')}: ${prev.label}`}
+			>
+				{/* Drawn in the template rather than with `set:html`: markup injected
+				    that way is outside Astro's style scoping, so the size and colour
+				    rules below would not reach it. */}
+				<svg viewBox="0 0 3 6" width="6" height="12" aria-hidden="true" focusable="false">
+					<path
+						d={isRtl ? 'M0 0l3 3l-3 3' : 'M3 0L0 3l3 3'}
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"></path>
+				</svg>
+				<span>{prev.label}</span>
+			</a>
+		)
+	}
+	{
+		next && (
+			<a href={next.href} rel="next" aria-label={`${Astro.locals.t('page.nextLink')}: ${next.label}`}>
+				<span>{next.label}</span>
+				<svg viewBox="0 0 3 6" width="6" height="12" aria-hidden="true" focusable="false">
+					<path
+						d={isRtl ? 'M3 0L0 3l3 3' : 'M0 0l3 3l-3 3'}
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"></path>
+				</svg>
+			</a>
+		)
+	}
+</div>
+
+<style>
+	.pc-pagination {
+		display: flex;
+		justify-content: space-between;
+		gap: 1.5rem;
+		padding-inline: 0.125rem;
+	}
+
+	.pc-pagination a {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+		line-height: 1.45;
+		text-decoration: none;
+	}
+
+	.pc-pagination a:hover {
+		color: var(--sl-color-white);
+	}
+
+	/* Next sits at the far end of the row, as in the reference. */
+	.pc-pagination [rel='next'] {
+		margin-inline-start: auto;
+		text-align: end;
+	}
+
+	.pc-pagination svg {
+		inline-size: 0.375rem;
+		block-size: 0.75rem;
+		flex-shrink: 0;
+		color: var(--sl-color-gray-4);
+	}
+
+	.pc-pagination a:hover svg {
+		color: var(--sl-color-gray-2);
+	}
+
+	@media (max-width: 30rem) {
+		.pc-pagination {
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+
+		.pc-pagination [rel='next'] {
+			margin-inline-start: 0;
+		}
+	}
+</style>

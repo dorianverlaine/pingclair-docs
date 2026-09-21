@@ -26,6 +26,8 @@ export default defineConfig({
 				// Theme and language pickers as menus rather than native selects.
 				ThemeSelect: './src/components/ThemeSelect.astro',
 				LanguageSelect: './src/components/LanguageSelect.astro',
+				// Previous/next as a line of links rather than two large cards.
+				Pagination: './src/components/Pagination.astro',
 			},
 			// The default locale lives at the site root, so it is configured under
 			// the `root` key. Listing it as `en` instead would make Starlight look
