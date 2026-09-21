@@ -28,6 +28,8 @@ export default defineConfig({
 				LanguageSelect: './src/components/LanguageSelect.astro',
 				// Previous/next as a line of links rather than two large cards.
 				Pagination: './src/components/Pagination.astro',
+				// Adds the project links and release line below the pagination.
+				Footer: './src/components/Footer.astro',
 			},
 			// The default locale lives at the site root, so it is configured under
 			// the `root` key. Listing it as `en` instead would make Starlight look

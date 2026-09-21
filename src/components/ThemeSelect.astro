@@ -117,18 +117,21 @@ const t = labels[lang] ?? labels.en;
 	.pc-theme__trigger {
 		display: grid;
 		place-items: center;
-		/* Fixed to the same 32px box as the other header controls, with no line
-		   box of its own: an inline icon span made this 42px tall and pushed the
-		   glyph above the row's centre. */
-		inline-size: 2rem;
-		block-size: 2rem;
+		/* Matches the header's search field, which sets the row height. */
+		inline-size: 2.5rem;
+		block-size: 2.5rem;
 		padding: 0;
 		line-height: 0;
 		border: 0;
-		border-radius: 0.5rem;
+		border-radius: 0.75rem;
 		background: none;
 		color: var(--sl-color-gray-3);
 		cursor: pointer;
+	}
+
+	.pc-theme__trigger svg {
+		inline-size: 1.25rem;
+		block-size: 1.25rem;
 	}
 
 	/*

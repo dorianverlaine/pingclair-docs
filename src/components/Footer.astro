@@ -1,0 +1,72 @@
+---
+import EditLink from 'virtual:starlight/components/EditLink';
+import LastUpdated from 'virtual:starlight/components/LastUpdated';
+import Pagination from 'virtual:starlight/components/Pagination';
+
+/*
+ * Starlight's footer holds the edit link, the last-updated stamp, and the
+ * previous/next links. This adds the site's own row underneath: where the
+ * project lives and which release this page describes. Text here is proper
+ * nouns and a version, so it needs no translation.
+ */
+const repository = 'https://github.com/dorianverlaine/pingclair';
+---
+
+<footer class="sl-flex">
+	<div class="meta sl-flex">
+		<EditLink />
+		<LastUpdated />
+	</div>
+	<Pagination />
+	<div class="pc-footer">
+		<p class="pc-footer__meta">
+			<a href={`${repository}/releases/tag/v0.2.0-rc.3`}>Pingclair v0.2.0-rc.3</a>
+			<span aria-hidden="true">·</span>
+			<a href={`${repository}/blob/main/LICENSE`}>Apache-2.0</a>
+		</p>
+		<nav class="pc-footer__links" aria-label="Project links">
+			<a href={repository}>GitHub</a>
+			<a href={`${repository}/releases`}>Releases</a>
+			<a href={`${repository}/blob/main/CHANGELOG.md`}>Changelog</a>
+			<a href={`${repository}/issues`}>Issues</a>
+		</nav>
+	</div>
+</footer>
+
+<style>
+	.pc-footer {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 2rem;
+		margin-top: 2rem;
+		padding-top: 1.25rem;
+		border-top: 1px solid var(--sl-color-hairline);
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+
+	.pc-footer__meta {
+		margin: 0;
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.pc-footer__links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.25rem;
+	}
+
+	.pc-footer a {
+		color: var(--sl-color-gray-3);
+		text-decoration: none;
+	}
+
+	.pc-footer a:hover {
+		color: var(--sl-color-white);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+</style>

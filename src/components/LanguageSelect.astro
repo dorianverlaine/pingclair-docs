@@ -98,16 +98,15 @@ const locales = Object.entries(config.locales ?? {}).map(([code, locale]) => ({
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		/* Matches the 32px of the neighbouring controls so the row has one
-		   baseline instead of three. */
-		block-size: 2rem;
+		/* Matches the header's search field, which sets the row height. */
+		block-size: 2.5rem;
 		padding: 0 0.625rem;
 		border: 0;
 		border-radius: 0.75rem;
 		background: none;
 		color: var(--sl-color-white);
 		font-family: var(--sl-font);
-		font-size: var(--sl-text-sm);
+		font-size: 0.9375rem; /* 15px */
 		font-weight: 500;
 		line-height: 1;
 		cursor: pointer;

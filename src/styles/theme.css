@@ -486,6 +486,36 @@ h2 {
 	--pc-font-serif: var(--pc-font-serif-ko);
 }
 
+/*
+ * Header row. The search field is the tallest control, so the icon and language
+ * controls match its 40px height and its corners, and the row is centred on one
+ * line instead of three heights.
+ */
+button[data-open-modal] {
+	border-radius: 0.75rem;
+}
+
+.right-group {
+	align-items: center;
+}
+
+.social-icons a {
+	display: grid;
+	place-items: center;
+	inline-size: 2.5rem;
+	block-size: 2.5rem;
+	border-radius: 0.75rem;
+}
+
+.social-icons a svg {
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+}
+
+.social-icons a:hover {
+	background-color: color-mix(in oklab, var(--sl-color-gray-2) 8%, transparent);
+}
+
 /* Splash page: a wide tagline, calmer spacing, restrained buttons. */
 .hero {
 	padding-block: 4rem 2.5rem;
