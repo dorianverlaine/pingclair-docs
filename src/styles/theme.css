@@ -111,6 +111,8 @@
 	--sl-color-text-invert: #09090b;
 	--pc-color-prose: #cecece;
 	--pc-code-bg: #151517;
+	--pc-color-toc: #9e9e9e;
+	--pc-color-toc-heading: #cecece;
 
 	--sl-color-backdrop-overlay: rgb(9 9 11 / 0.66);
 }
@@ -152,6 +154,8 @@
 	--sl-color-text-invert: #ffffff;
 	--pc-color-prose: #3e3e3e;
 	--pc-code-bg: #ffffff;
+	--pc-color-toc: #505050;
+	--pc-color-toc-heading: #3e3e3e;
 
 	--sl-color-backdrop-overlay: rgb(23 23 23 / 0.4);
 }
@@ -533,6 +537,46 @@ button[data-open-modal] {
 }
 
 /*
+ * Right-hand table of contents, matched to the reference. Its links are 14px on
+ * a 24px line with 4px of block padding — 32px per item, where Starlight's are
+ * 13px on a 16px line, which reads as cramped — with a 14px/500 heading flush
+ * with the links. The reference indents its heading, but only because a collapse
+ * toggle sits to its left; we have no toggle, so an indent would just look
+ * misaligned. The panel's own inline padding sets the distance from the text
+ * column: 88px against Starlight's 32px.
+ */
+.right-sidebar-panel {
+	padding-inline-start: 5.5rem;
+}
+
+starlight-toc nav h2 {
+	margin: 0;
+	font-family: var(--sl-font);
+	font-size: var(--sl-text-sm);
+	font-weight: 500;
+	line-height: 1.7;
+	letter-spacing: 0;
+	color: var(--pc-color-toc-heading);
+}
+
+starlight-toc nav a {
+	padding: 0.25rem 0;
+	padding-inline-start: calc(var(--depth, 0) * 1rem);
+	font-size: var(--sl-text-sm);
+	line-height: 1.7;
+	color: var(--pc-color-toc);
+}
+
+starlight-toc nav a:hover,
+starlight-toc nav a[aria-current='true'] {
+	color: var(--sl-color-white);
+}
+
+starlight-toc nav li {
+	margin: 0;
+}
+
+/*
  * Vertical centring in the header. The bottom hairline is part of the 64px box,
  * so the content box is one pixel shorter than the padding suggests and the
  * wordmark sat half a pixel low — 11.5px above it, 12.5px below. Handing that
@@ -546,6 +590,29 @@ header.header {
 header.header .site-title img {
 	block-size: 2.25rem;
 	inline-size: auto;
+}
+
+/*
+ * The wordmark says what the product is; the badge says which surface you are
+ * on, so a reader who lands on a deep page does not mistake it for the product
+ * site. Drawn as a pseudo-element on the title link, which keeps it inside the
+ * link's flex row without another component override.
+ */
+header.header .site-title::after {
+	/* The trailing empty string keeps the badge out of the link's accessible
+	   name, which should stay the product name. */
+	content: 'DOCS' / '';
+	align-self: center;
+	margin-inline-start: 0.75rem;
+	padding: 0.25rem 0.625rem;
+	border: 1px solid var(--sl-color-hairline);
+	border-radius: 0.625rem;
+	color: var(--sl-color-gray-3);
+	font-family: var(--sl-font);
+	font-size: 0.8125rem; /* 13px */
+	font-weight: 500;
+	letter-spacing: 0.06em;
+	line-height: 1.4;
 }
 
 /*

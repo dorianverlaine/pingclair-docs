@@ -1,5 +1,11 @@
-# Cloudflare Pages project settings. `pnpm build` writes the site to `dist`,
-# and `wrangler pages deploy` (or a Git-connected project) publishes it.
+# Cloudflare Workers, built from this GitHub repository. Workers Builds runs the
+# build command and then `wrangler deploy`, which reads the assets directory
+# below: the site is served as static assets, not as a Worker script.
 name = "pingclair-docs"
-pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
+
+[assets]
+directory = "./dist"
+# Starlight writes a 404.html, so an unknown path should serve that page rather
+# than the asset-server default.
+not_found_handling = "404-page"

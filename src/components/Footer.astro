@@ -110,7 +110,25 @@ const columns = [
 		<div class="pc-footer__legal">
 			<p class="pc-footer__copy">
 				<span>© {year} Dorian Verlaine</span>
-				<a href="mailto:me@dorian.page">me@dorian.page</a>
+				{/* An icon rather than the address as text: the mailto and the
+				    accessible name still carry it. */}
+				<a class="pc-footer__mail" href="mailto:me@dorian.page" aria-label="me@dorian.page">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.6"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<rect x="2.5" y="4.5" width="19" height="15" rx="2.5"></rect>
+						<path d="m3.5 7.5 8.5 5.5 8.5-5.5"></path>
+					</svg>
+				</a>
 			</p>
 			<p>
 				<a href={repository}>Pingclair</a> {t.legal}
@@ -212,8 +230,22 @@ const columns = [
 
 	/* The address sits under the name rather than beside it. */
 	.pc-footer__copy {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.pc-footer__mail {
 		display: grid;
-		gap: 0.25rem;
+		place-items: center;
+		inline-size: 1.5rem;
+		block-size: 1.5rem;
+		border-radius: 0.375rem;
+	}
+
+	.pc-footer__mail:hover {
+		background-color: color-mix(in oklab, var(--sl-color-gray-2) 8%, transparent);
+		text-decoration: none;
 	}
 
 	.pc-footer a {

@@ -99,25 +99,32 @@ page it is supposed to match.
 
 ## Deployment
 
-The site is fully static and is published to **Cloudflare Pages**.
-
-Project settings:
+The site is fully static and is deployed as **Cloudflare Workers static assets,
+built from this GitHub repository** (Workers Builds). One-time setup in the
+Cloudflare dashboard, under Workers & Pages → Create → import a repository:
 
 | Setting | Value |
 | --- | --- |
+| Repository | this one |
+| Production branch | `main` |
 | Build command | `pnpm build` |
-| Output directory | `dist` |
+| Deploy command | `npx wrangler deploy` (the default) |
 | Node version | from `.node-version` (24) |
+
+No output directory has to be configured in the dashboard: `wrangler.toml`
+declares `dist` as the assets directory, so `wrangler deploy` uploads it as
+static assets. Pushes to `main` build and deploy; other branches get preview
+URLs.
 
 Everything the build produces is a file: the pages, the `.md` endpoint behind
 "Copy page", `llms.txt`, `llms-full.txt`, the Pagefind index, and the sitemap.
-`public/_headers` sets long-lived caching for hashed assets and security headers
-for everything else; `wrangler.toml` records the same output directory for
-`wrangler pages deploy`.
+`public/_headers` is copied into `dist` and, like `_redirects`, is honored by
+Workers static assets: hashed assets are cached for a year, everything else gets
+the security headers.
 
-Two things to set when the domain is chosen: `site` in `astro.config.mjs` (it is
-the origin used in canonical URLs, the sitemap, `llms.txt`, and `robots.txt`),
-and the custom domain in the Pages project.
+Two things to set when the domain is chosen: `site` in `astro.config.mjs` (the
+origin used in canonical URLs, the sitemap, `llms.txt`, and `robots.txt`) and the
+Worker's custom domain.
 
 A copy served by Pingclair itself is a reasonable mirror, but not the primary
 one: when the server is misbehaving, its documentation is exactly what readers
