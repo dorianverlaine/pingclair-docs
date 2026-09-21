@@ -543,10 +543,12 @@ button[data-open-modal] {
  * with the links. The reference indents its heading, but only because a collapse
  * toggle sits to its left; we have no toggle, so an indent would just look
  * misaligned. The panel's own inline padding sets the distance from the text
- * column: 88px against Starlight's 32px.
+ * column: 56px, which also leaves the list 252px wide instead of 220px, so short
+ * entries are not pushed against the window edge — the reference's list is 264px
+ * wide against a slightly narrower text column than ours.
  */
 .right-sidebar-panel {
-	padding-inline-start: 5.5rem;
+	padding-inline-start: 3.5rem;
 }
 
 starlight-toc nav h2 {
