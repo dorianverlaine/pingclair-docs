@@ -100,8 +100,11 @@ page it is supposed to match.
 ## Deployment
 
 The site is fully static and is deployed as **Cloudflare Workers static assets,
-built from this GitHub repository** (Workers Builds). One-time setup in the
-Cloudflare dashboard, under Workers & Pages → Create → import a repository:
+built from this GitHub repository** (Workers Builds). It answers on
+**https://pingclair.aqeo.dev**, which `wrangler.toml` binds as a custom domain.
+
+One-time setup in the Cloudflare dashboard, under Workers & Pages → Create →
+import a repository:
 
 | Setting | Value |
 | --- | --- |
@@ -114,17 +117,18 @@ Cloudflare dashboard, under Workers & Pages → Create → import a repository:
 No output directory has to be configured in the dashboard: `wrangler.toml`
 declares `dist` as the assets directory, so `wrangler deploy` uploads it as
 static assets. Pushes to `main` build and deploy; other branches get preview
-URLs.
+URLs. The same file also declares the `pingclair.aqeo.dev` custom domain, which
+requires the `aqeo.dev` zone to be in the same account.
+
+To deploy to **Pages** instead, replace `[assets]` with
+`pages_build_output_dir = "dist"` and remove the `routes` entry; everything else,
+including `_headers`, works the same way.
 
 Everything the build produces is a file: the pages, the `.md` endpoint behind
 "Copy page", `llms.txt`, `llms-full.txt`, the Pagefind index, and the sitemap.
 `public/_headers` is copied into `dist` and, like `_redirects`, is honored by
 Workers static assets: hashed assets are cached for a year, everything else gets
 the security headers.
-
-Two things to set when the domain is chosen: `site` in `astro.config.mjs` (the
-origin used in canonical URLs, the sitemap, `llms.txt`, and `robots.txt`) and the
-Worker's custom domain.
 
 A copy served by Pingclair itself is a reasonable mirror, but not the primary
 one: when the server is misbehaving, its documentation is exactly what readers

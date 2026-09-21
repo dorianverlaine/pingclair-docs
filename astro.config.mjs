@@ -2,10 +2,10 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
-// `site` is used for canonical URLs and the generated sitemap. Update it when
-// the production domain is chosen.
+// `site` is the origin used in canonical URLs, the sitemap, `llms.txt`, and
+// `robots.txt`. It has to match the domain the Worker is bound to.
 export default defineConfig({
-	site: 'https://pingclair.dev',
+	site: 'https://pingclair.aqeo.dev',
 	integrations: [
 		starlight({
 			title: 'Pingclair',

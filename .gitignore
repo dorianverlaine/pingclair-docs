@@ -19,6 +19,3 @@ pnpm-debug.log*
 
 # macOS-specific files
 .DS_Store
-
-# Local working material: type comparison page for choosing the display serif.
-/public/font-preview.html
