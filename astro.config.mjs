@@ -1,6 +1,22 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { copyFile } from 'node:fs/promises';
+
+// Starlight always emits the sitemap as `sitemap-index.xml` plus numbered
+// chunks (`sitemap-0.xml`), and `filenameBase` only renames that pair. Crawlers
+// and the agent-readiness checks look for `/sitemap.xml`, so publish a copy of
+// the generated index under that name instead of hand-maintaining a second one.
+// It is registered after Starlight because build hooks run in integration
+// order, and Starlight is what writes the index this hook copies.
+const sitemapAlias = {
+	name: 'sitemap-alias',
+	hooks: {
+		'astro:build:done': async ({ dir }) => {
+			await copyFile(new URL('sitemap-index.xml', dir), new URL('sitemap.xml', dir));
+		},
+	},
+};
 
 // `site` is the origin used in canonical URLs, the sitemap, `llms.txt`, and
 // `robots.txt`. It has to match the domain the Worker is bound to.
@@ -108,5 +124,6 @@ export default defineConfig({
 				},
 			],
 		}),
+		sitemapAlias,
 	],
 });

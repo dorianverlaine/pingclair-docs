@@ -1,0 +1,16 @@
+# Pingclair documentation. Every page is also published as Markdown by
+# appending `.md` to its URL, and the whole set is indexed at /llms.txt.
+User-agent: *
+Allow: /
+# The search index is fetched by the browser, never by a crawler.
+Disallow: /pagefind/
+
+# Answer engines and model crawlers are welcome to read these pages.
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://pingclair.aqeo.dev/sitemap.xml
