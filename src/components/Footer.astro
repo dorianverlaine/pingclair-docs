@@ -22,33 +22,28 @@ const lang = Astro.locals.starlightRoute?.lang ?? 'en';
 const locale = Astro.locals.starlightRoute?.locale;
 const prefix = locale && locale !== 'root' ? `/${locale}` : '';
 
-const strings: Record<string, { tagline: string; project: string; docs: string; legal: string }> = {
+const strings: Record<string, { project: string; docs: string; legal: string }> = {
 	en: {
-		tagline: 'A reverse proxy and static file server written in Rust.',
 		project: 'Project',
 		docs: 'Documentation',
 		legal: 'is licensed under Apache-2.0.',
 	},
 	'zh-TW': {
-		tagline: '以 Rust 撰寫的反向代理與靜態檔案伺服器。',
 		project: '專案',
 		docs: '文件',
 		legal: '以 Apache-2.0 授權。',
 	},
 	'zh-CN': {
-		tagline: '用 Rust 编写的反向代理与静态文件服务器。',
 		project: '项目',
 		docs: '文档',
 		legal: '以 Apache-2.0 许可发布。',
 	},
 	ja: {
-		tagline: 'Rust で書かれたリバースプロキシ兼静的ファイルサーバー。',
 		project: 'プロジェクト',
 		docs: 'ドキュメント',
 		legal: 'は Apache-2.0 で提供されています。',
 	},
 	ko: {
-		tagline: 'Rust로 작성된 리버스 프록시 겸 정적 파일 서버입니다.',
 		project: '프로젝트',
 		docs: '문서',
 		legal: '는 Apache-2.0 라이선스로 배포됩니다.',
@@ -91,7 +86,6 @@ const columns = [
 		<div class="pc-footer__columns">
 			<div class="pc-footer__brand">
 				<img class="pc-footer__logo" src={logo.src} alt="Pingclair" width="132" height="38" />
-				<p class="pc-footer__tagline">{t.tagline}</p>
 				<p class="pc-footer__release">
 					<a href={`${repository}/releases/tag/${release}`}>{release}</a>
 				</p>
@@ -177,11 +171,6 @@ const columns = [
 		inline-size: 7.5rem;
 		block-size: auto;
 		margin-bottom: 0.75rem;
-	}
-
-	.pc-footer__tagline {
-		max-inline-size: 22rem;
-		margin: 0 0 0.5rem;
 	}
 
 	.pc-footer__release {
