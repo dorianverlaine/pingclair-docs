@@ -516,6 +516,54 @@ button[data-open-modal] {
 	background-color: color-mix(in oklab, var(--sl-color-gray-2) 8%, transparent);
 }
 
+/*
+ * Vertical centring in the header. The bottom hairline is part of the 64px box,
+ * so the content box is one pixel shorter than the padding suggests and the
+ * wordmark sat half a pixel low — 11.5px above it, 12.5px below. Handing that
+ * pixel back to the bottom padding evens the two out, and the wordmark is 36px
+ * so it keeps breathing room on both sides.
+ */
+header.header {
+	padding-block: 0.75rem;
+}
+
+header.header .site-title img {
+	block-size: 2.25rem;
+	inline-size: auto;
+}
+
+/*
+ * Gutters, matched to the reference. Its sidebar column starts 32px from the
+ * window edge and its labels sit 16px further in, and the logo lines up with
+ * those labels rather than with the window. Ours had the sidebar at 16px and the
+ * logo at 24px, which is why both read as pressed against the edge.
+ */
+:root {
+	--sl-sidebar-pad-x: 2rem;
+}
+
+@media (min-width: 72rem) {
+	:root {
+		/* 48px: the logo's left edge meets the sidebar labels. */
+		--sl-nav-pad-x: 3rem;
+	}
+}
+
+/*
+ * Sidebar rhythm: the reference puts its group labels and its links on one left
+ * edge, both 16px inside the column. Starlight indents nested items by another
+ * 16px (8px margin, 8px padding) and leaves the labels flush, which staggers the
+ * two. The label gets the same 16px inset and the item indent goes away.
+ */
+.sidebar-content summary {
+	padding-inline-start: 1rem;
+}
+
+.sidebar-content li {
+	margin-inline-start: 0;
+	padding-inline-start: 0;
+}
+
 /* Splash page: a wide tagline, calmer spacing, restrained buttons. */
 .hero {
 	padding-block: 4rem 2.5rem;
