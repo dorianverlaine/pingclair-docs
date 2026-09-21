@@ -281,11 +281,13 @@ h2 {
 	block-size: 0.75rem;
 	background-color: transparent;
 	/*
-	 * One SVG carries all three lights, each with its own highlight-to-rim
-	 * gradient. Three positioned background layers rendered as half-circles at
-	 * some zoom levels, because each layer's box clipped its own circle.
+	 * One SVG carries all three lights. The colours are sampled from a macOS
+	 * window rather than taken from the nominal palette: each button runs from a
+	 * saturated top to a lighter bottom — the light catches the lower edge — with
+	 * a hairline rim, whereas the earlier version had a bright highlight at the
+	 * top and a dark rim, which read as oversaturated on this background.
 	 */
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='12' viewBox='0 0 52 12'%3E%3Cdefs%3E%3CradialGradient id='r' cx='50%25' cy='36%25' r='68%25'%3E%3Cstop offset='0' stop-color='%23ff9d95'/%3E%3Cstop offset='.55' stop-color='%23ff5f57'/%3E%3Cstop offset='1' stop-color='%23de4a3f'/%3E%3C/radialGradient%3E%3CradialGradient id='y' cx='50%25' cy='36%25' r='68%25'%3E%3Cstop offset='0' stop-color='%23ffdc8a'/%3E%3Cstop offset='.55' stop-color='%23febc2e'/%3E%3Cstop offset='1' stop-color='%23dc9c17'/%3E%3C/radialGradient%3E%3CradialGradient id='g' cx='50%25' cy='36%25' r='68%25'%3E%3Cstop offset='0' stop-color='%238ff09a'/%3E%3Cstop offset='.55' stop-color='%2328c840'/%3E%3Cstop offset='1' stop-color='%231a9e30'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='6' cy='6' r='6' fill='url(%23r)'/%3E%3Ccircle cx='26' cy='6' r='6' fill='url(%23y)'/%3E%3Ccircle cx='46' cy='6' r='6' fill='url(%23g)'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='12' viewBox='0 0 52 12'%3E%3Cdefs%3E%3ClinearGradient id='r' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fb695f'/%3E%3Cstop offset='1' stop-color='%23f78e84'/%3E%3C/linearGradient%3E%3ClinearGradient id='y' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fcbc32'/%3E%3Cstop offset='1' stop-color='%23fed447'/%3E%3C/linearGradient%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%2362cf32'/%3E%3Cstop offset='1' stop-color='%239edf7d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg stroke='%23000000' stroke-opacity='.10' stroke-width='.5'%3E%3Ccircle cx='6' cy='6' r='5.5' fill='url(%23r)'/%3E%3Ccircle cx='26' cy='6' r='5.5' fill='url(%23y)'/%3E%3Ccircle cx='46' cy='6' r='5.5' fill='url(%23g)'/%3E%3C/g%3E%3C/svg%3E");
 	background-size: 3.25rem 0.75rem;
 	background-position: 0 50%;
 	background-repeat: no-repeat;
