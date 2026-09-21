@@ -16,9 +16,9 @@
  * CJK font, because shipping a CJK webfont costs megabytes for text the reader
  * already has.
  */
-@import '@fontsource/cormorant-garamond/400.css';
-@import '@fontsource/cormorant-garamond/500.css';
-@import '@fontsource/cormorant-garamond/600.css';
+@import '@fontsource-variable/playfair-display';
+@import '@fontsource/pt-serif/400.css';
+@import '@fontsource/pt-serif/700.css';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
 
@@ -33,12 +33,13 @@
 		'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 		'Liberation Mono', 'Courier New', 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei',
 		monospace;
-	/*
-	 * Interim: headings use the text face until a display serif is chosen. Open
-	 * /font-preview.html (local only) to compare candidates; swapping this value
-	 * is the whole change.
-	 */
-	--pc-font-serif: var(--sl-font);
+	--pc-font-serif:
+		'Playfair Display Variable', 'Iowan Old Style', 'Songti TC', 'Songti SC', 'LiSong Pro',
+		'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', Georgia,
+		'Times New Roman', Times, serif;
+
+	/* Playfair has no Hangul, and PT Serif is the face that reads correctly there. */
+	--pc-font-serif-ko: 'PT Serif', 'Nanum Myeongjo', 'Noto Serif KR', 'Apple SD Gothic Neo', serif;
 
 	/* Type scale: 16px body, 30-36px page title. */
 	--sl-text-xs: 0.8125rem; /* 13px */
@@ -131,13 +132,20 @@ body {
 h1,
 h2 {
 	font-family: var(--pc-font-serif);
-	font-weight: 400;
-	letter-spacing: 0;
+	/* Playfair's 400 is thin and reads narrow; 500 with a touch of tracking
+	   keeps it from looking squeezed. */
+	font-weight: 500;
+	letter-spacing: 0.01em;
 }
 
 .content-panel h1,
 .content-panel h2 {
-	font-optical-sizing: auto;
+	/*
+	 * Playfair's optical-size axis narrows the letterforms at display sizes,
+	 * which reads as horizontally squeezed. Using the text instance keeps the
+	 * proportions the reader expects from a heading.
+	 */
+	font-optical-sizing: none;
 }
 
 .sl-markdown-content h3,
@@ -237,22 +245,59 @@ h2 {
 	inline-size: 3.25rem;
 	block-size: 0.75rem;
 	background-color: transparent;
-	/* Each light is a small radial gradient: a highlight near the top, the body
-	   colour in the middle, and a darker edge, which is what gives the macOS
-	   buttons their depth. */
-	background-image:
-		radial-gradient(circle at 50% 38%, #ff9d95 0 18%, #ff5f57 58%, #de4a3f 100%),
-		radial-gradient(circle at 50% 38%, #ffdc8a 0 18%, #febc2e 58%, #dc9c17 100%),
-		radial-gradient(circle at 50% 38%, #8ff09a 0 18%, #28c840 58%, #1a9e30 100%);
-	background-size: 0.75rem 0.75rem;
-	background-position: 0 50%, 1.25rem 50%, 2.5rem 50%;
+	/*
+	 * One SVG carries all three lights, each with its own highlight-to-rim
+	 * gradient. Three positioned background layers rendered as half-circles at
+	 * some zoom levels, because each layer's box clipped its own circle.
+	 */
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='12' viewBox='0 0 52 12'%3E%3Cdefs%3E%3CradialGradient id='r' cx='50%25' cy='36%25' r='68%25'%3E%3Cstop offset='0' stop-color='%23ff9d95'/%3E%3Cstop offset='.55' stop-color='%23ff5f57'/%3E%3Cstop offset='1' stop-color='%23de4a3f'/%3E%3C/radialGradient%3E%3CradialGradient id='y' cx='50%25' cy='36%25' r='68%25'%3E%3Cstop offset='0' stop-color='%23ffdc8a'/%3E%3Cstop offset='.55' stop-color='%23febc2e'/%3E%3Cstop offset='1' stop-color='%23dc9c17'/%3E%3C/radialGradient%3E%3CradialGradient id='g' cx='50%25' cy='36%25' r='68%25'%3E%3Cstop offset='0' stop-color='%238ff09a'/%3E%3Cstop offset='.55' stop-color='%2328c840'/%3E%3Cstop offset='1' stop-color='%231a9e30'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='6' cy='6' r='6' fill='url(%23r)'/%3E%3Ccircle cx='26' cy='6' r='6' fill='url(%23y)'/%3E%3Ccircle cx='46' cy='6' r='6' fill='url(%23g)'/%3E%3C/svg%3E");
+	background-size: 3.25rem 0.75rem;
+	background-position: 0 50%;
 	background-repeat: no-repeat;
-	filter: drop-shadow(0 0.5px 0.5px rgb(0 0 0 / 0.14));
 	opacity: 1;
 }
 
 .expressive-code .frame.is-terminal .header::after {
 	border-bottom: none;
+}
+
+/*
+ * The code area only squares its top corners when the chrome bar is above it;
+ * blocks without a bar keep all four. Without this the corner looked cut off.
+ */
+.expressive-code .frame:has(> .header) pre {
+	border-start-start-radius: 0;
+	border-start-end-radius: 0;
+}
+
+/*
+ * The copy button lives in the chrome bar: 28px square, 8px radius, centred
+ * against the bar, with the icon mask inset so the glyph stays 16px.
+ */
+.expressive-code .frame > .copy {
+	inset-block-start: 0.125rem;
+	inset-inline-end: 0.5rem;
+}
+
+.expressive-code .frame > .copy button {
+	inline-size: 1.75rem;
+	block-size: 1.75rem;
+	border-radius: 0.5rem;
+	background: transparent;
+	opacity: 1;
+}
+
+.expressive-code .frame > .copy button div,
+.expressive-code .frame > .copy button::before {
+	border-radius: inherit;
+}
+
+.expressive-code .frame > .copy button::before {
+	border-color: var(--sl-color-hairline);
+}
+
+.expressive-code .frame > .copy button::after {
+	margin: 0.375rem;
 }
 
 /* Tinted callouts: one hairline around a 16px-rounded box rather than a thick
@@ -338,30 +383,62 @@ h2 {
 	border-radius: 1rem;
 }
 
-/* Sidebar: roomier rows, muted labels until hovered or current. */
+/*
+ * Sidebar, matched to the reference: a 288px column of 14px links with 6px/16px
+ * padding and a 12px radius, group labels at 14px/600 with no collapse caret,
+ * and the current page marked by a 10% tint of the text colour rather than a
+ * filled block or a bold label.
+ */
 .sidebar-content {
-	font-size: 0.9375rem; /* 15px */
+	font-size: 0.875rem;
 }
 
-.sidebar-content a {
-	padding-block: 0.3125rem;
+.sidebar-content ul a {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.375rem 0.75rem 0.375rem 1rem;
+	border-radius: 0.75rem;
 	line-height: 1.5;
+	color: var(--sl-color-gray-2);
 }
 
-.sidebar-content .group-label > span,
-.sidebar-content summary {
-	font-weight: 600;
-	letter-spacing: -0.01em;
-}
-
-/* The current page gets a quiet surface. Starlight fills it with the accent
-   colour, which turns into a solid block once the accent is near-black. */
-.sidebar-content a[aria-current='page'],
-.sidebar-content a[aria-current='page']:hover,
-.sidebar-content a[aria-current='page']:focus {
-	background-color: var(--sl-color-gray-6);
+.sidebar-content ul a:hover,
+.sidebar-content ul a:focus-visible {
+	background-color: color-mix(in oklab, var(--sl-color-white) 6%, transparent);
 	color: var(--sl-color-white);
-	font-weight: 500;
+}
+
+.sidebar-content ul a[aria-current='page'],
+.sidebar-content ul a[aria-current='page']:hover,
+.sidebar-content ul a[aria-current='page']:focus {
+	background-color: color-mix(in oklab, var(--sl-color-white) 10%, transparent);
+	color: var(--sl-color-white);
+	font-weight: 400;
+}
+
+.sidebar-content summary {
+	margin-block: 1.25rem 0.375rem;
+	padding: 0;
+	font-size: 0.875rem;
+	font-weight: 600;
+	letter-spacing: 0;
+	color: var(--sl-color-white);
+}
+
+.sidebar-content > ul > li:first-child > details > summary,
+.sidebar-content > ul > li:first-child > summary {
+	margin-block-start: 0;
+}
+
+/* The reference's groups are always open, so the caret is only noise. */
+.sidebar-content summary .caret {
+	display: none;
+}
+
+/* Korean titles use PT Serif: Playfair Display has no Hangul. */
+:root[lang='ko'] {
+	--pc-font-serif: var(--pc-font-serif-ko);
 }
 
 /* Splash page: a wide tagline, calmer spacing, restrained buttons. */

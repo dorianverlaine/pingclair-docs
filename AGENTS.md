@@ -21,6 +21,28 @@ pnpm preview     # serve dist/
 
 `pnpm build` is the gate. A page that does not build is not delivered.
 
+### When Expressive Code settings change
+
+Astro caches rendered pages under `.astro/` and `node_modules/.astro/`, and the
+cached HTML keeps the stylesheet link it was rendered with. After changing
+`expressiveCode` in `astro.config.mjs`, that link can point at a hash the build
+no longer emits: the page then loads without any Expressive Code styles, which
+shows up as code blocks with no padding, a misplaced copy button, and wrong
+colours. Move both cache directories aside and build again:
+
+```bash
+mv .astro /tmp/astro-cache && mv node_modules/.astro /tmp/astro-cache-nm
+pnpm build
+```
+
+Then confirm every stylesheet the HTML references exists:
+
+```bash
+for f in $(grep -o '_astro/[A-Za-z0-9._-]*\.css' dist/index.html | sort -u); do
+  [ -f "dist/$f" ] || echo "MISSING $f"
+done
+```
+
 ## Content rules
 
 - **Register:** American English, formal, third person for description and

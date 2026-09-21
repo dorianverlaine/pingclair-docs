@@ -45,6 +45,8 @@ export default defineConfig({
 			// gives them shell-compatible highlighting (# comments, shell-like
 			// quoting) instead of falling back to plain text.
 			expressiveCode: {
+				// Same pair the reference uses, so the syntax colours match.
+				themes: ['github-light-default', 'dark-plus'],
 				shiki: {
 					langAlias: { caddyfile: 'shellscript' },
 				},
