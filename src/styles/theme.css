@@ -62,6 +62,16 @@
 	--sl-line-height: 1.65;
 	--sl-line-height-headings: 1.15;
 
+	/*
+	 * Heading sizes, taken from the reference: 36 / 24 / 20 / 18. Starlight
+	 * raises these tokens again at 50em, so the values are repeated inside that
+	 * breakpoint rather than only here.
+	 */
+	--sl-text-h2: 1.5rem; /* 24px */
+	--sl-text-h3: 1.25rem; /* 20px */
+	--sl-text-h4: 1.125rem; /* 18px */
+	--sl-text-h5: 1rem;
+
 	/* Layout: 18rem sidebar, 48rem measure, 92rem container. */
 	--sl-sidebar-width: 18rem;
 	--sl-content-width: 48rem;
@@ -96,6 +106,15 @@
 	--pc-code-bg: #151517;
 
 	--sl-color-backdrop-overlay: rgb(9 9 11 / 0.66);
+}
+
+@media (min-width: 50em) {
+	:root {
+		--sl-text-h2: 1.5rem;
+		--sl-text-h3: 1.25rem;
+		--sl-text-h4: 1.125rem;
+		--sl-text-h5: 1rem;
+	}
 }
 
 :root[data-theme='light'] {
@@ -135,13 +154,12 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 }
 
-/* The reference sets its page titles in a serif at regular weight. h1 and h2
-   inherit that; smaller headings stay in the body face for scanability. */
+/* Every content heading is the display serif, as in the reference. */
 h1,
 h2 {
 	font-family: var(--pc-font-serif);
-	/* Playfair's 400 is thin and reads narrow; 500 with a touch of tracking
-	   keeps it from looking squeezed. */
+	/* Literata's 400 is a touch light at display sizes, and the reference's
+	   serif is set at the same weight it uses for body text. */
 	font-weight: 500;
 	letter-spacing: 0.01em;
 }
@@ -159,8 +177,8 @@ h2 {
 .sl-markdown-content h3,
 .sl-markdown-content h4,
 .sl-markdown-content h5 {
-	font-weight: 600;
-	letter-spacing: -0.01em;
+	font-weight: 400;
+	letter-spacing: 0;
 }
 
 /* Content links are underlined, not coloured, so they survive greyscale. */
@@ -502,4 +520,32 @@ h2 {
 /* Prose uses the reference's body colour rather than the UI text colour. */
 .sl-markdown-content {
 	color: var(--pc-color-prose);
+}
+
+/*
+ * Heading rhythm. The reference spaces its headings generously above and
+ * tightly below, and its line height grows as the size shrinks: 32px for a
+ * 24px h2, 28px for a 20px h3, 27px for an 18px h4.
+ */
+.sl-markdown-content h2:not(:where(.not-content *)) {
+	line-height: 1.33;
+	margin-block: 2.25rem 1.125rem; /* 36 / 18 */
+}
+
+.sl-markdown-content h3:not(:where(.not-content *)) {
+	font-family: var(--pc-font-serif);
+	font-weight: 400;
+	line-height: 1.4;
+	margin-block: 2rem 0.875rem; /* 32 / 14 */
+}
+
+.sl-markdown-content h4:not(:where(.not-content *)) {
+	font-family: var(--pc-font-serif);
+	font-weight: 400;
+	line-height: 1.5;
+	margin-block: 1.8rem 0.675rem; /* 28.8 / 10.8 */
+}
+
+:root[lang='ko'] .sl-markdown-content :is(h2, h3, h4):not(:where(.not-content *)) {
+	font-family: var(--pc-font-serif-ko);
 }
