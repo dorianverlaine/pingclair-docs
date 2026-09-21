@@ -2,61 +2,211 @@
 import EditLink from 'virtual:starlight/components/EditLink';
 import LastUpdated from 'virtual:starlight/components/LastUpdated';
 import Pagination from 'virtual:starlight/components/Pagination';
+import logo from '../assets/logo.png';
 
 /*
  * Starlight's footer holds the edit link, the last-updated stamp, and the
- * previous/next links. This adds the site's own row underneath: where the
- * project lives and which release this page describes. Text here is proper
- * nouns and a version, so it needs no translation.
+ * previous/next links. This replacement keeps those and adds the site's own
+ * footer below, laid out like the reference's: columns of small muted links
+ * over a rule, with a copyright line underneath.
+ *
+ * Its styles are local rather than inherited. Overriding the component means
+ * Starlight's own scoped `footer` rules no longer apply, which is what put the
+ * edit row and this block on one line.
  */
 const repository = 'https://github.com/dorianverlaine/pingclair';
+const release = 'v0.2.0-rc.3';
+const year = new Date().getFullYear();
+
+const lang = Astro.locals.starlightRoute?.lang ?? 'en';
+const locale = Astro.locals.starlightRoute?.locale;
+const prefix = locale && locale !== 'root' ? `/${locale}` : '';
+
+const strings: Record<string, { tagline: string; project: string; docs: string; legal: string }> = {
+	en: {
+		tagline: 'A reverse proxy and static file server written in Rust.',
+		project: 'Project',
+		docs: 'Documentation',
+		legal: 'is licensed under Apache-2.0.',
+	},
+	'zh-TW': {
+		tagline: '以 Rust 撰寫的反向代理與靜態檔案伺服器。',
+		project: '專案',
+		docs: '文件',
+		legal: '以 Apache-2.0 授權。',
+	},
+	'zh-CN': {
+		tagline: '用 Rust 编写的反向代理与静态文件服务器。',
+		project: '项目',
+		docs: '文档',
+		legal: '以 Apache-2.0 许可发布。',
+	},
+	ja: {
+		tagline: 'Rust で書かれたリバースプロキシ兼静的ファイルサーバー。',
+		project: 'プロジェクト',
+		docs: 'ドキュメント',
+		legal: 'は Apache-2.0 で提供されています。',
+	},
+	ko: {
+		tagline: 'Rust로 작성된 리버스 프록시 겸 정적 파일 서버입니다.',
+		project: '프로젝트',
+		docs: '문서',
+		legal: '는 Apache-2.0 라이선스로 배포됩니다.',
+	},
+};
+
+const t = strings[lang] ?? strings.en;
+
+const columns = [
+	{
+		heading: t.project,
+		links: [
+			{ label: 'GitHub', href: repository },
+			{ label: 'Releases', href: `${repository}/releases` },
+			{ label: 'Changelog', href: `${repository}/blob/main/CHANGELOG.md` },
+			{ label: 'Issues', href: `${repository}/issues` },
+		],
+	},
+	{
+		heading: t.docs,
+		links: [
+			{ label: 'Install', href: `${prefix}/start/install/` },
+			{ label: 'Quickstart', href: `${prefix}/start/quickstart/` },
+			{ label: 'Reference', href: `${prefix}/reference/directives/` },
+			{ label: 'Benchmarks', href: `${prefix}/project/benchmarks/` },
+		],
+	},
+];
 ---
 
-<footer class="sl-flex">
-	<div class="meta sl-flex">
+<footer class="pc-footer-root">
+	<div class="meta">
 		<EditLink />
 		<LastUpdated />
 	</div>
+
 	<Pagination />
+
 	<div class="pc-footer">
-		<p class="pc-footer__meta">
-			<a href={`${repository}/releases/tag/v0.2.0-rc.3`}>Pingclair v0.2.0-rc.3</a>
-			<span aria-hidden="true">·</span>
-			<a href={`${repository}/blob/main/LICENSE`}>Apache-2.0</a>
-		</p>
-		<nav class="pc-footer__links" aria-label="Project links">
-			<a href={repository}>GitHub</a>
-			<a href={`${repository}/releases`}>Releases</a>
-			<a href={`${repository}/blob/main/CHANGELOG.md`}>Changelog</a>
-			<a href={`${repository}/issues`}>Issues</a>
-		</nav>
+		<div class="pc-footer__columns">
+			<div class="pc-footer__brand">
+				<img class="pc-footer__logo" src={logo.src} alt="Pingclair" width="132" height="38" />
+				<p class="pc-footer__tagline">{t.tagline}</p>
+				<p class="pc-footer__release">
+					<a href={`${repository}/releases/tag/${release}`}>{release}</a>
+				</p>
+			</div>
+
+			{
+				columns.map((column) => (
+					<nav class="pc-footer__column" aria-label={column.heading}>
+						<h2 class="pc-footer__heading">{column.heading}</h2>
+						<ul>
+							{column.links.map((link) => (
+								<li>
+									<a href={link.href}>{link.label}</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+				))
+			}
+		</div>
+
+		<div class="pc-footer__legal">
+			<p>© {year} Dorian Verlaine</p>
+			<p>
+				<a href={repository}>Pingclair</a> {t.legal}
+			</p>
+		</div>
 	</div>
 </footer>
 
 <style>
-	.pc-footer {
+	.pc-footer-root {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	/* The edit link and last-updated stamp, as Starlight lays them out. */
+	.meta {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
 		justify-content: space-between;
-		gap: 0.75rem 2rem;
-		margin-top: 2rem;
-		padding-top: 1.25rem;
+		gap: 0.75rem 3rem;
+		margin-top: 3rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+
+	.pc-footer {
+		margin-top: 2.5rem;
+		padding-top: 2.5rem;
 		border-top: 1px solid var(--sl-color-hairline);
 		font-size: var(--sl-text-sm);
 		color: var(--sl-color-gray-3);
 	}
 
-	.pc-footer__meta {
-		margin: 0;
-		display: flex;
-		gap: 0.5rem;
+	.pc-footer__columns {
+		display: grid;
+		grid-template-columns: minmax(14rem, 1fr) repeat(2, minmax(9rem, 12rem));
+		gap: 2rem;
 	}
 
-	.pc-footer__links {
+	@media (max-width: 45rem) {
+		.pc-footer__columns {
+			grid-template-columns: 1fr;
+			gap: 1.75rem;
+		}
+	}
+
+	.pc-footer__logo {
+		display: block;
+		inline-size: 7.5rem;
+		block-size: auto;
+		margin-bottom: 0.75rem;
+	}
+
+	.pc-footer__tagline {
+		max-inline-size: 22rem;
+		margin: 0 0 0.5rem;
+	}
+
+	.pc-footer__release {
+		margin: 0;
+		font-weight: 600;
+	}
+
+	.pc-footer__heading {
+		margin: 0 0 0.75rem;
+		font-family: var(--sl-font);
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+		letter-spacing: 0;
+		color: var(--sl-color-white);
+	}
+
+	.pc-footer__column ul {
+		display: grid;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.pc-footer__legal {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem 1.25rem;
+		justify-content: space-between;
+		gap: 0.5rem 2rem;
+		margin-top: 2.5rem;
+		padding-top: 1.25rem;
+		border-top: 1px solid var(--sl-color-hairline);
+	}
+
+	.pc-footer__legal p {
+		margin: 0;
 	}
 
 	.pc-footer a {
