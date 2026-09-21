@@ -15,14 +15,19 @@ export const prerender = true;
  */
 export async function getStaticPaths() {
 	const docs = await getCollection('docs');
-	return docs.flatMap((entry) => {
-		const path = entry.filePath?.replace(/^.*?content\/docs\//, '').replace(/\.(md|mdx)$/, '');
-		if (!path) return [];
-		const slugs = new Set([path]);
-		// `/zh-TW/index.md` and `/zh-TW.md` both resolve to the locale home page.
-		if (path.endsWith('/index')) slugs.add(path.slice(0, -'/index'.length));
-		return [...slugs].map((slug) => ({ params: { slug }, props: { id: entry.id } }));
-	});
+	/*
+	 * One slug per entry, the case-preserved path. An extra alias without the
+	 * trailing `index` (so that `/zh-TW.md` would work) was tried and reverted:
+	 * it registered a route at `/zh-TW`, which Astro then refused to render as a
+	 * page, costing every locale's home page.
+	 */
+	return docs
+		.map((entry) => ({
+			slug: entry.filePath?.replace(/^.*?content\/docs\//, '').replace(/\.(md|mdx)$/, '') ?? '',
+			id: entry.id,
+		}))
+		.filter(({ slug }) => slug !== '')
+		.map(({ slug, id }) => ({ params: { slug }, props: { id } }));
 }
 
 export const GET: APIRoute = async ({ props }) => {

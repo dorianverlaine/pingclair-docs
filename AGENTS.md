@@ -43,6 +43,15 @@ for f in $(grep -o '_astro/[A-Za-z0-9._-]*\.css' dist/index.html | sort -u); do
 done
 ```
 
+### Never drop the custom `generateId`
+
+`src/content.config.ts` passes a case-preserving `generateId` to `docsLoader`.
+Astro's default slugifies entry ids, which lowercases the locale directory, and
+Starlight matches locales by that directory name. Without it, `zh-TW/` and
+`zh-CN/` stop matching their locale keys: the Chinese pages are replaced by
+English fallbacks that carry an "untranslated" notice, while `ja` and `ko` keep
+working because their keys are already lowercase.
+
 ## Content rules
 
 - **Register:** American English, formal, third person for description and

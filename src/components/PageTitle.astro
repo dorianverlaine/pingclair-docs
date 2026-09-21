@@ -72,11 +72,16 @@ const t = labels[lang] ?? labels.en;
 // not part of the package's public exports, so the value is repeated here.
 const PAGE_TITLE_ID = '_top';
 
-// The Markdown endpoint mirrors the route: `/start/quickstart/` is
-// `/start/quickstart.md`, and a directory page such as `/zh-TW/` is
-// `/zh-TW.md`. Entry ids cannot be used here because Astro lowercases them.
-const withoutTrailingSlash = Astro.url.pathname.replace(/\/+$/, '');
-const markdownUrl = `${withoutTrailingSlash === '' ? '' : withoutTrailingSlash}.md`;
+/*
+ * The Markdown endpoint is keyed by the content path, which is also the only
+ * case-accurate source: Astro lowercases entry ids, so `zh-TW/…` would become
+ * `zh-tw/…`. A directory page keeps its `index` (`/zh-TW/index.md`), while a
+ * named page drops it (`/start/quickstart.md`).
+ */
+const entryPath = (Astro.locals.starlightRoute?.entry.filePath ?? '')
+	.replace(/^.*?content\/docs\//, '')
+	.replace(/\.(md|mdx)$/, '');
+const markdownUrl = `/${entryPath || 'index'}.md`;
 ---
 
 <div class="pc-page-header">
