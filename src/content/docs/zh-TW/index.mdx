@@ -1,0 +1,54 @@
+---
+title: Pingclair
+description: 以 Rust 撰寫的反向代理與靜態檔案伺服器，支援 HTTP/1.1、HTTP/2、HTTP/3、自動 HTTPS，以及相容於 Caddyfile 的設定語言。
+template: splash
+hero:
+  tagline: 以 Rust 撰寫的反向代理與靜態檔案伺服器，支援 HTTP/1.1、HTTP/2、HTTP/3、自動 HTTPS，以及相容於 Caddyfile 的設定語言。
+  actions:
+    - text: 安裝 Pingclair
+      link: /zh-TW/start/install/
+      icon: right-arrow
+    - text: 快速開始
+      link: /zh-TW/start/quickstart/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Pingclair 以單一設定同時提供 HTTP/1.1、HTTP/2 與 HTTP/3，透過 ACME 取得並續用公開憑證，並以壓縮與 range 請求供應靜態檔案。其設定語言 Pingclairfile 遵循 Caddyfile 的慣例。
+
+```caddyfile
+example.com {
+    encode zstd gzip
+    reverse_proxy 10.0.0.10:8080 10.0.0.11:8080
+}
+```
+
+## 從這裡開始
+
+<CardGrid>
+	<Card title="🚀 安裝">
+		發行版二進位檔、原始碼編譯，或使用 Docker。
+		[安裝說明](/zh-TW/start/install/)
+	</Card>
+	<Card title="🏃 快速開始">
+		寫出第一份 Pingclairfile，驗證設定，然後開始服務流量。
+		[快速開始](/zh-TW/start/quickstart/)
+	</Card>
+	<Card title="🧠 核心概念">
+		設定檔如何變成執行期狀態，以及請求如何被處理。
+		[設定模型](/zh-TW/concepts/configuration/)
+	</Card>
+	<Card title="📖 參考手冊">
+		設定語言本身，以及它接受的指令。
+		[指令參考](/zh-TW/reference/directives/)
+	</Card>
+</CardGrid>
+
+## 📌 發行狀態
+
+目前版本是 **v0.2.0-rc.3**，屬於 release candidate。本站各頁描述的就是這個版本。`v0.1.x` 系列已不再維護，也不會收到安全修正。[專案狀態](/zh-TW/project/status/) 列出了支援的項目、會拒絕的設定，以及標記版本時已知的缺陷。
+
+## 📊 效能
+
+Pingclair 與 nginx、Caddy 在同一台主機上量測，每個候選者都限制在兩顆 CPU，並使用完全相同的負載。實測數字、量測條件，以及 Pingclair 落後的列，都公布在 [效能量測](/zh-TW/project/benchmarks/)。

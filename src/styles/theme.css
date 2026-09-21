@@ -1,0 +1,223 @@
+/*
+ * Typography, colour, and layout.
+ *
+ * The values follow the documentation design the project takes as its
+ * reference: Inter (variable, with its cv02/cv03/cv04/cv11 alternates) for
+ * text, a typewriter-adjacent monospace for code, a neutral grey ramp rather
+ * than a blue-grey one, near-black text and links instead of a coloured accent,
+ * hairline borders, and a page container that stops growing at 92rem.
+ *
+ * Latin glyphs come from Inter; Chinese glyphs fall through to the platform's
+ * CJK font, because shipping a CJK webfont costs megabytes for text the reader
+ * already has.
+ */
+@import '@fontsource-variable/inter';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+
+/* Dark mode is Starlight's default theme. */
+:root {
+	--sl-font:
+		'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif,
+		'PingFang TC', 'PingFang SC', 'Hiragino Sans', 'Noto Sans TC', 'Noto Sans SC',
+		'Noto Sans CJK TC', 'Noto Sans CJK SC', 'Microsoft JhengHei', 'Microsoft YaHei',
+		'Apple Color Emoji', 'Segoe UI Emoji';
+	--sl-font-mono:
+		'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+		'Courier New', 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', monospace;
+
+	/* Type scale: 16px body, 36px page title, tight headings. */
+	--sl-text-xs: 0.8125rem; /* 13px */
+	--sl-text-sm: 0.875rem; /* 14px */
+	--sl-text-base: 1rem; /* 16px */
+	--sl-text-lg: 1.0625rem; /* 17px */
+	--sl-text-xl: 1.1875rem; /* 19px */
+	--sl-text-2xl: 1.375rem; /* 22px */
+	--sl-text-3xl: 1.625rem; /* 26px */
+	--sl-text-4xl: 2rem; /* 32px */
+	--sl-text-5xl: 2.25rem; /* 36px */
+	--sl-line-height: 1.75;
+	--sl-line-height-headings: 1.2;
+
+	/* Layout: 18rem sidebar, 48rem measure, 92rem container. */
+	--sl-sidebar-width: 18rem;
+	--sl-content-width: 48rem;
+	--sl-nav-height: 4rem;
+	--sl-content-gap-y: 1.5rem;
+
+	/* Colours (dark) */
+	--sl-color-white: #ffffff;
+	--sl-color-gray-1: #ededed;
+	--sl-color-gray-2: #d4d4d4;
+	--sl-color-gray-3: #a3a3a3;
+	--sl-color-gray-4: #737373;
+	--sl-color-gray-5: #333333;
+	--sl-color-gray-6: #262626;
+	--sl-color-black: #171717;
+
+	--sl-color-bg: #171717;
+	--sl-color-bg-nav: #171717;
+	--sl-color-bg-sidebar: #171717;
+	--sl-color-bg-inline-code: #262626;
+	--sl-color-hairline-light: #333333;
+	--sl-color-hairline: #333333;
+	--sl-color-hairline-shade: #171717;
+
+	--sl-color-accent-low: #333333;
+	--sl-color-accent: #ffffff;
+	--sl-color-accent-high: #ffffff;
+	--sl-color-text-accent: #ffffff;
+	--sl-color-text: #d4d4d4;
+	--sl-color-text-invert: #171717;
+
+	--sl-color-backdrop-overlay: rgb(23 23 23 / 0.66);
+}
+
+:root[data-theme='light'] {
+	/* Colours (light) */
+	--sl-color-white: #171717;
+	--sl-color-gray-1: #171717;
+	--sl-color-gray-2: #404040;
+	--sl-color-gray-3: #525252;
+	--sl-color-gray-4: #737373;
+	--sl-color-gray-5: #e5e5e5;
+	--sl-color-gray-6: #f5f5f5;
+	--sl-color-gray-7: #fafafa;
+	--sl-color-black: #ffffff;
+
+	--sl-color-bg: #ffffff;
+	--sl-color-bg-nav: #ffffff;
+	--sl-color-bg-sidebar: #ffffff;
+	--sl-color-bg-inline-code: #f5f5f5;
+	--sl-color-hairline-light: #ebebeb;
+	--sl-color-hairline: #ebebeb;
+	--sl-color-hairline-shade: #ebebeb;
+
+	--sl-color-accent-low: #f5f5f5;
+	--sl-color-accent: #171717;
+	--sl-color-accent-high: #171717;
+	--sl-color-text-accent: #171717;
+	--sl-color-text: #404040;
+	--sl-color-text-invert: #ffffff;
+
+	--sl-color-backdrop-overlay: rgb(23 23 23 / 0.4);
+}
+
+body {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Headings: semibold and tightly tracked, never bold-black. */
+h1,
+h2,
+h3,
+h4,
+h5 {
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+
+.content-panel h1 {
+	letter-spacing: -0.025em;
+}
+
+/* Content links are underlined, not coloured, so they survive greyscale. */
+.sl-markdown-content a:not(:where(.not-content *)) {
+	color: var(--sl-color-text-accent);
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.2em;
+	text-decoration-color: color-mix(in oklab, currentColor 35%, transparent);
+}
+
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+	text-decoration-color: currentColor;
+}
+
+/* Code: hairline frame, moderate radius, quieter inline chip. */
+.sl-markdown-content code:not(:where(.not-content *)):not(pre code) {
+	font-family: var(--sl-font-mono);
+	font-size: 0.875em;
+	border-radius: 0.375rem;
+	padding: 0.125rem 0.3125rem;
+	border: 1px solid var(--sl-color-hairline);
+	background-color: var(--sl-color-bg-inline-code);
+}
+
+.expressive-code .frame {
+	border-radius: 0.75rem;
+	border: 1px solid var(--sl-color-hairline);
+	box-shadow: none;
+}
+
+/* Sidebar: 14px, roomier rows, muted labels until hovered or current. */
+.sidebar-content {
+	font-size: var(--sl-text-sm);
+}
+
+.sidebar-content a {
+	padding-block: 0.3125rem;
+	line-height: 1.5;
+}
+
+.sidebar-content .group-label > span,
+.sidebar-content summary {
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+/* The current page gets a quiet surface. Starlight fills it with the accent
+   colour, which turns into a solid block once the accent is near-black. */
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover,
+.sidebar-content a[aria-current='page']:focus {
+	background-color: var(--sl-color-gray-6);
+	color: var(--sl-color-white);
+	font-weight: 500;
+}
+
+/* Splash page: a wide tagline, calmer spacing, restrained buttons. */
+.hero {
+	padding-block: 4rem 2.5rem;
+}
+
+.hero .tagline {
+	font-size: var(--sl-text-lg);
+	line-height: 1.7;
+	color: var(--sl-color-text);
+	max-width: 54ch;
+}
+
+.hero .actions a {
+	border-radius: 0.625rem;
+	font-weight: 500;
+	padding: 0.625rem 1.125rem;
+}
+
+.hero + .sl-markdown-content {
+	margin-top: 0;
+}
+
+/* The container follows the reference design and stops growing at 92rem. */
+@media (min-width: 96rem) {
+	.page {
+		max-width: 92rem;
+		margin-inline: auto;
+		border-inline: 1px solid var(--sl-color-hairline);
+	}
+}
+
+/* Chinese text needs slightly more leading than Latin at the same size. */
+:root:is([lang='zh-TW'], [lang='zh-CN']) .sl-markdown-content {
+	line-height: 1.85;
+	letter-spacing: 0.01em;
+}
+
+:root:is([lang='zh-TW'], [lang='zh-CN']) h1,
+:root:is([lang='zh-TW'], [lang='zh-CN']) h2,
+:root:is([lang='zh-TW'], [lang='zh-CN']) h3 {
+	letter-spacing: 0;
+}

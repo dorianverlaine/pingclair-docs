@@ -46,6 +46,21 @@ pnpm preview     # serve dist/
 - **Versioning:** pages describe the latest published release and say so. When
   a page documents something that arrived recently, name the version inline.
 
+## Locales
+
+- English is the root locale. Chinese pages live under `src/content/docs/zh-TW/`
+  (Traditional) and `src/content/docs/zh-CN/` (Simplified); both are Starlight
+  locale codes, so their UI strings are built in.
+- Keep the three trees structurally identical: same page paths, same headings,
+  same anchors. Directive entry headings stay in English in every locale
+  (`## reverse_proxy`) because other pages link to those anchors.
+- Chinese pages use mainland terminology in `zh-CN` (文件, 配置, 服务器, 端口,
+  证书) and Taiwan terminology in `zh-TW` (檔案, 設定, 伺服器, 連接埠, 憑證).
+  A character-level conversion is not a translation.
+- Never rename the locale directories to lowercase: `zh-tw/` breaks Starlight's
+  locale matching, which also breaks `<html lang>` and the CJK typography rules
+  in `src/styles/theme.css`.
+
 ## Never publish
 
 Planning documents, internal audits, host inventories, credentials, IP
