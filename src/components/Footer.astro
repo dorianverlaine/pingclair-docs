@@ -114,7 +114,10 @@ const columns = [
 		</div>
 
 		<div class="pc-footer__legal">
-			<p>© {year} Dorian Verlaine</p>
+			<p class="pc-footer__copy">
+				<span>© {year} Dorian Verlaine</span>
+				<a href="mailto:me@dorian.page">me@dorian.page</a>
+			</p>
 			<p>
 				<a href={repository}>Pingclair</a> {t.legal}
 			</p>
@@ -150,14 +153,22 @@ const columns = [
 
 	.pc-footer__columns {
 		display: grid;
-		grid-template-columns: minmax(14rem, 1fr) repeat(2, minmax(9rem, 12rem));
+		/* Wraps by itself: three columns when there is room, two, then one. */
+		grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
 		gap: 2rem;
 	}
 
-	@media (max-width: 45rem) {
+	.pc-footer__brand {
+		grid-column: 1 / -1;
+	}
+
+	@media (min-width: 45rem) {
+		.pc-footer__brand {
+			grid-column: span 1;
+		}
+
 		.pc-footer__columns {
-			grid-template-columns: 1fr;
-			gap: 1.75rem;
+			grid-template-columns: minmax(14rem, 1fr) repeat(2, minmax(9rem, 12rem));
 		}
 	}
 
@@ -207,6 +218,13 @@ const columns = [
 
 	.pc-footer__legal p {
 		margin: 0;
+		min-inline-size: 0;
+	}
+
+	/* The address sits under the name rather than beside it. */
+	.pc-footer__copy {
+		display: grid;
+		gap: 0.25rem;
 	}
 
 	.pc-footer a {
