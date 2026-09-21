@@ -17,6 +17,7 @@
  * already has.
  */
 @import '@fontsource-variable/playfair-display';
+@import '@fontsource-variable/noto-serif-kr';
 @import '@fontsource/pt-serif/400.css';
 @import '@fontsource/pt-serif/700.css';
 @import '@fontsource-variable/inter';
@@ -38,8 +39,15 @@
 		'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', Georgia,
 		'Times New Roman', Times, serif;
 
-	/* Playfair has no Hangul, and PT Serif is the face that reads correctly there. */
-	--pc-font-serif-ko: 'PT Serif', 'Nanum Myeongjo', 'Noto Serif KR', 'Apple SD Gothic Neo', serif;
+	/*
+	 * Korean headings need a webfont: PT Serif has no Hangul, so a Korean page
+	 * fell through to the platform's Korean *sans* (Apple SD Gothic Neo) and the
+	 * serif disappeared. Playfair still sets any Latin in the heading, and the
+	 * browser resolves Hangul per glyph from Noto Serif KR.
+	 */
+	--pc-font-serif-ko:
+		'Playfair Display Variable', 'Noto Serif KR Variable', 'PT Serif', 'Nanum Myeongjo',
+		'Apple SD Gothic Neo', serif;
 
 	/* Type scale: 16px body, 30-36px page title. */
 	--sl-text-xs: 0.8125rem; /* 13px */
