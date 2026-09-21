@@ -26,18 +26,25 @@
 /* Dark mode is Starlight's default theme. */
 :root {
 	--sl-font:
-		'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif,
-		'PingFang TC', 'PingFang SC', 'Hiragino Sans', 'Noto Sans TC', 'Noto Sans SC',
-		'Noto Sans CJK TC', 'Noto Sans CJK SC', 'Microsoft JhengHei', 'Microsoft YaHei',
-		'Apple Color Emoji', 'Segoe UI Emoji';
+		/*
+		 * The colour emoji fonts sit directly after the Latin face and before the
+		 * CJK ones on purpose. A CJK font also carries monochrome symbol glyphs
+		 * for codepoints such as ✍ and ⚙, so with the emoji fonts at the end of
+		 * the stack those marks were drawn as flat text glyphs instead of emoji —
+		 * which is what looked low-resolution.
+		 */
+		'Inter Variable', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', -apple-system,
+		BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif, 'PingFang TC', 'PingFang SC',
+		'Hiragino Sans', 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans CJK TC', 'Noto Sans CJK SC',
+		'Microsoft JhengHei', 'Microsoft YaHei';
 	--sl-font-mono:
 		'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 		'Liberation Mono', 'Courier New', 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei',
 		monospace;
 	--pc-font-serif:
-		'Literata Variable', 'Iowan Old Style', 'Songti TC', 'Songti SC', 'LiSong Pro',
-		'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', Georgia,
-		'Times New Roman', Times, serif;
+		'Literata Variable', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Iowan Old Style',
+		'Songti TC', 'Songti SC', 'LiSong Pro', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN',
+		'Yu Mincho', 'Noto Serif JP', Georgia, 'Times New Roman', Times, serif;
 
 	/*
 	 * Korean headings need a webfont: PT Serif has no Hangul, so a Korean page
@@ -46,8 +53,8 @@
 	 * browser resolves Hangul per glyph from Noto Serif KR.
 	 */
 	--pc-font-serif-ko:
-		'Literata Variable', 'Noto Serif KR Variable', 'PT Serif', 'Nanum Myeongjo',
-		'Apple SD Gothic Neo', serif;
+		'Literata Variable', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji',
+		'Noto Serif KR Variable', 'PT Serif', 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
 
 	/* Type scale: 16px body, 30-36px page title. */
 	--sl-text-xs: 0.8125rem; /* 13px */
