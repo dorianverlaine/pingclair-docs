@@ -98,7 +98,10 @@ const locales = Object.entries(config.locales ?? {}).map(([code, locale]) => ({
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.375rem 0.625rem;
+		/* Matches the 32px of the neighbouring controls so the row has one
+		   baseline instead of three. */
+		block-size: 2rem;
+		padding: 0 0.625rem;
 		border: 0;
 		border-radius: 0.75rem;
 		background: none;
@@ -106,8 +109,12 @@ const locales = Object.entries(config.locales ?? {}).map(([code, locale]) => ({
 		font-family: var(--sl-font);
 		font-size: var(--sl-text-sm);
 		font-weight: 500;
-		line-height: 1.4;
+		line-height: 1;
 		cursor: pointer;
+	}
+
+	.pc-lang__trigger svg {
+		flex-shrink: 0;
 	}
 
 	.pc-lang__trigger:hover {

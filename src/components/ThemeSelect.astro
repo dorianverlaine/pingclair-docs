@@ -117,12 +117,27 @@ const t = labels[lang] ?? labels.en;
 	.pc-theme__trigger {
 		display: grid;
 		place-items: center;
-		padding: 0.5rem;
+		/* Fixed to the same 32px box as the other header controls, with no line
+		   box of its own: an inline icon span made this 42px tall and pushed the
+		   glyph above the row's centre. */
+		inline-size: 2rem;
+		block-size: 2rem;
+		padding: 0;
+		line-height: 0;
 		border: 0;
 		border-radius: 0.5rem;
 		background: none;
 		color: var(--sl-color-gray-3);
 		cursor: pointer;
+	}
+
+	/*
+	 * `:not([hidden])` matters: a bare `display` here would override the UA's
+	 * `[hidden] { display: none }`, which stacked all three icons in the button.
+	 */
+	.pc-theme__trigger span:not([hidden]) {
+		display: grid;
+		place-items: center;
 	}
 
 	.pc-theme__trigger:hover {
