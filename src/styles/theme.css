@@ -2,16 +2,22 @@
  * Typography, colour, and layout.
  *
  * The values follow the documentation design the project takes as its
- * reference: Inter (variable, with its cv02/cv03/cv04/cv11 alternates) for
- * text, a typewriter-adjacent monospace for code, a neutral grey ramp rather
- * than a blue-grey one, near-black text and links instead of a coloured accent,
+ * reference, measured from that site rather than guessed: a warm humanist
+ * grotesk for body text, a serif display face for h1 and h2 at regular weight,
+ * a typewriter-adjacent monospace for code, a neutral grey ramp rather than a
+ * blue-grey one, near-black text and links instead of a coloured accent,
  * hairline borders, and a page container that stops growing at 92rem.
+ *
+ * The reference's own faces (a proprietary sans and serif) are not published,
+ * so these are stand-ins chosen for character and for open licensing:
+ * Hanken Grotesk replaces the sans, Newsreader the serif display face.
  *
  * Latin glyphs come from Inter; Chinese glyphs fall through to the platform's
  * CJK font, because shipping a CJK webfont costs megabytes for text the reader
  * already has.
  */
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/hanken-grotesk';
+@import '@fontsource-variable/newsreader';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/ibm-plex-mono/600.css';
@@ -19,15 +25,20 @@
 /* Dark mode is Starlight's default theme. */
 :root {
 	--sl-font:
-		'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif,
+		'Hanken Grotesk Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
+		sans-serif,
 		'PingFang TC', 'PingFang SC', 'Hiragino Sans', 'Noto Sans TC', 'Noto Sans SC',
 		'Noto Sans CJK TC', 'Noto Sans CJK SC', 'Microsoft JhengHei', 'Microsoft YaHei',
 		'Apple Color Emoji', 'Segoe UI Emoji';
 	--sl-font-mono:
 		'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
 		'Courier New', 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', monospace;
+	--pc-font-serif:
+		'Newsreader Variable', Georgia, 'Times New Roman', Times, serif, 'Songti TC', 'Songti SC',
+		'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP',
+		'Nanum Myeongjo', 'Apple SD Gothic Neo';
 
-	/* Type scale: 16px body, 36px page title, tight headings. */
+	/* Type scale: 16px body, 30-36px page title. */
 	--sl-text-xs: 0.8125rem; /* 13px */
 	--sl-text-sm: 0.875rem; /* 14px */
 	--sl-text-base: 1rem; /* 16px */
@@ -35,10 +46,10 @@
 	--sl-text-xl: 1.1875rem; /* 19px */
 	--sl-text-2xl: 1.375rem; /* 22px */
 	--sl-text-3xl: 1.625rem; /* 26px */
-	--sl-text-4xl: 2rem; /* 32px */
+	--sl-text-4xl: 1.875rem; /* 30px */
 	--sl-text-5xl: 2.25rem; /* 36px */
-	--sl-line-height: 1.75;
-	--sl-line-height-headings: 1.2;
+	--sl-line-height: 1.65;
+	--sl-line-height-headings: 1.15;
 
 	/* Layout: 18rem sidebar, 48rem measure, 92rem container. */
 	--sl-sidebar-width: 18rem;
@@ -46,60 +57,62 @@
 	--sl-nav-height: 4rem;
 	--sl-content-gap-y: 1.5rem;
 
-	/* Colours (dark) */
+	/* Colours (dark). The ramp is the reference's: 50 #f3f3f3 … 950 #0a0a0a. */
 	--sl-color-white: #ffffff;
-	--sl-color-gray-1: #ededed;
-	--sl-color-gray-2: #d4d4d4;
-	--sl-color-gray-3: #a3a3a3;
-	--sl-color-gray-4: #737373;
-	--sl-color-gray-5: #333333;
-	--sl-color-gray-6: #262626;
-	--sl-color-black: #171717;
+	--sl-color-gray-1: #f3f3f3;
+	--sl-color-gray-2: #cecece;
+	--sl-color-gray-3: #9e9e9e;
+	--sl-color-gray-4: #707070;
+	--sl-color-gray-5: #252525;
+	--sl-color-gray-6: #171717;
+	--sl-color-black: #09090b;
 
-	--sl-color-bg: #171717;
-	--sl-color-bg-nav: #171717;
-	--sl-color-bg-sidebar: #171717;
-	--sl-color-bg-inline-code: #262626;
-	--sl-color-hairline-light: #333333;
-	--sl-color-hairline: #333333;
-	--sl-color-hairline-shade: #171717;
+	--sl-color-bg: #09090b;
+	--sl-color-bg-nav: #09090b;
+	--sl-color-bg-sidebar: #09090b;
+	--sl-color-bg-inline-code: #171717;
+	--sl-color-hairline-light: #252525;
+	--sl-color-hairline: #252525;
+	--sl-color-hairline-shade: #09090b;
 
-	--sl-color-accent-low: #333333;
+	--sl-color-accent-low: #252525;
 	--sl-color-accent: #ffffff;
 	--sl-color-accent-high: #ffffff;
 	--sl-color-text-accent: #ffffff;
-	--sl-color-text: #d4d4d4;
-	--sl-color-text-invert: #171717;
+	--sl-color-text: #cecece;
+	--sl-color-text-invert: #09090b;
+	--pc-color-prose: #cecece;
 
-	--sl-color-backdrop-overlay: rgb(23 23 23 / 0.66);
+	--sl-color-backdrop-overlay: rgb(9 9 11 / 0.66);
 }
 
 :root[data-theme='light'] {
-	/* Colours (light) */
+	/* Colours (light). The page is a warm off-white, not white. */
 	--sl-color-white: #171717;
 	--sl-color-gray-1: #171717;
-	--sl-color-gray-2: #404040;
-	--sl-color-gray-3: #525252;
-	--sl-color-gray-4: #737373;
-	--sl-color-gray-5: #e5e5e5;
-	--sl-color-gray-6: #f5f5f5;
-	--sl-color-gray-7: #fafafa;
-	--sl-color-black: #ffffff;
+	--sl-color-gray-2: #3e3e3e;
+	--sl-color-gray-3: #707070;
+	--sl-color-gray-4: #9e9e9e;
+	--sl-color-gray-5: #dedede;
+	--sl-color-gray-6: #f3f3f3;
+	--sl-color-gray-7: #f8f8f3;
+	--sl-color-black: #fdfdf7;
 
-	--sl-color-bg: #ffffff;
-	--sl-color-bg-nav: #ffffff;
-	--sl-color-bg-sidebar: #ffffff;
-	--sl-color-bg-inline-code: #f5f5f5;
-	--sl-color-hairline-light: #ebebeb;
-	--sl-color-hairline: #ebebeb;
-	--sl-color-hairline-shade: #ebebeb;
+	--sl-color-bg: #fdfdf7;
+	--sl-color-bg-nav: #fdfdf7;
+	--sl-color-bg-sidebar: #fdfdf7;
+	--sl-color-bg-inline-code: #f3f3f3;
+	--sl-color-hairline-light: #eeeeee;
+	--sl-color-hairline: #eeeeee;
+	--sl-color-hairline-shade: #eeeeee;
 
-	--sl-color-accent-low: #f5f5f5;
+	--sl-color-accent-low: #f3f3f3;
 	--sl-color-accent: #171717;
 	--sl-color-accent-high: #171717;
 	--sl-color-text-accent: #171717;
-	--sl-color-text: #404040;
+	--sl-color-text: #3e3e3e;
 	--sl-color-text-invert: #ffffff;
+	--pc-color-prose: #3e3e3e;
 
 	--sl-color-backdrop-overlay: rgb(23 23 23 / 0.4);
 }
@@ -107,21 +120,27 @@
 body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-	font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Headings: semibold and tightly tracked, never bold-black. */
+/* The reference sets its page titles in a serif at regular weight. h1 and h2
+   inherit that; smaller headings stay in the body face for scanability. */
 h1,
-h2,
-h3,
-h4,
-h5 {
-	font-weight: 600;
-	letter-spacing: -0.02em;
+h2 {
+	font-family: var(--pc-font-serif);
+	font-weight: 400;
+	letter-spacing: 0;
 }
 
-.content-panel h1 {
-	letter-spacing: -0.025em;
+.content-panel h1,
+.content-panel h2 {
+	font-optical-sizing: auto;
+}
+
+.sl-markdown-content h3,
+.sl-markdown-content h4,
+.sl-markdown-content h5 {
+	font-weight: 600;
+	letter-spacing: -0.01em;
 }
 
 /* Content links are underlined, not coloured, so they survive greyscale. */
@@ -153,9 +172,9 @@ h5 {
 	box-shadow: none;
 }
 
-/* Sidebar: 14px, roomier rows, muted labels until hovered or current. */
+/* Sidebar: roomier rows, muted labels until hovered or current. */
 .sidebar-content {
-	font-size: var(--sl-text-sm);
+	font-size: 0.9375rem; /* 15px */
 }
 
 .sidebar-content a {
@@ -186,9 +205,16 @@ h5 {
 
 .hero .tagline {
 	font-size: var(--sl-text-lg);
-	line-height: 1.7;
+	line-height: 1.65;
 	color: var(--sl-color-text);
 	max-width: 54ch;
+}
+
+.hero h1,
+.hero .title {
+	font-family: var(--pc-font-serif);
+	font-weight: 400;
+	letter-spacing: -0.01em;
 }
 
 .hero .actions a {
@@ -210,14 +236,7 @@ h5 {
 	}
 }
 
-/* Chinese text needs slightly more leading than Latin at the same size. */
-:root:is([lang='zh-TW'], [lang='zh-CN']) .sl-markdown-content {
-	line-height: 1.85;
-	letter-spacing: 0.01em;
-}
-
-:root:is([lang='zh-TW'], [lang='zh-CN']) h1,
-:root:is([lang='zh-TW'], [lang='zh-CN']) h2,
-:root:is([lang='zh-TW'], [lang='zh-CN']) h3 {
-	letter-spacing: 0;
+/* Prose uses the reference's body colour rather than the UI text colour. */
+.sl-markdown-content {
+	color: var(--pc-color-prose);
 }

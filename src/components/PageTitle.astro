@@ -1,0 +1,169 @@
+---
+const lang = Astro.locals.starlightRoute?.lang ?? 'en';
+
+const labels: Record<string, { copy: string; copied: string; failed: string }> = {
+	en: { copy: 'Copy page', copied: 'Copied', failed: 'Copy failed' },
+	'zh-TW': { copy: '複製頁面', copied: '已複製', failed: '複製失敗' },
+	'zh-CN': { copy: '复制页面', copied: '已复制', failed: '复制失败' },
+	ja: { copy: 'ページをコピー', copied: 'コピーしました', failed: 'コピーできません' },
+	ko: { copy: '페이지 복사', copied: '복사됨', failed: '복사 실패' },
+};
+
+const t = labels[lang] ?? labels.en;
+const markdownUrl = `${Astro.url.pathname.replace(/\/$/, '')}.md`;
+
+// Starlight anchors the page title with this id (its `PAGE_TITLE_ID`), and the
+// skip link and "back to top" scroll target both point at it. The constant is
+// not part of the package's public exports, so the value is repeated here.
+const PAGE_TITLE_ID = '_top';
+---
+
+<div class="pc-page-header">
+	<h1 id={PAGE_TITLE_ID}>{Astro.locals.starlightRoute?.entry.data.title}</h1>
+	<div class="pc-page-actions">
+		<button
+			type="button"
+			class="pc-copy-page"
+			data-copy-page
+			data-markdown-url={markdownUrl}
+			data-label-copy={t.copy}
+			data-label-copied={t.copied}
+			data-label-failed={t.failed}
+			aria-label={t.copy}
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="18"
+				height="18"
+				viewBox="0 0 18 18"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.5"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<rect x="6.75" y="6.75" width="8.25" height="8.25" rx="2"></rect>
+				<path d="M11.25 6.75V4.5A1.5 1.5 0 0 0 9.75 3h-6A1.5 1.5 0 0 0 2.25 4.5v6a1.5 1.5 0 0 0 1.5 1.5h2.25"
+				></path>
+			</svg>
+			<span data-copy-label>{t.copy}</span>
+		</button>
+	</div>
+</div>
+
+<style>
+	.pc-page-header {
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
+		margin-top: 1rem;
+	}
+
+	.pc-page-header h1 {
+		margin-top: 0;
+		font-size: var(--sl-text-h1);
+		line-height: var(--sl-line-height-headings);
+		font-weight: 400;
+		color: var(--sl-color-white);
+	}
+
+	.pc-page-actions {
+		margin-inline-start: auto;
+		flex-shrink: 0;
+	}
+
+	@media (max-width: 32rem) {
+		.pc-page-actions {
+			display: none;
+		}
+	}
+
+	.pc-copy-page {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.375rem 0.75rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 0.75rem;
+		background-color: var(--sl-color-bg);
+		color: var(--sl-color-gray-2);
+		font-family: var(--sl-font);
+		font-size: var(--sl-text-sm);
+		font-weight: 500;
+		line-height: 1.2;
+		cursor: pointer;
+	}
+
+	.pc-copy-page:hover {
+		background-color: color-mix(in oklab, var(--sl-color-gray-2) 5%, transparent);
+	}
+
+	.pc-copy-page[data-state='copied'] {
+		color: var(--sl-color-white);
+	}
+</style>
+
+<script>
+	/**
+	 * The async clipboard API needs a secure context and permission. Embedded
+	 * browsers and plain-HTTP previews often refuse both, so the deprecated
+	 * `execCommand` path stays as a fallback rather than leaving the button
+	 * silently doing nothing.
+	 */
+	async function writeToClipboard(text: string): Promise<boolean> {
+		if (navigator.clipboard?.writeText) {
+			try {
+				await navigator.clipboard.writeText(text);
+				return true;
+			} catch {
+				/* fall through to the textarea path */
+			}
+		}
+
+		const area = document.createElement('textarea');
+		area.value = text;
+		area.setAttribute('readonly', '');
+		area.style.position = 'fixed';
+		area.style.top = '-1000px';
+		document.body.append(area);
+		area.select();
+		let copied = false;
+		try {
+			copied = document.execCommand('copy');
+		} catch {
+			copied = false;
+		}
+		area.remove();
+		return copied;
+	}
+
+	function copyIconText(button: HTMLElement): string {
+		const url = button.dataset.markdownUrl;
+		const label = button.querySelector<HTMLElement>('[data-copy-label]');
+		const setState = (state: 'idle' | 'copied' | 'failed') => {
+			button.dataset.state = state;
+			if (!label) return;
+			label.textContent =
+				state === 'copied'
+					? (button.dataset.labelCopied ?? 'Copied')
+					: state === 'failed'
+						? (button.dataset.labelFailed ?? 'Copy failed')
+						: (button.dataset.labelCopy ?? 'Copy page');
+		};
+
+		button.addEventListener('click', async () => {
+			try {
+				const response = await fetch(url ?? '');
+				if (!response.ok) throw new Error(String(response.status));
+				const markdown = await response.text();
+				setState((await writeToClipboard(markdown)) ? 'copied' : 'failed');
+			} catch {
+				setState('failed');
+			}
+			window.setTimeout(() => setState('idle'), 2000);
+		});
+	}
+
+	document.querySelectorAll<HTMLElement>('[data-copy-page]').forEach(copyIconText);
+</script>

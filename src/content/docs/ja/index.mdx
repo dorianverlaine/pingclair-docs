@@ -1,0 +1,54 @@
+---
+title: Pingclair
+description: Rust で書かれたリバースプロキシ兼静的ファイルサーバー。HTTP/1.1、HTTP/2、HTTP/3、自動 HTTPS、そして Caddyfile 互換の設定言語を備えています。
+template: splash
+hero:
+  tagline: Rust で書かれたリバースプロキシ兼静的ファイルサーバー。HTTP/1.1、HTTP/2、HTTP/3、自動 HTTPS、そして Caddyfile 互換の設定言語を備えています。
+  actions:
+    - text: Pingclair をインストール
+      link: /ja/start/install/
+      icon: right-arrow
+    - text: クイックスタート
+      link: /ja/start/quickstart/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Pingclair は 1 つの設定から HTTP/1.1、HTTP/2、HTTP/3 を配信し、ACME で公開証明書を取得して更新し、圧縮とレンジリクエストに対応した静的ファイル配信を行います。設定言語である Pingclairfile は Caddyfile の慣習に従います。
+
+```caddyfile
+example.com {
+    encode zstd gzip
+    reverse_proxy 10.0.0.10:8080 10.0.0.11:8080
+}
+```
+
+## ここから始める
+
+<CardGrid>
+	<Card title="🚀 インストール">
+		リリースバイナリ、ソースからのビルド、または Docker。
+		[インストール手順](/ja/start/install/)
+	</Card>
+	<Card title="🏃 クイックスタート">
+		最初の Pingclairfile を書き、検証して、配信を始めます。
+		[クイックスタート](/ja/start/quickstart/)
+	</Card>
+	<Card title="🧠 コンセプト">
+		設定ファイルが実行時の状態になり、リクエストがどう処理されるか。
+		[設定モデル](/ja/concepts/configuration/)
+	</Card>
+	<Card title="📖 リファレンス">
+		設定言語そのものと、受け付けるディレクティブ。
+		[ディレクティブ一覧](/ja/reference/directives/)
+	</Card>
+</CardGrid>
+
+## 📌 リリース状況
+
+現在のリリースは **v0.2.0-rc.3** で、リリース候補です。本サイトの各ページはこのバージョンを説明しています。`v0.1.x` 系はメンテナンスされておらず、セキュリティ修正も提供されません。[プロジェクト状況](/ja/project/status/)に、対応している機能、拒否される設定、タグ付け時点で判明している不具合をまとめています。
+
+## 📊 性能
+
+Pingclair は nginx および Caddy と同一ホスト上で測定しています。各候補は 2 CPU に制限し、まったく同じ負荷をかけています。実測値、測定条件、そして Pingclair が劣っている行も[性能測定](/ja/project/benchmarks/)で公開しています。

@@ -48,6 +48,9 @@ pnpm preview     # serve dist/
 
 ## Locales
 
+- The default locale is the `root` key, not `en`. Naming it `en` makes Starlight
+  look for English pages under `en/`; the English sidebar then renders empty
+  while the localized sidebars keep working.
 - English is the root locale. Chinese pages live under `src/content/docs/zh-TW/`
   (Traditional) and `src/content/docs/zh-CN/` (Simplified); both are Starlight
   locale codes, so their UI strings are built in.
@@ -77,3 +80,15 @@ Concept pages: the problem, the model, the consequences, links to reference.
 Reference entries: a fixed header (`Syntax`, `Default`, `Context`) followed by
 what the directive does, how invalid input is refused, differences from
 expected Caddyfile behavior, and a working example.
+
+## Client-side behavior
+
+Interactive affordances ship as small Astro components with a plain `<script>`
+- no framework integration - and register through Starlight's `components`
+override map. The "Copy page" action in `src/components/PageTitle.astro` is the
+reference implementation: it fetches the page's own `.md` endpoint, copies the
+text, and reports success or failure in the button label in the page's locale.
+
+Anything that needs to fetch generated files must have a matching endpoint under
+`src/pages/`; do not scrape the rendered DOM for content that already exists as
+Markdown.

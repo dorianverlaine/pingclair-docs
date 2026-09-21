@@ -20,13 +20,22 @@ export default defineConfig({
 			},
 			favicon: '/favicon.png',
 			customCss: ['./src/styles/theme.css'],
-			defaultLocale: 'en',
+			components: {
+				// Adds the "Copy page" action next to the page title.
+				PageTitle: './src/components/PageTitle.astro',
+			},
+			// The default locale lives at the site root, so it is configured under
+			// the `root` key. Listing it as `en` instead would make Starlight look
+			// for English pages in an `en/` directory and leave the sidebar empty.
+			defaultLocale: 'root',
 			locales: {
-				en: { label: 'English', lang: 'en' },
+				root: { label: 'English', lang: 'en' },
 				// Both Chinese locales ship UI translations with Starlight, so
 				// the locale keys are the standard ones rather than a bare `zh`.
 				'zh-TW': { label: '繁體中文', lang: 'zh-TW' },
 				'zh-CN': { label: '简体中文', lang: 'zh-CN' },
+				ja: { label: '日本語', lang: 'ja' },
+				ko: { label: '한국어', lang: 'ko' },
 			},
 			// Shiki ships no Caddyfile grammar. The fences stay `caddyfile` so the
 			// server repository's documentation tests recognize them, and the alias
@@ -50,22 +59,42 @@ export default defineConfig({
 			sidebar: [
 				{
 					label: 'Start',
-					translations: { 'zh-TW': '開始', 'zh-CN': '开始' },
+					translations: {
+						'zh-TW': '開始',
+						'zh-CN': '开始',
+						ja: 'はじめに',
+						ko: '시작하기',
+					},
 					items: [{ autogenerate: { directory: 'start' } }],
 				},
 				{
 					label: 'Concepts',
-					translations: { 'zh-TW': '核心概念', 'zh-CN': '核心概念' },
+					translations: {
+						'zh-TW': '核心概念',
+						'zh-CN': '核心概念',
+						ja: 'コンセプト',
+						ko: '개념',
+					},
 					items: [{ autogenerate: { directory: 'concepts' } }],
 				},
 				{
 					label: 'Reference',
-					translations: { 'zh-TW': '參考手冊', 'zh-CN': '参考手册' },
+					translations: {
+						'zh-TW': '參考手冊',
+						'zh-CN': '参考手册',
+						ja: 'リファレンス',
+						ko: '레퍼런스',
+					},
 					items: [{ autogenerate: { directory: 'reference' } }],
 				},
 				{
 					label: 'Project',
-					translations: { 'zh-TW': '專案資訊', 'zh-CN': '项目信息' },
+					translations: {
+						'zh-TW': '專案資訊',
+						'zh-CN': '项目信息',
+						ja: 'プロジェクト',
+						ko: '프로젝트',
+					},
 					items: [{ autogenerate: { directory: 'project' } }],
 				},
 			],
