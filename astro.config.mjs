@@ -35,6 +35,9 @@ export default defineConfig({
 				replacesTitle: true,
 			},
 			favicon: '/favicon.png',
+			// WebMCP tools for browsers that expose `navigator.modelContext`.
+			// The script itself feature-detects and does nothing elsewhere.
+			head: [{ tag: 'script', attrs: { src: '/webmcp.js', type: 'module' } }],
 			customCss: ['./src/styles/theme.css'],
 			components: {
 				// Adds the "Copy page" action next to the page title.

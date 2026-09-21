@@ -1,0 +1,227 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pingclair documentation API",
+    "summary": "The machine-readable surface of this documentation site: Markdown pages, discovery documents, and the documentation MCP server.",
+    "description": "This site serves the Pingclair manual. It is not an application API: nothing here is authenticated, nothing is written, and every resource is a static document. The endpoints below are the ones an agent may use to read the manual.",
+    "version": "0.1.0",
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://pingclair.aqeo.dev"
+    }
+  ],
+  "paths": {
+    "/{path}": {
+      "get": {
+        "summary": "Read a documentation page",
+        "description": "Returns the rendered page, or its Markdown source when the request asks for `Accept: text/markdown`. Pages are also published at their own paths with a `.md` suffix.",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "start/quickstart"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The page, as HTML or as Markdown depending on the Accept header.",
+            "content": {
+              "text/html": {},
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such page."
+          }
+        }
+      }
+    },
+    "/llms.txt": {
+      "get": {
+        "summary": "The documentation map for models",
+        "responses": {
+          "200": {
+            "description": "An index of every English page with its Markdown URL.",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    },
+    "/llms-full.txt": {
+      "get": {
+        "summary": "The whole documentation in one Markdown file",
+        "responses": {
+          "200": {
+            "description": "Every English page concatenated.",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    },
+    "/mcp-index.json": {
+      "get": {
+        "summary": "The search index behind the MCP server",
+        "responses": {
+          "200": {
+            "description": "Every page with its path, title, description, and Markdown body.",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "summary": "Documentation MCP server (Streamable HTTP)",
+        "description": "JSON-RPC 2.0 over the Model Context Protocol: `initialize`, `tools/list`, and `tools/call` for the `search_docs`, `read_page`, and `list_pages` tools.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jsonrpc",
+                  "method"
+                ],
+                "properties": {
+                  "jsonrpc": {
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON-RPC response.",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "202": {
+            "description": "A notification was accepted; it has no response."
+          }
+        }
+      }
+    },
+    "/a2a": {
+      "post": {
+        "summary": "Documentation lookup agent (A2A)",
+        "description": "JSON-RPC 2.0 over the Agent2Agent protocol. `message/send` returns a completed task whose artifact lists the documentation pages that match the message.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jsonrpc",
+                  "method"
+                ],
+                "properties": {
+                  "jsonrpc": {
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON-RPC response carrying a task.",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/auth.md": {
+      "get": {
+        "summary": "Authentication and registration entrypoint",
+        "responses": {
+          "200": {
+            "description": "States that this site is anonymous and issues no credentials.",
+            "content": {
+              "text/markdown": {}
+            }
+          }
+        }
+      }
+    },
+    "/robots.txt": {
+      "get": {
+        "summary": "Crawl rules and content signals",
+        "responses": {
+          "200": {
+            "description": "Robots rules per RFC 9309 with Content Signals declaring training, search, and input preferences.",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    },
+    "/sitemap.xml": {
+      "get": {
+        "summary": "The canonical page list",
+        "responses": {
+          "200": {
+            "description": "A sitemap index.",
+            "content": {
+              "application/xml": {}
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/ai-catalog.json": {
+      "get": {
+        "summary": "Agentic Resource Discovery (ARD) catalog",
+        "responses": {
+          "200": {
+            "description": "The MCP server, A2A agent, and skills published by this host.",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

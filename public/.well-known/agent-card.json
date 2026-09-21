@@ -1,0 +1,43 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Pingclair documentation lookup",
+  "description": "Answers questions about Pingclair, the reverse proxy and static file server written in Rust, by searching this documentation site and returning the matching pages with their Markdown URLs. It retrieves; it does not generate prose.",
+  "url": "https://pingclair.aqeo.dev/a2a",
+  "preferredTransport": "JSONRPC",
+  "version": "0.1.0",
+  "supportedInterfaces": [
+    {
+      "url": "https://pingclair.aqeo.dev/a2a",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "0.3.0"
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  },
+  "defaultInputModes": [
+    "text/plain"
+  ],
+  "defaultOutputModes": [
+    "text/plain"
+  ],
+  "skills": [
+    {
+      "id": "search-docs",
+      "name": "Search the Pingclair documentation",
+      "description": "Given a question or a set of keywords, return the documentation pages that match, each with its URL and a short excerpt.",
+      "tags": [
+        "documentation",
+        "reverse-proxy",
+        "static-files"
+      ],
+      "examples": [
+        "How do I proxy an application with Pingclair?",
+        "Which directives does the Pingclairfile support?",
+        "How do I install Pingclair on Linux?"
+      ]
+    }
+  ]
+}
