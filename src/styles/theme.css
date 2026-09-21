@@ -186,9 +186,22 @@ h2 {
 	--ec-uiFontFml: var(--sl-font);
 	--ec-uiPadBlk: 0.375rem;
 	--ec-uiPadInl: 0.5rem;
-	border-radius: 1rem;
-	border: 1px solid var(--sl-color-hairline);
+	/* One border, drawn by the code block itself: the frame only clips. */
+	border: 0;
+	border-radius: calc(1rem + 1px);
+	overflow: hidden;
 	box-shadow: none;
+}
+
+/* The code area keeps the border and the bottom corners; the chrome above it
+   supplies the top corners, and that block's top border is the separator. */
+.expressive-code .frame pre {
+	background-color: var(--pc-code-bg);
+	border: 1px solid var(--sl-color-hairline);
+	border-start-start-radius: 0;
+	border-start-end-radius: 0;
+	border-end-start-radius: calc(1rem + 1px);
+	border-end-end-radius: calc(1rem + 1px);
 }
 
 /*
@@ -201,9 +214,13 @@ h2 {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 0.5rem 0.75rem;
-	border-bottom: 1px solid var(--sl-color-hairline);
-	background: var(--pc-code-bg);
+	min-block-size: 2rem;
+	padding: 0 0.75rem;
+	border: 1px solid var(--sl-color-hairline);
+	border-bottom: 0;
+	border-start-start-radius: calc(1rem + 1px);
+	border-start-end-radius: calc(1rem + 1px);
+	background-color: var(--pc-code-bg);
 	font-family: var(--sl-font);
 	font-size: var(--sl-text-xs);
 	font-weight: 500;

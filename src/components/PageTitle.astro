@@ -226,6 +226,7 @@ const markdownUrl = `${withoutTrailingSlash === '' ? '' : withoutTrailingSlash}.
 		flex-shrink: 0;
 		display: flex;
 		align-items: stretch;
+		block-size: 2.125rem; /* 34px, matching the control this imitates */
 		border: 1px solid var(--sl-color-hairline);
 		border-radius: 0.75rem;
 		background-color: var(--sl-color-bg);
@@ -253,10 +254,17 @@ const markdownUrl = `${withoutTrailingSlash === '' ? '' : withoutTrailingSlash}.
 	}
 
 	.pc-copy-page__caret {
-		padding: 0.375rem 0.5rem;
+		inline-size: 2.125rem;
+		padding: 0;
+		justify-content: center;
 		border-inline-start: 1px solid var(--sl-color-hairline);
 		border-start-end-radius: 0.75rem;
 		border-end-end-radius: 0.75rem;
+	}
+
+	.pc-copy-page__caret svg {
+		inline-size: 0.75rem;
+		block-size: 0.75rem;
 	}
 
 	.pc-copy-page button:hover,
