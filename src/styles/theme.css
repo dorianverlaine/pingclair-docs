@@ -16,7 +16,7 @@
  * CJK font, because shipping a CJK webfont costs megabytes for text the reader
  * already has.
  */
-@import '@fontsource-variable/playfair-display';
+@import '@fontsource-variable/literata';
 @import '@fontsource-variable/noto-serif-kr';
 @import '@fontsource/pt-serif/400.css';
 @import '@fontsource/pt-serif/700.css';
@@ -35,7 +35,7 @@
 		'Liberation Mono', 'Courier New', 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei',
 		monospace;
 	--pc-font-serif:
-		'Playfair Display Variable', 'Iowan Old Style', 'Songti TC', 'Songti SC', 'LiSong Pro',
+		'Literata Variable', 'Iowan Old Style', 'Songti TC', 'Songti SC', 'LiSong Pro',
 		'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', Georgia,
 		'Times New Roman', Times, serif;
 
@@ -46,7 +46,7 @@
 	 * browser resolves Hangul per glyph from Noto Serif KR.
 	 */
 	--pc-font-serif-ko:
-		'Playfair Display Variable', 'Noto Serif KR Variable', 'PT Serif', 'Nanum Myeongjo',
+		'Literata Variable', 'Noto Serif KR Variable', 'PT Serif', 'Nanum Myeongjo',
 		'Apple SD Gothic Neo', serif;
 
 	/* Type scale: 16px body, 30-36px page title. */
