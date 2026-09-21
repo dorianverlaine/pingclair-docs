@@ -4,6 +4,9 @@ User-agent: *
 Allow: /
 # The search index is fetched by the browser, never by a crawler.
 Disallow: /pagefind/
+# Content Signals: this documentation is published to be trained on, searched,
+# and read into an answer. See https://contentsignals.org/.
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
 
 # Answer engines and model crawlers are welcome to read these pages.
 User-agent: GPTBot
@@ -12,5 +15,6 @@ User-agent: PerplexityBot
 User-agent: Google-Extended
 User-agent: CCBot
 Allow: /
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
 
 Sitemap: https://pingclair.aqeo.dev/sitemap.xml

@@ -9,3 +9,9 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
+  # Agent discovery, per RFC 8288 and RFC 9727. The API catalog is the index;
+  # `describedby` points at the Markdown map of the documentation.
+  Link: </.well-known/api-catalog>; rel="api-catalog", </llms.txt>; rel="describedby", </sitemap.xml>; rel="sitemap"
+
+/.well-known/*
+  Access-Control-Allow-Origin: *

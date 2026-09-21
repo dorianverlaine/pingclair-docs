@@ -1,7 +1,8 @@
 # Cloudflare Workers, built from this GitHub repository. Workers Builds runs the
-# build command and then `wrangler deploy`, which reads the assets directory
-# below: the site is served as static assets, not as a Worker script.
+# build command and then `wrangler deploy`, which uploads `dist` as static assets
+# and `worker/index.js` as the small script in front of them.
 name = "pingclair-docs"
+main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
 # The docs domain. Deploying with this route requires the aqeo.dev zone to live
@@ -12,6 +13,11 @@ routes = [{ pattern = "pingclair.aqeo.dev", custom_domain = true }]
 
 [assets]
 directory = "./dist"
+# The script reaches the built site through this binding.
+binding = "ASSETS"
 # Starlight writes a 404.html, so an unknown path should serve that page rather
 # than the asset-server default.
 not_found_handling = "404-page"
+# The script answers page requests that ask for Markdown, so it has to run
+# before the assets server does.
+run_worker_first = true
