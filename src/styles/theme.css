@@ -217,7 +217,8 @@ h2 {
  * the bar is drawn here for every code block: the header element is already in
  * the markup, and the three lights are radial gradients in the macOS palette.
  */
-.expressive-code .frame .header {
+.expressive-code .frame .header,
+.expressive-code .frame.is-terminal .header {
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -236,7 +237,8 @@ h2 {
 }
 
 .expressive-code .frame .header::before,
-.expressive-code .frame.is-terminal .header::before {
+.expressive-code .frame.is-terminal .header::before,
+.expressive-code .frame.has-title:not(.is-terminal) .header::before {
 	content: '';
 	position: absolute;
 	inset-block-start: 50%;
@@ -254,6 +256,16 @@ h2 {
 	background-size: 3.25rem 0.75rem;
 	background-position: 0 50%;
 	background-repeat: no-repeat;
+	/*
+	 * Expressive Code masks this pseudo-element for terminal and titled frames
+	 * (its own dot layout, narrower than this one), which painted our image
+	 * through a mismatched mask: a full red light, half a yellow one, a sliver
+	 * of green. The mask is ours to own now, and the border that titled frames
+	 * draw here goes too.
+	 */
+	mask-image: none;
+	-webkit-mask-image: none;
+	border: 0;
 	opacity: 1;
 }
 
