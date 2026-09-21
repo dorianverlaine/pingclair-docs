@@ -1,5 +1,6 @@
 ---
 title: Project status
+h1_emoji: '📌'
 description: What the current release supports, what it refuses, and which defects are known.
 ---
 

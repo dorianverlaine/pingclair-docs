@@ -1,5 +1,6 @@
 ---
 title: 設定モデル
+h1_emoji: '🧠'
 description: Pingclairfile が解析、コンパイル、検証され、実行時の状態になるまで。
 ---
 

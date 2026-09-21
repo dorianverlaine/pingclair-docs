@@ -1,5 +1,6 @@
 ---
 title: インストール
+h1_emoji: '📦'
 description: リリースバイナリ、Docker、またはソースから Pingclair をインストールします。
 ---
 

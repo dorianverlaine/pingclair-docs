@@ -1,5 +1,6 @@
 ---
 title: 설정 모델
+h1_emoji: '🧠'
 description: Pingclairfile이 파싱, 컴파일, 검증되어 런타임 상태가 되기까지.
 ---
 

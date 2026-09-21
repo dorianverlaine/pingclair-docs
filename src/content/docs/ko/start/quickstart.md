@@ -1,5 +1,6 @@
 ---
 title: 빠른 시작
+h1_emoji: '🏃'
 description: 첫 Pingclairfile을 작성하고 검증한 뒤 트래픽을 처리합니다.
 ---
 

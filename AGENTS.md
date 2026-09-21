@@ -56,6 +56,10 @@ working because their keys are already lowercase.
 
 - **Register:** American English, formal, third person for description and
   second person for instructions. No humor and no exclamation marks.
+- **Page titles carry one emoji** through the `h1_emoji` frontmatter field, which
+  keeps the heading in step with the emoji-marked sections below it without
+  putting emoji into the sidebar, the browser tab, the previous/next links, or
+  `llms.txt`. The same page uses the same emoji in every locale.
 - **Emoji:** allowed as structural markers, in the same spirit as the server
   repository's logs and README. Use them as heading prefixes, callout markers,
   and list bullets; keep to a small reused set (🚀 🧠 📖 📊 🛡️ ⚠️ 📌 🌐 📦 🐳 🧭

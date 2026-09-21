@@ -1,5 +1,6 @@
 ---
 title: Pingclairfile
+h1_emoji: '📖'
 description: 설정 언어 자체. 파일 구조, 주소, 매처, 스니펫, 도구.
 ---
 

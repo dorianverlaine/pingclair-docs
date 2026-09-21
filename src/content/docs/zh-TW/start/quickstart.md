@@ -1,5 +1,6 @@
 ---
 title: 快速開始
+h1_emoji: '🏃'
 description: 寫出第一份 Pingclairfile，驗證設定，然後開始服務流量。
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: Benchmarks
+h1_emoji: '📊'
 description: What is measured, under which conditions, and where the numbers come from.
 ---
 

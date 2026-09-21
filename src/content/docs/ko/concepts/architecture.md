@@ -1,5 +1,6 @@
 ---
 title: 아키텍처
+h1_emoji: '🏗️'
 description: 서버의 구성 요소와 요청이 지나는 경로.
 ---
 

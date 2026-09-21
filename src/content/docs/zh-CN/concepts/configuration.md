@@ -1,5 +1,6 @@
 ---
 title: 配置模型
+h1_emoji: '🧠'
 description: Pingclairfile 如何被解析、编译、验证，并转换为运行时状态。
 ---
 

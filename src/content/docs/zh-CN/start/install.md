@@ -1,5 +1,6 @@
 ---
 title: 安装
+h1_emoji: '📦'
 description: 使用发布版二进制、Docker 或源码安装 Pingclair。
 ---
 

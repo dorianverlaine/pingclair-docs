@@ -1,5 +1,6 @@
 ---
 title: Architecture
+h1_emoji: '🏗️'
 description: The components of the server and the path a request takes through them.
 ---
 

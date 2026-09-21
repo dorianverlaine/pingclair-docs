@@ -1,6 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { docsLoader } from '@astrojs/starlight/loaders';
 import { docsSchema } from '@astrojs/starlight/schema';
+import { z } from 'astro/zod';
 
 export const collections = {
 	docs: defineCollection({
@@ -24,6 +25,15 @@ export const collections = {
 			generateId: ({ entry }) =>
 				entry.replace(/\.(md|mdx)$/, '').replace(/\/index$/, ''),
 		}),
-		schema: docsSchema(),
+		schema: docsSchema({
+			extend: z.object({
+				/*
+				 * Decoration for the page title only. Keeping it out of `title`
+				 * means the sidebar, the browser tab, the previous/next links, and
+				 * llms.txt stay plain text.
+				 */
+				h1_emoji: z.string().optional(),
+			}),
+		}),
 	}),
 };

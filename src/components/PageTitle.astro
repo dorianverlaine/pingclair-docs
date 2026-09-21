@@ -67,6 +67,8 @@ const labels: Record<string, Labels> = {
 
 const t = labels[lang] ?? labels.en;
 
+const h1Emoji = Astro.locals.starlightRoute?.entry.data.h1_emoji;
+
 // Starlight anchors the page title with this id (its `PAGE_TITLE_ID`), and the
 // skip link and "back to top" scroll target both point at it. The constant is
 // not part of the package's public exports, so the value is repeated here.
@@ -85,7 +87,10 @@ const markdownUrl = `/${entryPath || 'index'}.md`;
 ---
 
 <div class="pc-page-header">
-	<h1 id={PAGE_TITLE_ID}>{Astro.locals.starlightRoute?.entry.data.title}</h1>
+	<h1 id={PAGE_TITLE_ID}>
+		{h1Emoji && <span class="pc-page-header__emoji" aria-hidden="true">{h1Emoji}</span>}
+		{Astro.locals.starlightRoute?.entry.data.title}
+	</h1>
 
 	<div class="pc-copy-page" data-copy-page data-markdown-url={markdownUrl}>
 		<button
@@ -222,6 +227,15 @@ const markdownUrl = `/${entryPath || 'index'}.md`;
 		font-weight: 500;
 		letter-spacing: 0.01em;
 		color: var(--sl-color-white);
+	}
+
+	.pc-page-header__emoji {
+		margin-inline-end: 0.25em;
+		/* The emoji comes from the platform's colour font, so keep it off the
+		   serif's optical sizing and tracking. */
+		font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+		font-weight: 400;
+		letter-spacing: 0;
 	}
 
 	/* Split control: copy on the left, menu on the right, one hairline around

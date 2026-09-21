@@ -1,5 +1,6 @@
 ---
 title: Configuration model
+h1_emoji: '🧠'
 description: How a Pingclairfile is parsed, compiled, validated, and turned into runtime state.
 ---
 

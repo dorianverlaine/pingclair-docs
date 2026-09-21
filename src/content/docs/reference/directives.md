@@ -1,5 +1,6 @@
 ---
 title: Directives
+h1_emoji: '🧾'
 description: Syntax, defaults, and context for the directives this documentation covers.
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: Pingclairfile
+h1_emoji: '📖'
 description: The configuration language, including file structure, addresses, matchers, snippets, and tooling.
 ---
 

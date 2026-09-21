@@ -1,5 +1,6 @@
 ---
 title: Quickstart
+h1_emoji: '🏃'
 description: Write a first Pingclairfile, validate it, and serve traffic.
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: クイックスタート
+h1_emoji: '🏃'
 description: 最初の Pingclairfile を書き、検証して、配信を始めます。
 ---
 

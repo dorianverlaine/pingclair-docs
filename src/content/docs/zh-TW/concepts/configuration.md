@@ -1,5 +1,6 @@
 ---
 title: 設定模型
+h1_emoji: '🧠'
 description: Pingclairfile 如何被解析、編譯、驗證，並轉換成執行期狀態。
 ---
 

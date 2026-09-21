@@ -1,5 +1,6 @@
 ---
 title: Install
+h1_emoji: '📦'
 description: Install Pingclair from a release binary, with Docker, or by building from source.
 ---
 

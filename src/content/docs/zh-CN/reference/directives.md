@@ -1,5 +1,6 @@
 ---
 title: 指令
+h1_emoji: '🧾'
 description: 本文档涵盖的 directive 的语法、默认值与适用范围。
 ---
 
