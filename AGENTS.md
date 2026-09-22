@@ -186,6 +186,42 @@ when all of them agree. In order:
    `public/.well-known/agent-skills/*/SKILL.md` plus its `sha256:` digest for a
    new skill, `public/auth.md` for anything about access.
 
+## Verifying a start page
+
+Everything under `start/` is a procedure, not an essay: the reader runs the
+commands on a machine that matters to them. So every command on those pages was
+run on a real host before the page shipped, and the outputs quoted on the page
+are the ones that host printed. The five existing pages were written this way,
+and the routine is short enough to repeat:
+
+- **Use throwaway hosts, never the maintainer's machines.** Two cheap instances
+  in one cloud region, one on Ubuntu and one on Fedora, so both the `apt` and
+  the `dnf` branches of `scripts/install.sh` are exercised. Set the hostname to
+  `pingclair` inside each, so the transcripts copied into a page read cleanly.
+- **Install the way the page tells a reader to install.** The published
+  installer (`curl … | sudo bash`), not a local build, because the page
+  documents what a reader gets.
+- **Walk the page top to bottom on the Ubuntu host**, then walk the
+  distribution-specific parts again on Fedora. Where reality differs from the
+  draft, the machine wins and the page is corrected — the first draft of the
+  HTTPS page claimed DNS-01 worked because the configuration was accepted, and
+  the run is what proved it does not.
+- **Quote the host's output, not the intended output.** The `text` blocks that
+  show logs and headers are copied from the run. If a step cannot be verified —
+  it needs another provider, a second host, or a live authority — say so in the
+  page and in the commit rather than leaving it implied.
+- **When the run shows that a documented feature does not work, the page says
+  what actually happens and the defect gets an issue.** A page that promises the
+  intended behaviour is worse than one that reports the observed behaviour, and
+  the issue is what keeps the observed behaviour from becoming permanent.
+- **Keep the transcripts local.** The commit's `Verified:` line names the
+  distribution, the version, and the commands that were run. No addresses,
+  instance identifiers, or host inventories.
+- **Destroy the hosts, their security group, their key pair, and any temporary
+  DNS records when the pages are done.** A claim that outlives its machine is a
+  claim nobody can re-check, and throwaway instances left running are somebody's
+  bill.
+
 ## Keeping the site agent friendly
 
 This site is published twice: once as pages for people, and once as an API for
