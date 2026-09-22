@@ -36,7 +36,21 @@ example.com {
 ## file_server
 
 ```text
-Syntax:   file_server [<root>]
+Syntax:   file_server [<root>] [browse]
+          file_server [<root>] {
+              root                  <path>
+              index                 <filenames...>
+              browse {
+                  file_limit        <number>
+              }
+              compress              [off|false]
+              precompressed         <formats...>
+              hide                  <paths...>
+              status                <code>
+              pass_thru
+              disable_canonical_uris
+              etag_file_extensions  <extensions...>
+          }
 Default:  disabled
 Context:  site block
 ```
@@ -44,6 +58,11 @@ Context:  site block
 Serves files from disk, with MIME type detection, range requests, and ETag and
 `Last-Modified` validation. The optional argument sets the root for this
 directive alone. When it is omitted, the site root set by `root` is used.
+
+`browse` turns directory listings on, and `file_limit` caps how many entries a
+listing shows — upstream's own name for it, in the place upstream puts it. A
+listing template, `reveal_symlinks` and `sort` are refused by name rather than
+ignored, so an option you write never disappears in silence.
 
 ```caddyfile
 localhost:8080 {

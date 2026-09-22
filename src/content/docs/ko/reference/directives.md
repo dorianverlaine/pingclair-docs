@@ -30,12 +30,28 @@ example.com {
 ## file_server
 
 ```text
-Syntax:   file_server [<root>]
+Syntax:   file_server [<root>] [browse]
+          file_server [<root>] {
+              root                  <path>
+              index                 <filenames...>
+              browse {
+                  file_limit        <number>
+              }
+              compress              [off|false]
+              precompressed         <formats...>
+              hide                  <paths...>
+              status                <code>
+              pass_thru
+              disable_canonical_uris
+              etag_file_extensions  <extensions...>
+          }
 Default:  disabled
 Context:  site block
 ```
 
 디스크에서 파일을 제공합니다. MIME 타입 판별, 범위 요청, ETag와 `Last-Modified` 검증을 지원합니다. 인수를 주면 이 지시어 자체의 루트가 되고, 생략하면 `root`로 설정한 사이트 루트를 씁니다.
+
+`browse`는 디렉터리 목록을 켜고, `file_limit`은 목록에 표시할 항목 수의 상한을 정합니다. 이름과 위치 모두 upstream 그대로입니다. 목록 템플릿, `reveal_symlinks`, `sort`는 조용히 무시하지 않고 이름을 들어 거부합니다.
 
 ```caddyfile
 localhost:8080 {

@@ -40,7 +40,21 @@ example.com {
 ## file_server
 
 ```text
-Syntax:   file_server [<root>]
+Syntax:   file_server [<root>] [browse]
+          file_server [<root>] {
+              root                  <path>
+              index                 <filenames...>
+              browse {
+                  file_limit        <number>
+              }
+              compress              [off|false]
+              precompressed         <formats...>
+              hide                  <paths...>
+              status                <code>
+              pass_thru
+              disable_canonical_uris
+              etag_file_extensions  <extensions...>
+          }
 Default:  disabled
 Context:  site block
 ```
@@ -49,6 +63,11 @@ Sert des fichiers depuis le disque, avec détection du type MIME, requêtes
 partielles et validation par ETag et `Last-Modified`. L'argument facultatif
 définit la racine pour cette seule directive. Lorsqu'il est omis, la racine du
 site définie par `root` est utilisée.
+
+`browse` active les listes de répertoire, et `file_limit` borne le nombre
+d'entrées affichées — le nom d'upstream, à l'endroit où upstream le met. Un
+modèle de liste, `reveal_symlinks` et `sort` sont refusés nommément plutôt
+qu'ignorés : une option que vous écrivez ne disparaît jamais en silence.
 
 ```caddyfile
 localhost:8080 {

@@ -30,12 +30,28 @@ example.com {
 ## file_server
 
 ```text
-Syntax:   file_server [<root>]
+Syntax:   file_server [<root>] [browse]
+          file_server [<root>] {
+              root                  <path>
+              index                 <filenames...>
+              browse {
+                  file_limit        <number>
+              }
+              compress              [off|false]
+              precompressed         <formats...>
+              hide                  <paths...>
+              status                <code>
+              pass_thru
+              disable_canonical_uris
+              etag_file_extensions  <extensions...>
+          }
 Default:  disabled
 Context:  site block
 ```
 
 ディスクからファイルを配信します。MIME タイプの判定、レンジリクエスト、ETag と `Last-Modified` による検証に対応します。引数を指定するとこのディレクティブ自身のルートになり、省略すると `root` で設定したサイトルートを使います。
+
+`browse` はディレクトリ一覧を有効にし、`file_limit` は一覧に表示する件数の上限を決めます。名前も置き場所も upstream のままです。一覧テンプレート、`reveal_symlinks`、`sort` は黙って無視せず、名前を挙げて拒否します。
 
 ```caddyfile
 localhost:8080 {

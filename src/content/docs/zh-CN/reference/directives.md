@@ -30,12 +30,28 @@ example.com {
 ## file_server
 
 ```text
-Syntax:   file_server [<root>]
+Syntax:   file_server [<root>] [browse]
+          file_server [<root>] {
+              root                  <path>
+              index                 <filenames...>
+              browse {
+                  file_limit        <number>
+              }
+              compress              [off|false]
+              precompressed         <formats...>
+              hide                  <paths...>
+              status                <code>
+              pass_thru
+              disable_canonical_uris
+              etag_file_extensions  <extensions...>
+          }
 Default:  disabled
 Context:  site block
 ```
 
 从磁盘提供文件，包含 MIME 类型判断、范围请求，以及 ETag 与 `Last-Modified` 校验。可选参数只设置这个 directive 自己的根目录；省略时使用 `root` 设定的站点根目录。
+
+`browse` 打开目录列表，`file_limit` 决定列表最多显示多少条——名字和位置都沿用 upstream。列表模板、`reveal_symlinks`、`sort` 会被指名拒绝，而不是默默忽略：你写的选项不会无声消失。
 
 ```caddyfile
 localhost:8080 {
