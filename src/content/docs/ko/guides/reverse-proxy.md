@@ -39,7 +39,7 @@ curl -i http://localhost:8080/
 
 응답은 애플리케이션의 것이고 그 헤더도 그대로 전달됩니다. `admin`은
 `pingclair reload`가 실행 중인 서버에 닿기 위한 것이며 `SIGUSR1`에는 필요하지
-않습니다([재적용의 의미](/ko/start/service/#-what-a-reload-means)).
+않습니다([재적용의 의미](/ko/start/service/#-재적용의-의미)).
 
 ## ⚖️ 업스트림 여러 개
 
@@ -224,8 +224,9 @@ INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_st
   (타임아웃은 `transport http`, 체크는 `health_check`). `validate`가 거부한 철자를
   그대로 알려 줍니다.
 - **설정 변경이 반영되지 않음.** 재적용이 적용하는 것은 정책이지 새 리스너가
-  아니며, `pc service reload`는 아무것도 적용하지 않습니다
-  ([서비스로 실행](/ko/start/service/#-what-a-reload-means)).
+  아닙니다. 재적용이 리스너를 추가하거나 옮겼다면 유닛의 status line이 바뀐
+  주소를 알려 주고, `sudo pc service restart`가 그것을 적용합니다
+  ([서비스로 실행](/ko/start/service/#-재적용의-의미)).
 - **모든 요청이 한 인스턴스로 감.** 그것이 유일하게 건강한 업스트림입니다. 헬스
   체크 로그가 언제 어떤 이유로 나머지가 빠졌는지 알려 줍니다(`ConnectRefused`,
   `failure_statuses` 등).

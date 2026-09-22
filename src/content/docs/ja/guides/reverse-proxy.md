@@ -40,7 +40,7 @@ curl -i http://localhost:8080/
 
 応答はアプリケーションのもので、そのヘッダーもそのまま通ります。`admin` は
 `pingclair reload` が実行中のサーバーに届くようにするためで、`SIGUSR1` には
-不要です（[再読み込みの意味](/ja/start/service/#-what-a-reload-means)）。
+不要です（[再読み込みの意味](/ja/start/service/#-再読み込みの意味)）。
 
 ## ⚖️ アムトが複数
 
@@ -228,8 +228,9 @@ INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_st
   属します（タイムアウトは `transport http`、チェックは `health_check`）。
   `validate` は拒否した綴りをそのまま示します。
 - **設定変更が反映されない。** 再読み込みが適用するのはポリシーで、新しい
-  リスナーではありません。`pc service reload` は何も適用しません
-  （[サービスとして動かす](/ja/start/service/#-what-a-reload-means)）。
+  リスナーではありません。再読み込みが追加または移動した場合は、ユニットの
+  status line が変わったアドレスを示し、`sudo pc service restart` がそれを
+  適用します（[サービスとして動かす](/ja/start/service/#-再読み込みの意味)）。
 - **すべてのリクエストが 1 台に届く。** それが唯一の健全なアムトです。ヘルス
   チェックのログが、いつ何の理由で他が外れたかを示します（`ConnectRefused`、
   `failure_statuses` など）。

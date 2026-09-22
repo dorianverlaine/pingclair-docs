@@ -99,4 +99,4 @@ sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 
 `pingclair reload` 透過 Admin API 走到同一段程式碼，並回報伺服器對檔案的判斷，需要在全域選項區塊裡寫 `admin`。
 
-`pc service reload` 不是第三條路：安裝出來的 unit 送出 `SIGHUP`，而伺服器會忽略它，所以指令回報成功，舊設定繼續執行（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。於啟動階段建立的行程級策略，例如 `trusted_proxies`，要在重啟後才會生效；改動監聽器的設定同樣需要重啟。
+`pc service reload` 透過安裝出來的 unit 送出這個訊號，所以那條理所當然的指令就是能用的指令。答案不在結束碼裡——`systemctl reload` 只能回報訊號已經送達——而在 unit 的 status line 與日誌裡；被拒絕的重載會讓舊設定繼續執行（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66) 記錄的是那個即使如此也回報成功的 unit 版本）。於啟動階段建立的行程級策略，例如 `trusted_proxies`，要在重啟後才會生效；改動監聽器的設定同樣需要重啟。

@@ -99,4 +99,4 @@ sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 
 `pingclair reload`는 Admin API를 거쳐 같은 코드에 도달하며, 서버가 그 파일을 어떻게 봤는지 보고합니다. 전역 옵션 블록의 `admin`이 필요합니다.
 
-`pc service reload`는 세 번째 방법이 아닙니다. 설치된 유닛은 `SIGHUP`을 보내지만 서버가 그 신호를 무시하므로, 명령은 성공을 보고하고 이전 설정이 계속 실행됩니다([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)). `trusted_proxies`처럼 시작 시점에 확립되는 프로세스 전역 정책은 재시작 후에 반영되며, 리스너를 바꾸는 설정도 재시작이 필요합니다.
+`pc service reload`는 설치된 유닛을 통해 이 신호를 보내므로, 당연해 보이는 명령이 곧 동작하는 명령입니다. 답은 종료 코드에 없습니다 — `systemctl reload`가 보고할 수 있는 것은 신호가 전달되었다는 사실뿐입니다 — 유닛의 status line과 저널에 있으며, 거부된 재적용은 이전 설정을 계속 실행합니다([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)은 그럼에도 성공을 보고하던 유닛 버전을 기록해 두었습니다). `trusted_proxies`처럼 시작 시점에 확립되는 프로세스 전역 정책은 재시작 후에 반영되며, 리스너를 바꾸는 설정도 재시작이 필요합니다.

@@ -189,16 +189,19 @@ Server address: [::]:8083
 ```bash
 sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+sudo pc service reload
 curl -i http://localhost/
 ```
 
-`SIGUSR1` 才是重载信号，不需要额外配置。`pingclair reload` 通过 Admin API 做
-同一件事，还会报告服务器对文件的判断，需要在全局选项块里写 `admin`。
+`pc service reload` 让运行中的服务器重新读取文件，unit 通过发送 `SIGUSR1` 做到
+这一点。`pingclair reload` 通过 Admin API 走到同一段代码，还会报告服务器对文件的
+判断，需要在全局选项块里写 `admin`；`sudo kill -USR1 "$(systemctl show -p MainPID
+--value pingclair)"` 则两者都不需要。
 
-两条路都要先校验。`pc service reload` 看起来是那条理所当然的命令，其实不是：
-安装出来的 unit 发送 `SIGHUP`，服务器会忽略它，于是命令报成功，而旧配置继续
-提供服务（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。
+两条路都要先校验，然后读回答案：`systemctl reload` 只能报告信号已经送达，服务器
+的判断——已应用，还是带着原因被拒绝——在 unit 的 status line 和日志里。被拒绝的
+重载会让旧配置继续服务，这正是拒绝的意义。
+[以服务方式运行](/zh-CN/start/service/#-重载意味着什么) 是详细版本。
 
 ## ⚠️ 出问题时
 

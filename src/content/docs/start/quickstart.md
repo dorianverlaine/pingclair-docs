@@ -199,19 +199,23 @@ there is what makes it survive a reboot:
 ```bash
 sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+sudo pc service reload
 curl -i http://localhost/
 ```
 
-`SIGUSR1` is the reload signal, and it works without any further configuration.
-`pingclair reload` does the same through the Admin API and also reports what the
-server thought of the file, which needs the `admin` option from the global
-options block.
+`pc service reload` asks the running server to read the file again, which the
+unit does by sending `SIGUSR1`. `pingclair reload` reaches the same code through
+the Admin API and also reports what the server thought of the file, which needs
+the `admin` option from the global options block; and
+`sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` does it with
+neither.
 
-Validate first either way. `pc service reload` looks like the obvious command
-and is not: the installed unit sends `SIGHUP`, which the server drops, so it
-reports success while the old configuration keeps serving
-([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)).
+Validate first either way, and read the answer afterwards: `systemctl reload`
+reports only that the signal was delivered, so the server's verdict — applied,
+or refused with a reason — is on the unit's status line and in the journal. A
+refused reload leaves the previous configuration serving, which is the point of
+refusing. [Run it as a service](/start/service/#-what-a-reload-means) is the long
+version.
 
 ## ⚠️ When it does not work
 

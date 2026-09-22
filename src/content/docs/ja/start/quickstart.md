@@ -198,18 +198,22 @@ Server address: [::]:8083
 ```bash
 sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+sudo pc service reload
 curl -i http://localhost/
 ```
 
-`SIGUSR1` が再読み込みの信号で、追加の設定なしで機能します。`pingclair reload`
-は Admin API 経由で同じことをし、サーバーがファイルをどう見たかも報告します。
-グローバルオプションの `admin` が必要です。
+`pc service reload` は実行中のサーバーにファイルを読み直すよう求め、ユニットは
+それを `SIGUSR1` で行います。`pingclair reload` は Admin API 経由で同じコードに
+到達し、サーバーがファイルをどう見たかも報告します（グローバルオプションの
+`admin` が必要です）。`sudo kill -USR1 "$(systemctl show -p MainPID --value
+pingclair)"` はどちらも使わずに同じことをします。
 
-どちらの場合も先に検証します。`pc service reload` は明らかな命令に見えますが
-そうではありません。インストールされたユニットは `SIGHUP` を送り、サーバーは
-それを無視するため、成功を報告しながら古い設定が動き続けます
-（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。
+どちらの場合も先に検証し、そのあと答えを読みます。`systemctl reload` が報告
+できるのは信号が届いたことだけなので、サーバーの判断——適用されたか、理由付きで
+拒否されたか——はユニットの status line とジャーナルに残ります。拒否された
+再読み込みは以前の設定を動かしたままにします。それが拒否の目的です。
+[サービスとして動かす](/ja/start/service/#-再読み込みの意味) に詳しい説明が
+あります。
 
 ## ⚠️ うまくいかないとき
 

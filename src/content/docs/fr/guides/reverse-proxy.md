@@ -42,7 +42,7 @@ curl -i http://localhost:8080/
 La réponse est celle de l'application, et ses en-têtes passent tels quels.
 L'option `admin` est là pour que `pingclair reload` puisse joindre le serveur en
 service ; `SIGUSR1` n'en a pas besoin
-([ce que signifie un rechargement](/fr/start/service/#-what-a-reload-means)).
+([ce que signifie un rechargement](/fr/start/service/#-ce-que-signifie-un-rechargement)).
 
 ## ⚖️ Plusieurs amonts
 
@@ -234,8 +234,10 @@ qu'il n'est pas listé dans `trusted_proxies` ; le
   imbriqué — les délais sous `transport http`, les contrôles sous `health_check`
   — et `validate` nomme l'orthographe refusée.
 - **Un changement de configuration ne prend pas effet.** Le rechargement applique
-  la politique, pas un nouvel écouteur, et `pc service reload` n'applique rien du
-  tout ; voir [Exécution comme service](/fr/start/service/#-what-a-reload-means).
+  la politique, pas un nouvel écouteur : quand un rechargement en a ajouté ou
+  déplacé un, la ligne d'état de l'unité nomme les adresses qui ont changé et
+  `sudo pc service restart` est ce qui les applique. Voir
+  [Exécution comme service](/fr/start/service/#-ce-que-signifie-un-rechargement).
 - **Toutes les requêtes arrivent sur une instance.** C'est la seule saine. Le
   journal des contrôles de santé dit quand les autres sont sorties, et pourquoi
   (`ConnectRefused`, `failure_statuses`, …).

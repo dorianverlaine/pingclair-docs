@@ -37,7 +37,7 @@ curl -i http://localhost:8080/
 ```
 
 响应来自应用，它的响应头原样透传。`admin` 是为了让 `pingclair reload` 能联系
-运行中的服务器；`SIGUSR1` 不需要它（[重载意味着什么](/zh-CN/start/service/#-what-a-reload-means)）。
+运行中的服务器；`SIGUSR1` 不需要它（[重载意味着什么](/zh-CN/start/service/#-重载意味着什么)）。
 
 ## ⚖️ 多个上游
 
@@ -215,8 +215,9 @@ INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_st
 - **`Unknown directive 'reverse_proxy: …'`。** 该选项属于嵌套块 —— 超时在
   `transport http` 下，检查在 `health_check` 下 —— `validate` 会指明它拒绝的
   确切写法。
-- **配置改动没有生效。** 重载应用的是策略，不是新的监听器；而 `pc service
-  reload` 什么都不应用，见 [以服务方式运行](/zh-CN/start/service/#-what-a-reload-means)。
+- **配置改动没有生效。** 重载应用的是策略，不是新的监听器；当重载新增或移动了
+  监听器时，unit 的 status line 会指出变化的地址，`sudo pc service restart`
+  才是应用它的命令。见 [以服务方式运行](/zh-CN/start/service/#-重载意味着什么)。
 - **所有请求都落到同一台。** 那是唯一健康的上游。健康检查日志会说明其他几台何时
   因何被摘掉（`ConnectRefused`、`failure_statuses` 等）。
 

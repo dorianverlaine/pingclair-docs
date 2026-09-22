@@ -204,19 +204,24 @@ configuration qui la fait survivre à un redémarrage :
 ```bash
 sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+sudo pc service reload
 curl -i http://localhost/
 ```
 
-`SIGUSR1` est le signal de rechargement, et il fonctionne sans configuration
-supplémentaire. `pingclair reload` fait la même chose par l'Admin API et rapporte
-en plus ce que le serveur a pensé du fichier, ce qui exige l'option `admin` du
-bloc des options globales.
+`pc service reload` demande au serveur en cours de relire le fichier, ce que
+l'unité fait en envoyant `SIGUSR1`. `pingclair reload` atteint le même code par
+l'Admin API et rapporte en plus ce que le serveur a pensé du fichier, ce qui exige
+l'option `admin` du bloc des options globales ; et
+`sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` y arrive sans
+l'un ni l'autre.
 
-Validez d'abord dans tous les cas. `pc service reload` a l'air de la commande
-évidente et n'en est pas une : l'unité installée envoie `SIGHUP`, que le serveur
-ignore, donc elle annonce un succès pendant que l'ancienne configuration continue
-de servir ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)).
+Validez d'abord dans tous les cas, puis lisez la réponse : `systemctl reload`
+signale seulement que le signal a été délivré, donc le verdict du serveur —
+appliqué, ou refusé avec une raison — se trouve sur la ligne d'état de l'unité et
+dans le journal. Un rechargement refusé laisse la configuration précédente en
+service, ce qui est précisément le but du refus.
+[Exécution comme service](/fr/start/service/#-ce-que-signifie-un-rechargement) est
+la version longue.
 
 ## ⚠️ Quand cela ne marche pas
 

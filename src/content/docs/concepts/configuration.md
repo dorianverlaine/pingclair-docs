@@ -132,9 +132,11 @@ sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 the server thought of the file, which needs the `admin` option from the global
 options block.
 
-`pc service reload` is not a third way: the installed unit sends `SIGHUP`, which
-the server drops, so the command reports success and the old configuration keeps
-running ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)).
-Process-wide policy that is established during startup, such as
-`trusted_proxies`, takes effect only after a restart, and a configuration that
-changes listeners needs one too.
+`pc service reload` sends that signal through the installed unit, so the obvious
+command is the working one. Its answer is not in the exit code — `systemctl
+reload` can only report that the signal was delivered — but on the unit's status
+line and in the journal, and a refused reload leaves the old configuration
+running ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)
+recorded the version whose unit reported success anyway). Process-wide policy
+that is established during startup, such as `trusted_proxies`, takes effect only
+after a restart, and a configuration that changes listeners needs one too.

@@ -141,10 +141,13 @@ sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 serveur a pensé du fichier, ce qui exige l'option `admin` du bloc des options
 globales.
 
-`pc service reload` n'est pas une troisième voie : l'unité installée envoie
-`SIGHUP`, que le serveur ignore, donc la commande annonce un succès et l'ancienne
-configuration continue de servir
-([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)). La politique
-valable pour tout le processus, établie au démarrage — par exemple
-`trusted_proxies` — ne prend effet qu'après un redémarrage, et une configuration
-qui change d'écouteurs en exige un aussi.
+`pc service reload` envoie ce signal par l'unité installée : la commande évidente
+est celle qui fonctionne. Sa réponse n'est pas dans le code de sortie —
+`systemctl reload` peut seulement signaler que le signal a été délivré — mais sur
+la ligne d'état de l'unité et dans le journal, et un rechargement refusé laisse
+l'ancienne configuration en service
+([issue #66](https://github.com/dorianverlaine/pingclair/issues/66) décrit la
+version dont l'unité annonçait un succès malgré tout). La politique valable pour
+tout le processus, établie au démarrage — par exemple `trusted_proxies` — ne
+prend effet qu'après un redémarrage, et une configuration qui change d'écouteurs
+en exige un aussi.

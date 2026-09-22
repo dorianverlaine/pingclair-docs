@@ -233,8 +233,9 @@ guide](/guides/cloudflare-tunnel/) covers that case.
   block — timeouts under `transport http`, checks under `health_check` — and
   `validate` names the exact spelling it refused.
 - **A configuration change does not take effect.** Reload applies policy, not a
-  new listener, and `pc service reload` does not apply anything at all; see
-  [Run it as a service](/start/service/#-what-a-reload-means).
+  new listener: when a reload added or moved one, the unit's status line names
+  the addresses that changed and `sudo pc service restart` is what applies
+  them. See [Run it as a service](/start/service/#-what-a-reload-means).
 - **Every request lands on one instance.** It is the only healthy one. The health
   check log says when the others left rotation, and why (`ConnectRefused`,
   `failure_statuses`, and so on).
