@@ -1,0 +1,47 @@
+---
+import StarlightHead from '@astrojs/starlight/components/Head.astro';
+import { slugOf, twinPath } from '../lib/agent-paths';
+
+/**
+ * 🔗 The document head, plus the two twins agents should know about.
+ *
+ * Starlight renders the canonical link, the hreflang alternates, meta tags, and
+ * the stylesheets; this wrapper adds `rel="alternate"` entries for the page's
+ * Markdown (`.md`, `text/markdown`) and plain-text (`.txt`, `text/plain`)
+ * twins. Without them the twins are invisible: the only other pointer is the
+ * "View as Markdown" control, which needs JavaScript to be discovered.
+ */
+
+const entry = Astro.locals.starlightRoute?.entry as { filePath?: string } | undefined;
+const slug = slugOf(entry?.filePath);
+---
+
+<StarlightHead />
+
+{
+	slug && (
+		<>
+			<link rel="alternate" type="text/plain" href={twinPath(slug, 'txt')} title="Plain text for agents" />
+			<link rel="alternate" type="text/markdown" href={twinPath(slug, 'md')} title="Markdown source" />
+		</>
+	)
+}
+
+<script is:inline>
+	// 📑 Starlight renders two tables of contents — one for wide viewports and
+	// one for narrow — and hides the unused one with CSS at 72rem. Assistive
+	// technology and DOM-reading agents still see both, so the same query that
+	// hides one marks it aria-hidden, leaving exactly one "On this page".
+	(() => {
+		const desktop = document.querySelector('starlight-toc');
+		const mobile = document.querySelector('mobile-starlight-toc');
+		if (!desktop && !mobile) return;
+		const wide = matchMedia('(width >= 72rem)');
+		const sync = () => {
+			desktop?.setAttribute('aria-hidden', String(!wide.matches));
+			mobile?.setAttribute('aria-hidden', String(wide.matches));
+		};
+		wide.addEventListener('change', sync);
+		sync();
+	})();
+</script>

@@ -16,9 +16,9 @@ const labels: Record<string, Labels> = {
 	en: {
 		title: 'Copy page',
 		copy: 'Copy page',
-		copyHint: 'Copy page as Markdown for LLMs',
+		copyHint: 'Markdown for LLMs',
 		view: 'View as Markdown',
-		viewHint: 'View this page as plain text',
+		viewHint: 'Plain text, no HTML',
 		copied: 'Copied',
 		failed: 'Copy failed',
 		menu: 'Copy options',
@@ -26,9 +26,9 @@ const labels: Record<string, Labels> = {
 	fr: {
 		title: 'Copier la page',
 		copy: 'Copier la page',
-		copyHint: 'Copier la page en Markdown pour les LLM',
+		copyHint: 'Markdown pour les LLM',
 		view: 'Voir en Markdown',
-		viewHint: 'Voir cette page en texte brut',
+		viewHint: 'Texte brut, sans HTML',
 		copied: 'Copié',
 		failed: 'Échec de la copie',
 		menu: 'Options de copie',
@@ -36,9 +36,9 @@ const labels: Record<string, Labels> = {
 	'zh-TW': {
 		title: '複製頁面',
 		copy: '複製頁面',
-		copyHint: '以 Markdown 複製本頁，供 LLM 使用',
+		copyHint: '供 LLM 使用的 Markdown',
 		view: '以 Markdown 檢視',
-		viewHint: '以純文字檢視本頁',
+		viewHint: '純文字，沒有 HTML',
 		copied: '已複製',
 		failed: '複製失敗',
 		menu: '複製選項',
@@ -46,9 +46,9 @@ const labels: Record<string, Labels> = {
 	'zh-CN': {
 		title: '复制页面',
 		copy: '复制页面',
-		copyHint: '以 Markdown 复制本页，供 LLM 使用',
+		copyHint: '供 LLM 使用的 Markdown',
 		view: '以 Markdown 查看',
-		viewHint: '以纯文本查看本页',
+		viewHint: '纯文本，没有 HTML',
 		copied: '已复制',
 		failed: '复制失败',
 		menu: '复制选项',
@@ -56,9 +56,9 @@ const labels: Record<string, Labels> = {
 	ja: {
 		title: 'ページをコピー',
 		copy: 'ページをコピー',
-		copyHint: 'LLM 向けに Markdown でコピー',
+		copyHint: 'LLM 向けの Markdown',
 		view: 'Markdown として表示',
-		viewHint: 'このページをプレーンテキストで表示',
+		viewHint: 'プレーンテキスト（HTML なし）',
 		copied: 'コピーしました',
 		failed: 'コピーできません',
 		menu: 'コピーオプション',
@@ -66,9 +66,9 @@ const labels: Record<string, Labels> = {
 	ko: {
 		title: '페이지 복사',
 		copy: '페이지 복사',
-		copyHint: 'LLM용 Markdown으로 복사',
+		copyHint: 'LLM용 Markdown',
 		view: 'Markdown으로 보기',
-		viewHint: '이 페이지를 일반 텍스트로 보기',
+		viewHint: '일반 텍스트(HTML 없음)',
 		copied: '복사됨',
 		failed: '복사 실패',
 		menu: '복사 옵션',
@@ -85,15 +85,18 @@ const h1Emoji = Astro.locals.starlightRoute?.entry.data.h1_emoji;
 const PAGE_TITLE_ID = '_top';
 
 /*
- * The Markdown endpoint is keyed by the content path, which is also the only
+ * The plain-text twin is keyed by the content path, which is also the only
  * case-accurate source: Astro lowercases entry ids, so `zh-TW/…` would become
- * `zh-tw/…`. A directory page keeps its `index` (`/zh-TW/index.md`), while a
+ * `zh-tw/…`. A directory page keeps its `index` (`/zh-TW/index.txt`), while a
  * named page drops it (`/start/quickstart.md`).
  */
 const entryPath = (Astro.locals.starlightRoute?.entry.filePath ?? '')
 	.replace(/^.*?content\/docs\//, '')
 	.replace(/\.(md|mdx)$/, '');
-const markdownUrl = `/${entryPath || 'index'}.md`;
+// Agents follow this link, and a few fetch stacks refuse `text/markdown`, so
+// the visible link points at the `.txt` twin. The `.md` twin stays published
+// and advertised in the document head for clients that want the real type.
+const agentTextUrl = `/${entryPath || 'index'}.txt`;
 ---
 
 <div class="pc-page-header">
@@ -102,7 +105,7 @@ const markdownUrl = `/${entryPath || 'index'}.md`;
 		{Astro.locals.starlightRoute?.entry.data.title}
 	</h1>
 
-	<div class="pc-copy-page" data-copy-page data-markdown-url={markdownUrl}>
+	<div class="pc-copy-page" data-copy-page data-copy-url={agentTextUrl}>
 		<button
 			type="button"
 			class="pc-copy-page__main"
@@ -110,7 +113,6 @@ const markdownUrl = `/${entryPath || 'index'}.md`;
 			data-label-copy={t.copy}
 			data-label-copied={t.copied}
 			data-label-failed={t.failed}
-			aria-label={t.copy}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -176,11 +178,11 @@ const markdownUrl = `/${entryPath || 'index'}.md`;
 				</span>
 				<span class="pc-copy-menu__text">
 					<span class="pc-copy-menu__title">{t.copy}</span>
-					<span class="pc-copy-menu__hint">{t.copyHint}</span>
+					<span class="pc-copy-menu__hint" aria-hidden="true">{t.copyHint}</span>
 				</span>
 			</button>
 
-			<a class="pc-copy-menu__item" href={markdownUrl} target="_blank" rel="noreferrer">
+			<a class="pc-copy-menu__item" href={agentTextUrl} target="_blank" rel="noreferrer">
 				<span class="pc-copy-menu__icon" aria-hidden="true">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -215,7 +217,7 @@ const markdownUrl = `/${entryPath || 'index'}.md`;
 							<path d="M6.75 3.75h7.5v7.5M14.25 3.75 6 12"></path>
 						</svg>
 					</span>
-					<span class="pc-copy-menu__hint">{t.viewHint}</span>
+					<span class="pc-copy-menu__hint" aria-hidden="true">{t.viewHint}</span>
 				</span>
 			</a>
 		</div>
@@ -407,7 +409,7 @@ const markdownUrl = `/${entryPath || 'index'}.md`;
 	}
 
 	function setupCopyPage(root: HTMLElement) {
-		const url = root.dataset.markdownUrl ?? '';
+		const url = root.dataset.copyUrl ?? '';
 		const toggle = root.querySelector<HTMLButtonElement>('[data-copy-menu-toggle]');
 		const menu = root.querySelector<HTMLElement>('[data-copy-menu]');
 		const primary = root.querySelector<HTMLButtonElement>('.pc-copy-page__main');

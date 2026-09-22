@@ -40,6 +40,9 @@ export default defineConfig({
 			head: [{ tag: 'script', attrs: { src: '/webmcp.js', type: 'module' } }],
 			customCss: ['./src/styles/theme.css'],
 			components: {
+				// Adds rel="alternate" links for the .txt and .md twins of each
+				// page, and keeps only one table of contents in the DOM.
+				Head: './src/components/Head.astro',
 				// Adds the "Copy page" action next to the page title.
 				PageTitle: './src/components/PageTitle.astro',
 				// Theme and language pickers as menus rather than native selects.

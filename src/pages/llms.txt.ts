@@ -1,57 +1,17 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
+import { llmsHeaders, llmsIndex } from '../lib/llms';
 
 export const prerender = true;
 
 /**
- * The case-preserved path of a page inside the content directory. Astro
- * lowercases entry ids, so `filePath` is the only case-accurate source.
- */
-function slugOf(filePath: string | undefined): string {
-	return filePath?.replace(/^.*?content\/docs\//, '').replace(/\.(md|mdx)$/, '') ?? '';
-}
-
-const otherLocales = ['fr', 'ja', 'ko', 'zh-CN', 'zh-TW'];
-
-/** English pages only: the root locale is the one without a prefix. */
-const isRootLocale = (slug: string) => !otherLocales.includes(slug.split('/')[0] ?? '');
-
-/**
- * The llms.txt index: a map of the documentation for a model that wants to
- * fetch only the pages it needs. Every entry points at the Markdown endpoint
- * rather than the rendered page, which is the whole point of publishing both.
+ * 🤖 The English index: a map of the documentation for a model that wants to
+ * fetch only the pages it needs. Each entry points at the page's Markdown twin
+ * rather than the rendered page, which is the whole point of publishing both,
+ * and the five localized indexes are named in the header.
  */
 export const GET: APIRoute = async ({ site }) => {
 	const docs = await getCollection('docs');
 	const origin = site ?? new URL('https://pingclair.dev');
-
-	const pages = docs.map((entry) => ({ entry, slug: slugOf(entry.filePath) }));
-
-	const lines: string[] = [
-		'# Pingclair',
-		'',
-		'> Pingclair is a reverse proxy and static file server written in Rust, serving HTTP/1.1, HTTP/2, and HTTP/3 from a Caddyfile-compatible configuration language with automatic HTTPS.',
-		'',
-		'> Every page below is available as Markdown by appending `.md` to its URL. The whole documentation in one file is at ' +
-			new URL('/llms-full.txt', origin).toString() +
-			'.',
-		'',
-		'> These pages are published in five other languages as well: /fr/, /ja/, /ko/, /zh-CN/, and /zh-TW/.',
-		'',
-	];
-
-	const english = pages
-		.filter(({ entry, slug }) => isRootLocale(slug) && !entry.data.draft)
-		.sort((a, b) => a.slug.localeCompare(b.slug));
-
-	for (const { entry, slug } of english) {
-		const markdown = new URL(`/${slug.replace(/\/index$/, '')}.md`, origin).toString();
-		lines.push(`- [${entry.data.title}](${markdown}): ${entry.data.description ?? ''}`.trimEnd());
-	}
-
-	lines.push('');
-
-	return new Response(lines.join('\n'), {
-		headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-	});
+	return new Response(llmsIndex(origin, docs, null), { headers: llmsHeaders });
 };
