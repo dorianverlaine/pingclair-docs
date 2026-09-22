@@ -28,7 +28,7 @@ HTTP/2 looks exactly like success.
 
 ```caddyfile
 {
-    email pingclair@pingclair.com
+    email bonjour@pingclair.com
     servers {
         protocols h1 h2 h3
     }
