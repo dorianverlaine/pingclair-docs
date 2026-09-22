@@ -10,6 +10,14 @@ code; the server lives in `~/code/pingclair`. Nothing here is generated from the
 server repository yet, so accuracy is maintained by review rather than by a
 build step.
 
+📡 **The site is also an API for agents, and that is a deliverable.** Every page
+is published as Markdown, `/mcp` and `/a2a` answer documentation queries, and a
+dozen discovery documents under `/.well-known/` describe them. `pnpm scan:agents`
+checks that surface against the public agent-readiness scan and must report
+**level 5 with only the documented failures**. Read
+[Keeping the site agent friendly](#keeping-the-site-agent-friendly) before
+touching `worker/`, `public/`, `robots.txt`, or anything under `src/pages/`.
+
 ## Commands
 
 ```bash
@@ -17,6 +25,7 @@ pnpm install     # install dependencies (pnpm is the only supported manager)
 pnpm dev         # development server
 pnpm build       # must pass before handoff
 pnpm preview     # serve dist/
+pnpm scan:agents # agent-readiness of the published site; run before handoff
 ```
 
 `pnpm build` is the gate. A page that does not build is not delivered.
@@ -219,22 +228,25 @@ curl -s -X POST http://127.0.0.1:4321/mcp -H 'content-type: application/json' \
 ```
 
 Anything that touches the worker, the discovery documents, or `robots.txt` also
-gets the published scan, and the release check is **Level 5 with no new
-failures**:
+gets the published scan, and the release check is **level 5 with no unexpected
+failure**. That scan needs network access to isitagentready.com, so the
+repository ships it as a script that encodes the expected result and exits
+non-zero when the result changes:
 
 ```bash
-curl -s -X POST https://isitagentready.com/api/scan \
-  -H 'Content-Type: application/json' --data '{"url":"https://pingclair.aqeo.dev"}' \
-  | jq -r '{level, levelName}, (.checks | to_entries[] | .key as $c | .value
-    | to_entries[] | select(.value.status != "pass") | "\(.value.status)\t\($c).\(.key)")'
+pnpm scan:agents                      # the published site
+pnpm scan:agents http://127.0.0.1:8788  # a local `wrangler dev`, if the checks under test need the worker
 ```
 
-Four checks are expected to stay failed, and none of them is a defect to fix
-here: `oauthDiscovery`, `oauthProtectedResource`, and `authMd` want OAuth
-metadata for an authorization server this site does not operate, and `dnsAid`
-follows the `aqeo.dev` zone's DNSSEC state, which the maintainer controls
-outside this repository on purpose. Do not "fix" them by publishing metadata
-for a server that does not exist.
+`scripts/agent-readiness.mjs` holds the expected-failure list, so a documented
+failure stays documented in one place instead of in everyone's memory. Four
+checks are expected to stay failed, and none of them is a defect to fix here:
+`oauthDiscovery`, `oauthProtectedResource`, and `authMd` want OAuth metadata for
+an authorization server this site does not operate, and `dnsAid` follows the
+`aqeo.dev` zone's DNSSEC state, which the maintainer controls outside this
+repository on purpose. Do not "fix" them by publishing metadata for a server
+that does not exist, and do not widen the list to make a failing check pass:
+adding a new entry means the site stopped doing something it used to do.
 
 ## Traps that already cost a build or a check
 

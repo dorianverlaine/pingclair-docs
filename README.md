@@ -17,7 +17,13 @@ pnpm install
 pnpm dev        # development server on http://localhost:4321
 pnpm build      # static output in dist/
 pnpm preview    # serve the contents of dist/
+pnpm scan:agents # agent-readiness of the published site (level 5 is the floor)
 ```
+
+The site is published twice: as pages for people and as an API for agents. The
+second surface is checked by `pnpm scan:agents`, which runs the public
+agent-readiness scan and fails on a regression; `AGENTS.md` owns the rules that
+keep it working.
 
 ## Layout
 
