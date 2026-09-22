@@ -51,8 +51,10 @@ Lisez-les dans l'ordre :
   un `$HOME` inexistant.
 - `ExecStartPre` exécute `validate` avant chaque démarrage. Une configuration qui
   ne compile pas n'atteint jamais le serveur.
-- `ExecReload` envoie `SIGHUP` : un rechargement relit le même fichier sans
-  redémarrer le processus.
+- `ExecReload` envoie `SIGHUP`, que le serveur ignore : `systemctl reload` — et
+  `pc service reload`, qui l'enveloppe — annonce un succès et ne change rien
+  ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)). Le signal
+  qui recharge est `SIGUSR1`.
 - `Restart=always` avec `RestartSec=5s` : un démarrage en échec est retenté
   toutes les cinq secondes. Voir les modes d'échec plus bas, car c'est le
   réglage qui surprend.
@@ -80,7 +82,8 @@ interchangeables.
 | Démarrer | `sudo pc service start` | `sudo systemctl start pingclair` |
 | Arrêter | `sudo pc service stop` | `sudo systemctl stop pingclair` |
 | Redémarrer | `sudo pc service restart` | `sudo systemctl restart pingclair` |
-| Recharger la configuration | `sudo pc service reload` | `sudo systemctl reload pingclair` |
+| Recharger la configuration | — | `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` |
+| Recharger, tel qu'installé (ne fait rien) | `sudo pc service reload` | `sudo systemctl reload pingclair` |
 | État | `pc service status` | `systemctl status pingclair` |
 | Suivre le journal | — | `journalctl -u pingclair -f` |
 
@@ -98,45 +101,48 @@ envoyée par le serveur :
 
 ## 🔁 Ce que signifie un rechargement
 
-Il y a deux façons d'appliquer une configuration modifiée, et elles se comportent
-différemment quand le fichier est faux.
+Deux commandes appliquent une configuration modifiée, et une troisième, qui en a
+l'air, ne fait rien du tout.
 
-`pc service reload` remet `SIGHUP`. Il annonce un succès quand le signal a été
-remis :
+`SIGUSR1` est le signal de rechargement. Il n'exige aucune configuration :
 
-```text
-✅ Service reloaded successfully
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 ```
 
-`pingclair reload` passe par l'Admin API et a besoin de l'option `admin` du bloc
-des options globales. Il rapporte ce que le serveur a pensé du fichier :
+`pingclair reload` atteint le même code par l'Admin API et rapporte ce que le
+serveur a pensé du fichier, ce qui exige l'option `admin` du bloc des options
+globales :
+
+```text
+✅ Configuration reloaded successfully
+```
 
 ```text
 Error: ❌ Reload failed (400): HTTP/1.1 400 Bad Request
 ```
 
-Dans les deux cas, une configuration qui ne compile pas laisse la précédente en
-service, et le site continue de répondre :
+`pc service reload` a l'air de la commande évidente et c'est celle qui ne fait
+rien : l'`ExecReload` de l'unité installée envoie `SIGHUP`, et le serveur ignore
+ce signal, donc la commande annonce un succès pendant que l'ancienne
+configuration continue de servir. Mesuré sur cette unité : avec
+`x-version: four` en service et `five` écrit dans le fichier, `pc service reload`
+a répondu `✅ Service reloaded successfully` et l'en-tête est resté `four` ; la
+même modification appliquée par `SIGUSR1` ou `pingclair reload` a pris effet
+immédiatement ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)).
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost/
-```
-
-```text
-200
-```
-
-C'est pourquoi il faut valider d'abord et considérer le rechargement comme une
-formalité :
+Quelle que soit la voie choisie, une configuration qui ne compile pas laisse la
+précédente en service, et le serveur ne journalise pas ce refus. Validez d'abord :
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo pc service reload
 ```
 
 La politique valable pour tout le processus fait exception. Les options établies
 au démarrage, comme `trusted_proxies`, ne prennent effet qu'après un redémarrage :
-`sudo pc service restart`.
+`sudo pc service restart`. Une configuration qui ajoute ou déplace un écouteur
+exige elle aussi un redémarrage : le rechargement applique la politique, pas un
+nouveau socket d'écoute.
 
 ## 📜 Journaux
 

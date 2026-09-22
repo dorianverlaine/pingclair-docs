@@ -50,8 +50,11 @@ LimitNOFILE=1048576
   `$HOME`을 가리키게 됩니다.
 - `ExecStartPre`는 시작할 때마다 `validate`를 실행합니다. 컴파일되지 않는 설정은
   서버에 도달하지 않습니다.
-- `ExecReload`는 `SIGHUP`을 보냅니다. 재적용은 프로세스를 다시 시작하지 않고 같은
-  파일을 다시 읽습니다.
+- `ExecReload`는 `SIGHUP`을 보내지만 서버는 그 신호를 무시합니다. 그래서
+  `systemctl reload` — 그것을 감싼 `pc service reload`도 — 성공을 보고하고 아무것도
+  바꾸지 않습니다
+  ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)). 재적용하는
+  신호는 `SIGUSR1`입니다.
 - `Restart=always`와 `RestartSec=5s`: 시작에 실패하면 5초마다 다시 시도합니다.
   사람을 놀라게 하는 설정이므로 실패 형태를 아래에 적었습니다.
 
@@ -78,7 +81,8 @@ sudo systemctl restart pingclair
 | 시작 | `sudo pc service start` | `sudo systemctl start pingclair` |
 | 중지 | `sudo pc service stop` | `sudo systemctl stop pingclair` |
 | 다시 시작 | `sudo pc service restart` | `sudo systemctl restart pingclair` |
-| 설정 재적용 | `sudo pc service reload` | `sudo systemctl reload pingclair` |
+| 설정 재적용 | — | `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` |
+| 설치된 그대로의 재적용(아무것도 하지 않음) | `sudo pc service reload` | `sudo systemctl reload pingclair` |
 | 상태 | `pc service status` | `systemctl status pingclair` |
 | 로그 따라가기 | — | `journalctl -u pingclair -f` |
 
@@ -96,42 +100,45 @@ sudo systemctl restart pingclair
 
 ## 🔁 재적용의 의미
 
-수정한 설정을 반영하는 방법은 두 가지이며, 파일이 잘못됐을 때의 동작이 다릅니다.
+수정한 설정을 반영하는 명령은 두 가지이고, 그럴듯해 보이는 세 번째는 아무것도
+하지 않습니다.
 
-`pc service reload`는 `SIGHUP`을 전달합니다. 신호가 전달된 시점에 성공을
-보고합니다.
+`SIGUSR1`이 재적용 신호입니다. 추가 설정이 필요 없습니다.
 
-```text
-✅ Service reloaded successfully
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 ```
 
-`pingclair reload`는 Admin API를 거치며 전역 옵션 블록의 `admin`이 필요합니다.
-서버가 그 파일을 어떻게 봤는지 보고합니다.
+`pingclair reload`는 Admin API를 거쳐 같은 코드에 도달하고 서버가 파일을 어떻게
+봤는지 보고합니다. 전역 옵션 블록의 `admin`이 필요합니다.
+
+```text
+✅ Configuration reloaded successfully
+```
 
 ```text
 Error: ❌ Reload failed (400): HTTP/1.1 400 Bad Request
 ```
 
-두 경우 모두 컴파일되지 않는 설정은 이전 설정을 그대로 두므로 사이트는 계속
-응답합니다.
+`pc service reload`는 당연해 보이는 명령이고, 아무것도 하지 않는 쪽이 바로
+이것입니다. 설치된 유닛의 `ExecReload`는 `SIGHUP`을 보내고 서버는 그 신호를
+무시하므로, 명령은 성공을 보고하면서 이전 설정이 계속 실행됩니다. 이 유닛에서
+측정: `x-version: four`가 실행 중이고 파일에 `five`를 쓴 상태에서
+`pc service reload`는 `✅ Service reloaded successfully`라고 답했고 헤더는 `four`
+그대로였습니다. 같은 변경을 `SIGUSR1`이나 `pingclair reload`로 적용하면 즉시
+반영됐습니다([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)).
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost/
-```
-
-```text
-200
-```
-
-그래서 먼저 검증하고 재적용은 형식적인 절차로 다룹니다.
+어느 경로든 컴파일되지 않는 설정은 이전 설정을 그대로 두고, 서버는 그 거부를
+로그에 남기지 않습니다. 먼저 검증하십시오.
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo pc service reload
 ```
 
 예외는 프로세스 전역 정책입니다. `trusted_proxies`처럼 시작 시 확립되는 옵션은
-재시작 후에만 효력을 냅니다: `sudo pc service restart`.
+재시작 후에만 효력을 냅니다: `sudo pc service restart`. 리스너를 추가하거나
+옮기는 설정도 재시작이 필요합니다. 재적용이 적용하는 것은 정책이지 새로운
+대기 소켓이 아닙니다.
 
 ## 📜 로그
 

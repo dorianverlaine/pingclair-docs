@@ -121,6 +121,20 @@ leaves the previous state in place.
 
 ## 🔁 Reloads
 
-`pc service reload` re-reads the configuration without restarting the process.
+A reload re-reads the configuration without restarting the process. The signal
+is `SIGUSR1`:
+
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+```
+
+`pingclair reload` reaches the same code through the Admin API, and reports what
+the server thought of the file, which needs the `admin` option from the global
+options block.
+
+`pc service reload` is not a third way: the installed unit sends `SIGHUP`, which
+the server drops, so the command reports success and the old configuration keeps
+running ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)).
 Process-wide policy that is established during startup, such as
-`trusted_proxies`, takes effect only after a restart.
+`trusted_proxies`, takes effect only after a restart, and a configuration that
+changes listeners needs one too.

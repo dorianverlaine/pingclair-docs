@@ -50,8 +50,10 @@ Read them in order:
   would send the store to a `$HOME` that does not exist.
 - `ExecStartPre` runs `validate` before every start. A configuration that does
   not compile never reaches the server.
-- `ExecReload` sends `SIGHUP`: a reload re-reads the same file without
-  restarting the process.
+- `ExecReload` sends `SIGHUP`, which the server drops, so `systemctl reload` —
+  and `pc service reload`, which wraps it — reports success and changes nothing
+  ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)). The
+  signal that reloads is `SIGUSR1`.
 - `Restart=always` with `RestartSec=5s`: a start that fails is retried every five
   seconds. See the failure modes below, because this is the one setting that
   surprises people.
@@ -78,7 +80,8 @@ sudo systemctl restart pingclair
 | Start | `sudo pc service start` | `sudo systemctl start pingclair` |
 | Stop | `sudo pc service stop` | `sudo systemctl stop pingclair` |
 | Restart | `sudo pc service restart` | `sudo systemctl restart pingclair` |
-| Reload the configuration | `sudo pc service reload` | `sudo systemctl reload pingclair` |
+| Reload the configuration | — | `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` |
+| Reload, as installed (does nothing) | `sudo pc service reload` | `sudo systemctl reload pingclair` |
 | State | `pc service status` | `systemctl status pingclair` |
 | Follow the log | — | `journalctl -u pingclair -f` |
 
@@ -96,45 +99,48 @@ server sent:
 
 ## 🔁 What a reload means
 
-There are two ways to apply an edited configuration, and they behave
-differently when the file is wrong.
+Two commands apply an edited configuration, and one that looks like a third does
+nothing at all.
 
-`pc service reload` delivers `SIGHUP`. It reports success when the signal was
-delivered:
+`SIGUSR1` is the reload signal. It needs no configuration of its own:
 
-```text
-✅ Service reloaded successfully
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 ```
 
-`pingclair reload` goes through the Admin API instead, and needs the `admin`
-option from the global options block. It reports what the server thought of the
-file:
+`pingclair reload` reaches the same code through the Admin API and reports what
+the server thought of the file, which needs the `admin` option from the global
+options block:
+
+```text
+✅ Configuration reloaded successfully
+```
 
 ```text
 Error: ❌ Reload failed (400): HTTP/1.1 400 Bad Request
 ```
 
-Either way, a configuration that does not compile leaves the previous one
-running, so the site keeps answering:
+`pc service reload` looks like the obvious command and is the one that does
+nothing: the installed unit's `ExecReload` sends `SIGHUP`, and the server drops
+that signal, so the command reports success while the old configuration keeps
+serving. Measured on this unit: with `x-version: four` live and `five` written to
+the file, `pc service reload` answered `✅ Service reloaded successfully` and the
+header stayed `four`; the same edit applied through `SIGUSR1` or `pingclair
+reload` took effect immediately
+([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)).
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost/
-```
-
-```text
-200
-```
-
-For that reason, validate first and treat the reload as a formality:
+Whatever path you use, a configuration that does not compile leaves the previous
+one running, so the site keeps answering, and the server does not log the
+refusal. Validate first:
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo pc service reload
 ```
 
 Process-wide policy is the exception. Options that are established at startup,
 such as `trusted_proxies`, only take effect after a restart:
-`sudo pc service restart`.
+`sudo pc service restart`. A configuration that adds or moves a listener also
+needs a restart: reload applies policy, not a new listening socket.
 
 ## 📜 Logs
 

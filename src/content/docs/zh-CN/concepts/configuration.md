@@ -91,4 +91,12 @@ import site example.com {
 
 ## 🔁 重新加载
 
-`pc service reload` 会重新读取配置，而不重启进程。在启动阶段建立的进程级策略，例如 `trusted_proxies`，要在重启后才会生效。
+重载会重新读取配置，而不重启进程。信号是 `SIGUSR1`：
+
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+```
+
+`pingclair reload` 通过 Admin API 走到同一段代码，并报告服务器对文件的判断，需要在全局选项块里写 `admin`。
+
+`pc service reload` 不是第三条路：安装出来的 unit 发送 `SIGHUP`，而服务器会忽略它，所以命令报成功，旧配置继续运行（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。在启动阶段建立的进程级策略，例如 `trusted_proxies`，要在重启后才会生效；改动监听器的配置同样需要重启。

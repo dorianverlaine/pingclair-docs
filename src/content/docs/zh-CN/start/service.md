@@ -46,7 +46,10 @@ LimitNOFILE=1048576
 - `PINGCLAIR_TLS_STORE`：证书放在 `/var/lib/pingclair/certs`。服务账号没有主
   目录，交给二进制默认值会把存储指到一个不存在的 `$HOME`。
 - `ExecStartPre` 每次启动前都会跑 `validate`。编译不过的配置永远到不了服务器。
-- `ExecReload` 发送 `SIGHUP`：重载读取同一个文件，不重启进程。
+- `ExecReload` 发送 `SIGHUP`，而服务器会忽略这个信号：`systemctl reload` ——
+  以及包装它的 `pc service reload` —— 报成功却什么都不改
+  （[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。真正
+  重载的信号是 `SIGUSR1`。
 - `Restart=always` 配合 `RestartSec=5s`：启动失败每五秒重试一次。这是最容易
   让人意外的一项，故障现象写在下面。
 
@@ -72,7 +75,8 @@ sudo systemctl restart pingclair
 | 启动 | `sudo pc service start` | `sudo systemctl start pingclair` |
 | 停止 | `sudo pc service stop` | `sudo systemctl stop pingclair` |
 | 重启 | `sudo pc service restart` | `sudo systemctl restart pingclair` |
-| 重载配置 | `sudo pc service reload` | `sudo systemctl reload pingclair` |
+| 重载配置 | — | `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` |
+| 按安装出来的方式重载（什么都不做） | `sudo pc service reload` | `sudo systemctl reload pingclair` |
 | 查看状态 | `pc service status` | `systemctl status pingclair` |
 | 跟踪日志 | — | `journalctl -u pingclair -f` |
 
@@ -89,40 +93,42 @@ sudo systemctl restart pingclair
 
 ## 🔁 重载意味着什么
 
-让改过的配置生效有两条路，它们在文件写坏时的表现不同。
+让改过的配置生效有两条命令，而那个看起来理所当然的第三条什么都不做。
 
-`pc service reload` 发的是 `SIGHUP`，只要信号送达就报成功：
+`SIGUSR1` 是重载信号，本身不需要任何配置：
 
-```text
-✅ Service reloaded successfully
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 ```
 
-`pingclair reload` 走 Admin API，需要在全局选项块里写 `admin`。它会报告服务器
-对文件的判断：
+`pingclair reload` 通过 Admin API 走到同一段代码，并报告服务器对文件的判断，
+需要在全局选项块里写 `admin`：
+
+```text
+✅ Configuration reloaded successfully
+```
 
 ```text
 Error: ❌ Reload failed (400): HTTP/1.1 400 Bad Request
 ```
 
-两种情况下，编译不过的配置都会让旧配置继续运行，所以站点照常应答：
+`pc service reload` 看起来是那条理所当然的命令，而什么都不做的正是它：安装出来
+的 unit 里 `ExecReload` 发的是 `SIGHUP`，服务器忽略该信号，于是命令报成功，而旧
+配置继续提供服务。在这个 unit 上实测：`x-version: four` 正在服务、文件里已写成
+`five` 时，`pc service reload` 回答 `✅ Service reloaded successfully`，响应头仍是
+`four`；同一处改动走 `SIGUSR1` 或 `pingclair reload` 立刻生效
+（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost/
-```
-
-```text
-200
-```
-
-所以一定要先校验，把重载当成形式：
+无论走哪条路，编译不过的配置都会让旧配置继续运行，服务器也不会把这次拒绝写进
+日志。先校验：
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo pc service reload
 ```
 
 例外是与整个进程有关的策略。像 `trusted_proxies` 这样在启动时确立的选项，只有
-重启后才生效：`sudo pc service restart`。
+重启后才生效：`sudo pc service restart`。改动监听器的配置同样需要重启：重载
+应用的是策略，不是新的监听套接字。
 
 ## 📜 日志
 

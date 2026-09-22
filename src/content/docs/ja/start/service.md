@@ -49,8 +49,10 @@ LimitNOFILE=1048576
   存在しない `$HOME` を指してしまいます。
 - `ExecStartPre` は起動のたびに `validate` を実行します。コンパイルできない設定は
   サーバーに届きません。
-- `ExecReload` は `SIGHUP` を送ります。再読み込みはプロセスを再起動せずに同じ
-  ファイルを読み直します。
+- `ExecReload` は `SIGHUP` を送りますが、サーバーはそれを無視します。したがって
+  `systemctl reload` — それを包む `pc service reload` も — は成功を報告して何も
+  変えません（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。
+  再読み込みする信号は `SIGUSR1` です。
 - `Restart=always` と `RestartSec=5s`: 起動に失敗すると 5 秒ごとに再試行します。
   これが人を驚かせる設定なので、失敗の形を以下に書きます。
 
@@ -77,7 +79,8 @@ sudo systemctl restart pingclair
 | 起動 | `sudo pc service start` | `sudo systemctl start pingclair` |
 | 停止 | `sudo pc service stop` | `sudo systemctl stop pingclair` |
 | 再起動 | `sudo pc service restart` | `sudo systemctl restart pingclair` |
-| 設定の再読み込み | `sudo pc service reload` | `sudo systemctl reload pingclair` |
+| 設定の再読み込み | — | `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` |
+| インストール済みの再読み込み（何もしない） | `sudo pc service reload` | `sudo systemctl reload pingclair` |
 | 状態 | `pc service status` | `systemctl status pingclair` |
 | ログを追う | — | `journalctl -u pingclair -f` |
 
@@ -95,42 +98,45 @@ sudo systemctl restart pingclair
 
 ## 🔁 再読み込みの意味
 
-編集した設定を反映する方法は二つあり、ファイルが間違っているときの振る舞いが
-異なります。
+編集した設定を反映するコマンドは二つあり、それらしく見える三つ目は何もしません。
 
-`pc service reload` は `SIGHUP` を送ります。信号が届いた時点で成功を報告します。
+`SIGUSR1` が再読み込みの信号です。追加の設定は不要です。
 
-```text
-✅ Service reloaded successfully
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 ```
 
-`pingclair reload` は Admin API を通り、グローバルオプションの `admin` が要ります。
-サーバーがファイルをどう見たかを報告します。
+`pingclair reload` は Admin API 経由で同じコードに到達し、サーバーがファイルを
+どう見たかを報告します。グローバルオプションの `admin` が必要です。
+
+```text
+✅ Configuration reloaded successfully
+```
 
 ```text
 Error: ❌ Reload failed (400): HTTP/1.1 400 Bad Request
 ```
 
-どちらの場合も、コンパイルできない設定は以前の設定を動かしたままにするので、
-サイトは応答し続けます。
+`pc service reload` は明らかな命令に見えますが、何もしないのはこちらです。
+インストールされたユニットの `ExecReload` は `SIGHUP` を送り、サーバーはその信号を
+無視するため、コマンドは成功を報告しながら古い設定が動き続けます。このユニットで
+実測: `x-version: four` が稼働中でファイルに `five` を書いた状態で
+`pc service reload` は `✅ Service reloaded successfully` と答え、ヘッダーは
+`four` のまま。同じ変更を `SIGUSR1` か `pingclair reload` で適用すると即座に
+反映されました
+（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost/
-```
-
-```text
-200
-```
-
-そのため、先に検証し、再読み込みは形式的なものとして扱います。
+どの経路でも、コンパイルできない設定は以前の設定を動かしたままにし、サーバーは
+その拒否をログに残しません。先に検証します。
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo pc service reload
 ```
 
 例外はプロセス全体に関わるポリシーです。`trusted_proxies` のような起動時に
 確立されるオプションは、再起動後にしか効きません: `sudo pc service restart`。
+リスナーを追加・移動する設定も再起動が必要です。再読み込みが適用するのは
+ポリシーであり、新しい待ち受けソケットではありません。
 
 ## 📜 ログ
 

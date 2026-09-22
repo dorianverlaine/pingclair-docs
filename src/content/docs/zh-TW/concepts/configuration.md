@@ -91,4 +91,12 @@ import site example.com {
 
 ## 🔁 重新載入
 
-`pc service reload` 會重新讀取設定，而不重啟行程。於啟動階段建立的行程級策略，例如 `trusted_proxies`，要在重啟後才會生效。
+重載會重新讀取設定，而不重啟行程。訊號是 `SIGUSR1`：
+
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+```
+
+`pingclair reload` 透過 Admin API 走到同一段程式碼，並回報伺服器對檔案的判斷，需要在全域選項區塊裡寫 `admin`。
+
+`pc service reload` 不是第三條路：安裝出來的 unit 送出 `SIGHUP`，而伺服器會忽略它，所以指令回報成功，舊設定繼續執行（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。於啟動階段建立的行程級策略，例如 `trusted_proxies`，要在重啟後才會生效；改動監聽器的設定同樣需要重啟。

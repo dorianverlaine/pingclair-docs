@@ -46,7 +46,10 @@ LimitNOFILE=1048576
 - `PINGCLAIR_TLS_STORE`：憑證放在 `/var/lib/pingclair/certs`。服務帳號沒有家
   目錄，交給二進位預設值會把儲存區指到不存在的 `$HOME`。
 - `ExecStartPre` 每次啟動前都會跑 `validate`。編譯不過的設定永遠到不了伺服器。
-- `ExecReload` 送出 `SIGHUP`：重載讀取同一個檔案，不重啟行程。
+- `ExecReload` 送出 `SIGHUP`，而伺服器會忽略這個訊號：`systemctl reload` ——
+  以及包裝它的 `pc service reload` —— 回報成功卻什麼都不改
+  （[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。真正
+  重載的訊號是 `SIGUSR1`。
 - `Restart=always` 搭配 `RestartSec=5s`：啟動失敗每五秒重試一次。這是最容易
   讓人意外的一項，故障現象寫在下面。
 
@@ -72,7 +75,8 @@ sudo systemctl restart pingclair
 | 啟動 | `sudo pc service start` | `sudo systemctl start pingclair` |
 | 停止 | `sudo pc service stop` | `sudo systemctl stop pingclair` |
 | 重啟 | `sudo pc service restart` | `sudo systemctl restart pingclair` |
-| 重載設定 | `sudo pc service reload` | `sudo systemctl reload pingclair` |
+| 重載設定 | — | `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` |
+| 依安裝出來的方式重載（什麼都不做） | `sudo pc service reload` | `sudo systemctl reload pingclair` |
 | 查看狀態 | `pc service status` | `systemctl status pingclair` |
 | 追蹤日誌 | — | `journalctl -u pingclair -f` |
 
@@ -89,40 +93,42 @@ sudo systemctl restart pingclair
 
 ## 🔁 重載意味著什麼
 
-讓改過的設定生效有兩條路，它們在檔案寫壞時表現不同。
+讓改過的設定生效有兩條指令，而那個看起來理所當然的第三條什麼都不做。
 
-`pc service reload` 送的是 `SIGHUP`，只要訊號送達就回報成功：
+`SIGUSR1` 是重載訊號，本身不需要任何設定：
 
-```text
-✅ Service reloaded successfully
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 ```
 
-`pingclair reload` 走 Admin API，需要在全域選項區塊裡寫 `admin`。它會回報伺服器
-對檔案的判斷：
+`pingclair reload` 透過 Admin API 走到同一段程式碼，並回報伺服器對檔案的判斷，
+需要在全域選項區塊裡寫 `admin`：
+
+```text
+✅ Configuration reloaded successfully
+```
 
 ```text
 Error: ❌ Reload failed (400): HTTP/1.1 400 Bad Request
 ```
 
-兩種情況下，編譯不過的設定都會讓舊設定繼續執行，所以站台照常應答：
+`pc service reload` 看起來是那條理所當然的指令，而什麼都不做的正是它：安裝出來
+的 unit 裡 `ExecReload` 送的是 `SIGHUP`，伺服器忽略該訊號，於是指令回報成功，而
+舊設定繼續提供服務。在這個 unit 上實測：`x-version: four` 正在服務、檔案裡已寫成
+`five` 時，`pc service reload` 回答 `✅ Service reloaded successfully`，回應標頭仍是
+`four`；同一處改動走 `SIGUSR1` 或 `pingclair reload` 立刻生效
+（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost/
-```
-
-```text
-200
-```
-
-所以一定要先驗證，把重載當成形式：
+無論走哪條路，編譯不過的設定都會讓舊設定繼續執行，伺服器也不會把這次拒絕寫進
+日誌。先驗證：
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo pc service reload
 ```
 
 例外是與整個行程有關的策略。像 `trusted_proxies` 這樣在啟動時確立的選項，只有
-重啟後才生效：`sudo pc service restart`。
+重啟後才生效：`sudo pc service restart`。改動監聽器的設定同樣需要重啟：重載
+套用的是策略，不是新的監聽通訊端。
 
 ## 📜 日誌
 

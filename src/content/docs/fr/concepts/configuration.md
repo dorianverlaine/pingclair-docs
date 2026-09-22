@@ -130,6 +130,21 @@ pendant un rechargement laisse l'état précédent en place.
 
 ## 🔁 Rechargements
 
-`pc service reload` relit la configuration sans redémarrer le processus. La
-politique valable pour tout le processus, établie au démarrage — par exemple
-`trusted_proxies` — ne prend effet qu'après un redémarrage.
+Un rechargement relit la configuration sans redémarrer le processus. Le signal
+est `SIGUSR1` :
+
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+```
+
+`pingclair reload` atteint le même code par l'Admin API et rapporte ce que le
+serveur a pensé du fichier, ce qui exige l'option `admin` du bloc des options
+globales.
+
+`pc service reload` n'est pas une troisième voie : l'unité installée envoie
+`SIGHUP`, que le serveur ignore, donc la commande annonce un succès et l'ancienne
+configuration continue de servir
+([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)). La politique
+valable pour tout le processus, établie au démarrage — par exemple
+`trusted_proxies` — ne prend effet qu'après un redémarrage, et une configuration
+qui change d'écouteurs en exige un aussi.

@@ -189,13 +189,16 @@ Server address: [::]:8083
 ```bash
 sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo pc service reload
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 curl -i http://localhost/
 ```
 
-先驗證。`pc service reload` 回報成功只表示訊號送達了，不代表伺服器接受了設定；
-拒絕設定的伺服器會繼續執行舊設定，而且不會把這次拒絕寫進日誌。只有驗證指令
-會告訴你真相。
+`SIGUSR1` 才是重載訊號，不需要額外設定。`pingclair reload` 透過 Admin API 做
+同一件事，還會回報伺服器對檔案的判斷，需要在全域選項區塊裡寫 `admin`。
+
+兩條路都要先驗證。`pc service reload` 看起來是那條理所當然的指令，其實不是：
+安裝出來的 unit 送出 `SIGHUP`，伺服器會忽略它，於是指令回報成功，而舊設定繼續
+提供服務（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。
 
 ## ⚠️ 出問題時
 

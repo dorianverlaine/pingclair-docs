@@ -91,4 +91,12 @@ import されたファイルで定義されたスニペットは、それより�
 
 ## 🔁 再読み込み
 
-`pc service reload` はプロセスを再起動せずに設定を読み直します。`trusted_proxies` のように起動時に確立されるプロセス全体のポリシーは、再起動後に反映されます。
+再読み込みはプロセスを再起動せずに設定を読み直します。信号は `SIGUSR1` です。
+
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+```
+
+`pingclair reload` は Admin API 経由で同じコードに到達し、サーバーがファイルをどう見たかを報告します。グローバルオプションの `admin` が必要です。
+
+`pc service reload` は第三の方法ではありません。インストールされたユニットは `SIGHUP` を送りますが、サーバーはそれを無視するため、コマンドは成功を報告し、古い設定が動き続けます（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。`trusted_proxies` のように起動時に確立されるプロセス全体のポリシーは再起動後に反映され、リスナーを変える設定も再起動が必要です。

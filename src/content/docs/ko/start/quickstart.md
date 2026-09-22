@@ -195,14 +195,18 @@ Server address: [::]:8083
 ```bash
 sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
 sudo pingclair validate /etc/Pingclair/Pingclairfile
-sudo pc service reload
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 curl -i http://localhost/
 ```
 
-먼저 검증하십시오. `pc service reload`가 성공을 알리는 것은 신호가 전달됐을
-때이지 서버가 설정을 받아들였을 때가 아닙니다. 설정을 거부한 서버는 거부를
-로그에 남기지 않고 이전 설정을 계속 실행합니다. 진실을 알려 주는 것은 검증
-명령뿐입니다.
+`SIGUSR1`이 재적용 신호이며 추가 설정 없이 동작합니다. `pingclair reload`는
+Admin API를 거쳐 같은 일을 하고 서버가 파일을 어떻게 봤는지도 보고합니다. 전역
+옵션 블록의 `admin`이 필요합니다.
+
+어느 쪽이든 먼저 검증하십시오. `pc service reload`는 당연해 보이는 명령이지만
+아닙니다. 설치된 유닛은 `SIGHUP`을 보내고 서버는 그 신호를 무시하므로, 성공을
+보고하면서 이전 설정이 계속 실행됩니다
+([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)).
 
 ## ⚠️ 잘 되지 않을 때
 

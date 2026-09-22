@@ -91,4 +91,12 @@ import된 파일에서 정의한 스니펫은 그 뒤의 import에서 볼 수 �
 
 ## 🔁 다시 로드
 
-`pc service reload`는 프로세스를 재시작하지 않고 설정을 다시 읽습니다. `trusted_proxies`처럼 시작 시점에 확립되는 프로세스 전역 정책은 재시작 후에 반영됩니다.
+재적용은 프로세스를 재시작하지 않고 설정을 다시 읽습니다. 신호는 `SIGUSR1`입니다.
+
+```bash
+sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
+```
+
+`pingclair reload`는 Admin API를 거쳐 같은 코드에 도달하며, 서버가 그 파일을 어떻게 봤는지 보고합니다. 전역 옵션 블록의 `admin`이 필요합니다.
+
+`pc service reload`는 세 번째 방법이 아닙니다. 설치된 유닛은 `SIGHUP`을 보내지만 서버가 그 신호를 무시하므로, 명령은 성공을 보고하고 이전 설정이 계속 실행됩니다([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)). `trusted_proxies`처럼 시작 시점에 확립되는 프로세스 전역 정책은 재시작 후에 반영되며, 리스너를 바꾸는 설정도 재시작이 필요합니다.
