@@ -242,6 +242,7 @@ change has to leave it working. What exists, and what breaks it:
 | Skills | `public/.well-known/agent-skills/` | `index.json` carries a `sha256:` digest of every `SKILL.md`. Editing a skill without recomputing it publishes a file that fails its own integrity check: `shasum -a 256 public/.well-known/agent-skills/<name>/SKILL.md`. |
 | Browser tools | `public/webmcp.js` | Registers `search_pingclair_docs` and `read_pingclair_page` for browsers that implement WebMCP, and calls `/mcp` so there is one search implementation. Feature-detect, never assume the API exists. |
 | Access statement | `public/auth.md` | States that the site is anonymous and issues no credentials. This site operates no OAuth authorization server, so it publishes no OAuth metadata: inventing one would send agents to a dead end. |
+| Retired hostname | `wrangler.toml`, `worker/index.js` | `pingclair.aqeo.dev` stays bound as a custom domain, and every request on it is a permanent redirect to `pingclair.com`: a 301 for `GET` and `HEAD`, a 308 for anything else so an agent posting to `/mcp` keeps its method and body. Dropping the route or the hostname check silently retires every link written before the move. |
 
 `wrangler.toml` sets `run_worker_first = true`, which is what lets the worker
 see a page request before the assets server answers it. Removing it does not

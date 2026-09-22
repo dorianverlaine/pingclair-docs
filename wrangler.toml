@@ -5,11 +5,16 @@ name = "pingclair-docs"
 main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
-# The docs domain. Deploying with this route requires the pingclair.com zone to live
-# in the same Cloudflare account: Wrangler creates the DNS record and the
-# certificate for the hostname. Top-level, not inside [assets]: TOML tables
-# swallow every key that follows them.
-routes = [{ pattern = "pingclair.com", custom_domain = true }]
+# The docs domain, plus the hostname the site moved away from: it stays bound so
+# the Worker can answer every old link with a permanent redirect rather than
+# letting the retired address go dark. Deploying with these routes requires both
+# zones to live in the same Cloudflare account: Wrangler creates the DNS record
+# and the certificate for each hostname. Top-level, not inside [assets]: TOML
+# tables swallow every key that follows them.
+routes = [
+	{ pattern = "pingclair.com", custom_domain = true },
+	{ pattern = "pingclair.aqeo.dev", custom_domain = true },
+]
 
 [assets]
 directory = "./dist"

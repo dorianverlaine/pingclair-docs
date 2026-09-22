@@ -123,12 +123,17 @@ import a repository:
 No output directory has to be configured in the dashboard: `wrangler.toml`
 declares `dist` as the assets directory, so `wrangler deploy` uploads it as
 static assets. Pushes to `main` build and deploy; other branches get preview
-URLs. The same file also declares the `pingclair.com` custom domain, which
-requires the `pingclair.com` zone to be in the same account.
+URLs. The same file declares two custom domains: `pingclair.com`, which the
+canonical URLs, sitemap, and discovery documents name, and the retired
+`pingclair.aqeo.dev`, which the Worker answers with a permanent redirect to the
+new origin — a 301 for `GET` and `HEAD`, a 308 for anything else so a client
+posting to `/mcp` keeps its method. Both zones have to be in the same Cloudflare
+account as the Worker.
 
 To deploy to **Pages** instead, replace `[assets]` with
-`pages_build_output_dir = "dist"` and remove the `routes` entry; everything else,
-including `_headers`, works the same way.
+`pages_build_output_dir = "dist"` and remove the `routes` entry, which also drops
+the `/mcp` and `/a2a` endpoints and the retired-hostname redirect; everything
+else, including `_headers`, works the same way.
 
 Everything the build produces is a file: the pages, the `.md` endpoint behind
 "Copy page", `llms.txt`, `llms-full.txt`, the Pagefind index, and the sitemap.

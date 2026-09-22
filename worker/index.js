@@ -7,12 +7,26 @@
  * and the documentation servers an agent can query (`/mcp` and `/a2a`) — and
  * hands every other request straight back to it.
  *
+ * 🧭 It also answers on the retired hostname, where every request becomes a
+ * permanent redirect to the canonical origin, so links written before the move
+ * keep working.
+ *
  * `wrangler.toml` sets `run_worker_first`, because assets-first routing would
  * answer the request before either behavior could see it.
  */
 
 const MCP_PROTOCOL_VERSION = '2025-06-18';
 const SERVER_INFO = { name: 'pingclair-docs', version: '0.1.0' };
+
+/** The origin every canonical URL, sitemap entry, and discovery document names. */
+const CANONICAL_ORIGIN = 'https://pingclair.com';
+
+/**
+ * 🔁 Hostnames the site has moved away from. They stay bound as custom domains
+ * so old links land here instead of going dark, and every request on them is
+ * redirected to `CANONICAL_ORIGIN`.
+ */
+const RETIRED_HOSTS = new Set(['pingclair.aqeo.dev']);
 
 const TOOLS = [
 	{
@@ -313,9 +327,24 @@ function withVaryAccept(headers) {
 	return headers;
 }
 
+/**
+ * 🔁 The permanent redirect a retired hostname answers with, or `null` when the
+ * request already arrived on the canonical one. `GET` and `HEAD` get the 301
+ * browsers, crawlers, and link checkers expect; every other method gets 308,
+ * because a client `POST`ing to `/mcp` must keep its method and body.
+ */
+function retiredRedirect(request, url) {
+	if (!RETIRED_HOSTS.has(url.hostname)) return null;
+	const status = request.method === 'GET' || request.method === 'HEAD' ? 301 : 308;
+	return Response.redirect(new URL(`${url.pathname}${url.search}`, CANONICAL_ORIGIN), status);
+}
+
 export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
+
+		const redirect = retiredRedirect(request, url);
+		if (redirect) return redirect;
 
 		if (url.pathname === '/mcp' || url.pathname === '/a2a') {
 			try {
