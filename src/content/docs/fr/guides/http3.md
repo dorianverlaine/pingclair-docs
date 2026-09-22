@@ -138,7 +138,7 @@ Pour cela, regardez le réglage HTTP/3 du CDN.
   l'hôte.
 - **Aucun écouteur UDP sur l'hôte.** `h3` manque dans la liste de protocoles, ou
   le fichier en service n'est pas celui que vous avez édité
-  ([ce que signifie un rechargement](/fr/start/service/#-what-a-reload-means)).
+  ([ce que signifie un rechargement](/fr/start/service/#-ce-que-signifie-un-rechargement)).
 - **HTTP/3 marche localement mais pas depuis l'extérieur.** Le réseau du client
   bloque UDP 443, ce qui est courant en entreprise et à l'hôtel ; les navigateurs
   retombent silencieusement.

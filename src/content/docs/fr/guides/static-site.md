@@ -177,7 +177,7 @@ fichier existe.
 - **Une nouvelle page n'apparaît pas après un rechargement.** Le rechargement
   applique la politique, pas un nouvel écouteur ; les fichiers sont lus à chaque
   requête, donc ajouter un fichier est immédiat et déplacer l'écouteur ne l'est
-  pas ([Exécution comme service](/fr/start/service/#-what-a-reload-means)).
+  pas ([Exécution comme service](/fr/start/service/#-ce-que-signifie-un-rechargement)).
 
 ## 🧭 Étapes suivantes
 

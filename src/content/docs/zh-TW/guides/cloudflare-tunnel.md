@@ -133,7 +133,7 @@ remote_ip=16.162.199.171     # 之後：發起請求的用戶端
 
 這個設定也讓基於 IP 的限速與規則在 tunnel 後面變得有意義。它在啟動時確立，所以
 改動需要重啟而不是重載，見
-[重載意味著什麼](/zh-TW/start/service/#-what-a-reload-means)。
+[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)。
 
 ## ⚠️ 出問題時
 

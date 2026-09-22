@@ -158,7 +158,7 @@ Caddy-compatible directive 'tls on_demand' is not supported by Pingclair yet: Pi
 - **`protocols h1 h2` でも HTTP/3 が動き続ける。** 本来は止まります。それを決める
   のがこのリストです。UDP 443 がまだ待ち受けているなら、動いているファイルは
   編集したファイルではありません
-  （[再読み込みの意味](/ja/start/service/#-what-a-reload-means)）。
+  （[再読み込みの意味](/ja/start/service/#-再読み込みの意味)）。
 - **ストアを移したあとサービスが起動しない。** 上記の所有権の問題です。
 
 ## 🧭 次の手順

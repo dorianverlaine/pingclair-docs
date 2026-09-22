@@ -126,7 +126,7 @@ ALPN protocol: h3
 - **`curl --http3` 卡住或逾時。** 某處擋住了 UDP 443。先查服務商防火牆或安全群組，
   再查主機。
 - **主機上沒有 UDP 監聽。** 協定列表裡少了 `h3`，或者正在執行的不是你編輯的那個
-  檔案（[重載意味著什麼](/zh-TW/start/service/#-what-a-reload-means)）。
+  檔案（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
 - **本機能用、外面不能用。** 用戶端網路阻斷了 UDP 443，這在企業與飯店網路很常見；
   瀏覽器會靜默後退。
 - **FastCGI 路由回 `501`。** 在 HTTP/3 上這是設計如此；[專案狀態](/zh-TW/project/status/)

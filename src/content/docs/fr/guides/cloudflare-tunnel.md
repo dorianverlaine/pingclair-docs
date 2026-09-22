@@ -141,7 +141,7 @@ remote_ip=16.162.199.171     # après : le client qui a lancé la requête
 C'est aussi ce réglage qui donne un sens à la limitation par IP et aux règles par
 IP derrière un tunnel. Il est établi au démarrage : le changer demande un
 redémarrage, pas un rechargement
-([ce que signifie un rechargement](/fr/start/service/#-what-a-reload-means)).
+([ce que signifie un rechargement](/fr/start/service/#-ce-que-signifie-un-rechargement)).
 
 ## ⚠️ Quand cela ne marche pas
 

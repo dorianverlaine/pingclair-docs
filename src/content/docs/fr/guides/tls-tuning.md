@@ -165,7 +165,7 @@ c'est une demande de fonctionnalité, pas une erreur de configuration.
 - **HTTP/3 tourne encore après `protocols h1 h2`.** Ce ne devrait pas être le
   cas : c'est cette liste qui le commande. Si UDP 443 écoute encore, le fichier en
   service n'est pas celui que vous avez édité
-  ([ce que signifie un rechargement](/fr/start/service/#-what-a-reload-means)).
+  ([ce que signifie un rechargement](/fr/start/service/#-ce-que-signifie-un-rechargement)).
 - **Le service ne démarre plus après un déplacement de magasin.** La propriété,
   comme ci-dessus.
 

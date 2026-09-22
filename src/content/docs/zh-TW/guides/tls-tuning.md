@@ -149,7 +149,7 @@ Caddy-compatible directive 'tls on_demand' is not supported by Pingclair yet: Pi
   它們沒有實作；見上一節。
 - **`protocols h1 h2` 之後 HTTP/3 還在跑。** 不該如此 —— 控制它的就是那個列表。
   如果 UDP 443 還在監聽，說明正在執行的不是你編輯的那個檔案，見
-  [重載意味著什麼](/zh-TW/start/service/#-what-a-reload-means)。
+  [重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)。
 - **搬移儲存區後服務起不來。** 就是上面的擁有者問題。
 
 ## 🧭 下一步
