@@ -1,5 +1,5 @@
 ---
-title: TLS: what you can tune
+title: 'TLS: what you can tune'
 h1_emoji: '🛡️'
 sidebar:
   order: 3

@@ -1,5 +1,5 @@
 ---
-title: TLS : ce qui se règle
+title: 'TLS : ce qui se règle'
 h1_emoji: '🛡️'
 sidebar:
   order: 3
