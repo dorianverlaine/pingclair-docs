@@ -9,7 +9,7 @@ description: 為公開網域取得憑證、發佈內部憑證，或帶自己的�
 只要站台區塊的位址是公開網域，不需要 `tls` 指令就有了 HTTPS：Pingclair 透過
 ACME 向 Let's Encrypt 申請憑證，在 80 連接埠回應 HTTP-01 挑戰，保存結果，並在
 背景下續期。其餘三種取得憑證的方式 —— DNS-01、本機憑證授權單位、自己提供的
-檔案 —— 下面分別說明各自需要什麼，以及在 v0.2.0-rc.3 裡實際是什麼行為。
+檔案 —— 下面分別說明各自需要什麼。
 
 ## 🧾 開始之前
 
@@ -108,20 +108,35 @@ DNS-01 用發佈 TXT 記錄來證明對網域的控制，而不是在 80 連接�
 `NO_CERTIFICATE_SET` 失敗。另外 token 是 Cloudflare API token，需要該網域所在
 區域的 `Zone:DNS:Edit` 權限。
 
-⚠️ **在 v0.2.0-rc.3 裡 DNS-01 簽發無法完成。** 挑戰本身是跑起來的：記錄發佈了，
-按設定指定的解析器確認了傳播，也要求了憑證授權單位做驗證。隨後訂單在一秒內變成
-invalid，試過的每個網域都是如此，憑證從未落盤：
+🃏 **一張憑證覆蓋整個站台。** `*.example.com` 站台簽的就是 `*.example.com`
+本身：啟動時取得一張憑證，服務它底下的每個名字。萬用字元只涵蓋一層 label，
+所以 apex 需要自己的條目 —— 站台也要回答 `example.com` 的話，寫成
+`*.example.com, example.com`，每個主體都照寫下的樣子下單。這樣服務的子網域不會
+進入 Certificate Transparency 記錄，而這正是使用萬用字元的隱私理由。
 
-```text
-📡 Published the DNS-01 record for _acme-challenge.example.com via cloudflare
-👍 DNS-01 record for _acme-challenge.example.com is visible
-🚀 Verification triggered for example.com
-⏳ Polling order status...
-⚠️ Eager issuance failed for example.com: Order ended in state: Invalid
+站台底下的每個名字都由這一張憑證服務。在另一台機器上：
+
+```bash
+curl -I https://anything.example.com/
 ```
 
-在修好之前，公開網域請用 HTTP-01。因此萬用字元網域暫時還不能帶憑證提供服務；
-替代方案是每個名字單獨一張憑證，或者在別處簽發後以檔案形式提供。
+```text
+HTTP/2 200
+content-type: text/html; charset=utf-8
+server: Pingclair
+```
+
+```bash
+echo | openssl s_client -connect example.com:443 -servername anything.example.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -ext subjectAltName
+```
+
+```text
+subject=CN=*.example.com
+issuer=C=US, O=Let's Encrypt, CN=YE1
+X509v3 Subject Alternative Name:
+    DNS:*.example.com
+```
 
 ## 🏛️ 來自內部憑證授權單位的憑證
 

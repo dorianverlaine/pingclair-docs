@@ -10,8 +10,8 @@ A site block whose address is a public name gets HTTPS without a `tls`
 directive: Pingclair asks Let's Encrypt for a certificate over ACME, answers the
 HTTP-01 challenge on port 80, stores the result, and renews it in the
 background. The other three ways to get a certificate — DNS-01, a local
-authority, and files you supply — are covered below with what each one requires
-and what it actually does in v0.2.0-rc.3.
+authority, and files you supply — are covered below with what each one
+requires.
 
 ## 🧾 Before you start
 
@@ -116,23 +116,37 @@ hostname(s)` and never asks for a certificate, leaving every handshake to fail
 with `NO_CERTIFICATE_SET`. And the token is a Cloudflare API token with
 `Zone:DNS:Edit` for the zone that holds the name.
 
-⚠️ **DNS-01 issuance does not complete in v0.2.0-rc.3.** The challenge itself
-runs: the record is published, propagation is confirmed against the resolver
-the configuration names, and the authority is asked to validate. The order then
-comes back invalid within a second, on every name tried, and the certificate is
-never stored:
+🃏 **One leaf covers the site.** A `*.example.com` site orders `*.example.com`
+itself: one certificate, obtained at startup, served to every name beneath it.
+A wildcard covers exactly one label, so the apex needs its own entry — write
+`*.example.com, example.com` if the site answers at `example.com` too, and each
+subject is ordered as written. The subdomains served this way stay out of
+Certificate Transparency logs, which is the privacy argument for a wildcard in
+the first place.
 
-```text
-📡 Published the DNS-01 record for _acme-challenge.example.com via cloudflare
-👍 DNS-01 record for _acme-challenge.example.com is visible
-🚀 Verification triggered for example.com
-⏳ Polling order status...
-⚠️ Eager issuance failed for example.com: Order ended in state: Invalid
+Any name under the site is served by that one leaf. From another machine:
+
+```bash
+curl -I https://anything.example.com/
 ```
 
-Until that is fixed, use HTTP-01 for public names. A wildcard name therefore
-cannot be served with a certificate yet; the alternative is one name per
-certificate, or a certificate you issue elsewhere and supply as files.
+```text
+HTTP/2 200
+content-type: text/html; charset=utf-8
+server: Pingclair
+```
+
+```bash
+echo | openssl s_client -connect example.com:443 -servername anything.example.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -ext subjectAltName
+```
+
+```text
+subject=CN=*.example.com
+issuer=C=US, O=Let's Encrypt, CN=YE1
+X509v3 Subject Alternative Name:
+    DNS:*.example.com
+```
 
 ## 🏛️ Certificates from the internal authority
 

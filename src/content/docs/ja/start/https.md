@@ -10,7 +10,7 @@ description: 公開名の証明書を取得し、内部証明書を配布し、�
 なります。Pingclair は ACME で Let's Encrypt に証明書を要求し、80 ポートで
 HTTP-01 チャレンジに応答し、結果を保存してバックグラウンドで更新します。残り
 三つの方法 — DNS-01、ローカル認証局、自分で用意するファイル — については、それ
-ぞれ何が必要で v0.2.0-rc.3 で実際に何が起きるかを以下に書きます。
+ぞれ何が必要かを以下に書きます。
 
 ## 🧾 はじめる前に
 
@@ -115,22 +115,37 @@ DNS-01 は 80 ポートで応答する代わりに TXT レコードを公開し�
 失敗します。もう一つ、トークンはその名前を含むゾーンに対する `Zone:DNS:Edit`
 権限を持つ Cloudflare API トークンです。
 
-⚠️ **v0.2.0-rc.3 では DNS-01 の発行が完了しません。** チャレンジ自体は動きます。
-レコードが公開され、設定で指定したリゾルバーに対して伝播が確認され、認証局に
-検証が要求されます。その直後、試したすべての名前で注文が 1 秒以内に invalid に
-なり、証明書は保存されません。
+🃏 **1 枚のリーフがサイト全体を覆います。** `*.example.com` のサイトは
+`*.example.com` 自体を注文します。起動時に取得した 1 枚の証明書が、その下の
+すべての名前に使われます。ワイルドカードは 1 ラベルだけを覆うので、apex には
+独自のエントリが必要です — `example.com` でも応答するなら
+`*.example.com, example.com` と書き、各サブジェクトは書いたとおりに注文されます。
+こうして配信されるサブドメインは Certificate Transparency のログに出ません。
+これがワイルドカードを使う privacy 上の理由そのものです。
 
-```text
-📡 Published the DNS-01 record for _acme-challenge.example.com via cloudflare
-👍 DNS-01 record for _acme-challenge.example.com is visible
-🚀 Verification triggered for example.com
-⏳ Polling order status...
-⚠️ Eager issuance failed for example.com: Order ended in state: Invalid
+サイト配下のどの名前も、この 1 枚のリーフで配信されます。別のマシンから:
+
+```bash
+curl -I https://anything.example.com/
 ```
 
-修正されるまでは公開名に HTTP-01 を使ってください。したがってワイルドカード名は
-まだ証明書付きで配信できません。代わりに 1 名 1 証明書にするか、他所で発行した
-証明書をファイルとして渡します。
+```text
+HTTP/2 200
+content-type: text/html; charset=utf-8
+server: Pingclair
+```
+
+```bash
+echo | openssl s_client -connect example.com:443 -servername anything.example.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -ext subjectAltName
+```
+
+```text
+subject=CN=*.example.com
+issuer=C=US, O=Let's Encrypt, CN=YE1
+X509v3 Subject Alternative Name:
+    DNS:*.example.com
+```
 
 ## 🏛️ 内部認証局からの証明書
 

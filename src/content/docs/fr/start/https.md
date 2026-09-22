@@ -11,7 +11,7 @@ Un bloc de site dont l'adresse est un nom public obtient HTTPS sans directive
 HTTP-01 sur le port 80, conserve le résultat et le renouvelle en arrière-plan.
 Les trois autres façons d'obtenir un certificat — DNS-01, une autorité locale et
 des fichiers que vous fournissez — sont décrites ci-dessous avec ce que chacune
-exige et ce qu'elle fait réellement en v0.2.0-rc.3.
+exige.
 
 ## 🧾 Avant de commencer
 
@@ -118,24 +118,38 @@ inscrit le nom sur la liste d'émission ; sans elle, le serveur journalise
 chaque poignée de main échouer avec `NO_CERTIFICATE_SET`. Et le jeton est un
 jeton d'API Cloudflare avec `Zone:DNS:Edit` sur la zone qui contient le nom.
 
-⚠️ **L'émission DNS-01 ne va pas au bout en v0.2.0-rc.3.** Le défi lui-même se
-déroule : l'enregistrement est publié, la propagation est confirmée auprès du
-résolveur nommé dans la configuration, et l'autorité est priée de valider. La
-commande revient ensuite invalide en moins d'une seconde, sur chaque nom essayé,
-et le certificat n'est jamais conservé :
+🃏 **Une seule feuille couvre le site.** Un site `*.example.com` demande
+`*.example.com` lui-même : un certificat, obtenu au démarrage, servi à chaque nom
+en dessous. Un certificat générique couvre exactement un label, donc l'apex a
+besoin de sa propre entrée — écrivez `*.example.com, example.com` si le site
+répond aussi à `example.com`, et chaque sujet est demandé tel qu'écrit. Les
+sous-domaines ainsi servis restent hors des journaux Certificate Transparency,
+ce qui est justement l'argument de confidentialité en faveur d'un générique.
 
-```text
-📡 Published the DNS-01 record for _acme-challenge.example.com via cloudflare
-👍 DNS-01 record for _acme-challenge.example.com is visible
-🚀 Verification triggered for example.com
-⏳ Polling order status...
-⚠️ Eager issuance failed for example.com: Order ended in state: Invalid
+Tout nom sous le site est servi par cette unique feuille. Depuis une autre
+machine :
+
+```bash
+curl -I https://anything.example.com/
 ```
 
-Tant que ce n'est pas corrigé, utilisez HTTP-01 pour les noms publics. Un nom
-générique ne peut donc pas encore être servi avec un certificat ; l'alternative
-est un nom par certificat, ou un certificat émis ailleurs et fourni sous forme de
-fichiers.
+```text
+HTTP/2 200
+content-type: text/html; charset=utf-8
+server: Pingclair
+```
+
+```bash
+echo | openssl s_client -connect example.com:443 -servername anything.example.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -ext subjectAltName
+```
+
+```text
+subject=CN=*.example.com
+issuer=C=US, O=Let's Encrypt, CN=YE1
+X509v3 Subject Alternative Name:
+    DNS:*.example.com
+```
 
 ## 🏛️ Certificats de l'autorité interne
 

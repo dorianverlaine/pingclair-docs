@@ -10,7 +10,7 @@ description: 공개 이름의 인증서를 받고, 내부 인증서를 배포하
 Pingclair는 ACME로 Let's Encrypt에 인증서를 요청하고, 80 포트에서 HTTP-01
 챌린지에 응답하고, 결과를 저장하고, 백그라운드에서 갱신합니다. 나머지 세 가지
 방법 — DNS-01, 로컬 인증 기관, 직접 준비한 파일 — 은 각각 무엇이 필요한지와
-v0.2.0-rc.3에서 실제로 어떻게 동작하는지를 아래에 적었습니다.
+무엇이 필요한지를 아래에 적었습니다.
 
 ## 🧾 시작하기 전에
 
@@ -115,22 +115,37 @@ DNS-01은 80 포트에서 응답하는 대신 TXT 레코드를 게시해 이름�
 실패합니다. 또한 토큰은 그 이름을 담은 존에 대한 `Zone:DNS:Edit` 권한이 있는
 Cloudflare API 토큰입니다.
 
-⚠️ **v0.2.0-rc.3에서는 DNS-01 발급이 끝나지 않습니다.** 챌린지 자체는
-동작합니다. 레코드가 게시되고, 설정에 적은 리졸버로 전파가 확인되고, 인증
-기관에 검증이 요청됩니다. 그 직후 시도한 모든 이름에서 주문이 1초 안에
-invalid가 되고 인증서는 저장되지 않습니다.
+🃏 **리프 하나가 사이트 전체를 덮습니다.** `*.example.com` 사이트는
+`*.example.com` 자체를 주문합니다. 시작할 때 받은 인증서 한 장이 그 아래 모든
+이름에 사용됩니다. 와일드카드는 정확히 한 레이블만 덮으므로 apex에는 별도 항목이
+필요합니다 — `example.com`에서도 응답한다면
+`*.example.com, example.com`이라고 쓰고, 각 주체는 적은 그대로 주문됩니다.
+이렇게 제공되는 하위 도메인은 Certificate Transparency 로그에 남지 않습니다.
+와일드카드를 쓰는 privacy상의 이유가 바로 이것입니다.
 
-```text
-📡 Published the DNS-01 record for _acme-challenge.example.com via cloudflare
-👍 DNS-01 record for _acme-challenge.example.com is visible
-🚀 Verification triggered for example.com
-⏳ Polling order status...
-⚠️ Eager issuance failed for example.com: Order ended in state: Invalid
+사이트 아래의 모든 이름이 그 리프 하나로 제공됩니다. 다른 머신에서:
+
+```bash
+curl -I https://anything.example.com/
 ```
 
-고쳐질 때까지 공개 이름에는 HTTP-01을 사용하십시오. 따라서 와일드카드 이름은
-아직 인증서와 함께 제공할 수 없습니다. 대신 이름마다 인증서를 하나씩 받거나,
-다른 곳에서 발급한 인증서를 파일로 넘기십시오.
+```text
+HTTP/2 200
+content-type: text/html; charset=utf-8
+server: Pingclair
+```
+
+```bash
+echo | openssl s_client -connect example.com:443 -servername anything.example.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -ext subjectAltName
+```
+
+```text
+subject=CN=*.example.com
+issuer=C=US, O=Let's Encrypt, CN=YE1
+X509v3 Subject Alternative Name:
+    DNS:*.example.com
+```
 
 ## 🏛️ 내부 인증 기관의 인증서
 

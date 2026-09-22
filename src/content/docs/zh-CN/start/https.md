@@ -9,7 +9,7 @@ description: 为公开域名取得证书、发布内部证书，或带自己的�
 只要站点块的地址是公开域名，不需要 `tls` 指令就有了 HTTPS：Pingclair 通过 ACME
 向 Let's Encrypt 申请证书，在 80 端口应答 HTTP-01 挑战，保存结果，并在后台续期。
 其余三种取得证书的方式 —— DNS-01、本地证书颁发机构、自己提供的文件 —— 下面分别
-说明各自需要什么，以及在 v0.2.0-rc.3 里实际是什么行为。
+说明各自需要什么。
 
 ## 🧾 开始之前
 
@@ -106,20 +106,35 @@ DNS-01 用发布 TXT 记录来证明对域名的控制，而不是在 80 端口�
 `NO_CERTIFICATE_SET` 失败。另外 token 是 Cloudflare API token，需要该域名所在
 区域的 `Zone:DNS:Edit` 权限。
 
-⚠️ **在 v0.2.0-rc.3 里 DNS-01 签发无法完成。** 挑战本身是跑起来的：记录发布了，
-按配置指定的解析器确认了传播，也请求了颁发机构做校验。随后订单在一秒内变成
-invalid，试过的每个域名都是如此，证书从未落盘：
+🃏 **一张证书覆盖整个站点。** `*.example.com` 站点下单的就是 `*.example.com`
+本身：启动时取得一张证书，服务它下面的每个名字。通配符只覆盖一层 label，所以
+apex 需要自己的条目 —— 如果站点也要回答 `example.com`，写成
+`*.example.com, example.com`，每个主体都按写下的样子下单。这样服务的子域名不会
+进入 Certificate Transparency 日志，而这正是使用通配符的隐私理由。
 
-```text
-📡 Published the DNS-01 record for _acme-challenge.example.com via cloudflare
-👍 DNS-01 record for _acme-challenge.example.com is visible
-🚀 Verification triggered for example.com
-⏳ Polling order status...
-⚠️ Eager issuance failed for example.com: Order ended in state: Invalid
+站点下的每个名字都由这一张证书服务。在另一台机器上：
+
+```bash
+curl -I https://anything.example.com/
 ```
 
-在修好之前，公开域名请用 HTTP-01。因此通配符域名暂时还不能带证书提供服务；替代
-方案是每个名字单独一张证书，或者在别处签发后以文件形式提供。
+```text
+HTTP/2 200
+content-type: text/html; charset=utf-8
+server: Pingclair
+```
+
+```bash
+echo | openssl s_client -connect example.com:443 -servername anything.example.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -ext subjectAltName
+```
+
+```text
+subject=CN=*.example.com
+issuer=C=US, O=Let's Encrypt, CN=YE1
+X509v3 Subject Alternative Name:
+    DNS:*.example.com
+```
 
 ## 🏛️ 来自内部证书颁发机构的证书
 
