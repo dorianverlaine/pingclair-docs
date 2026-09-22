@@ -113,6 +113,17 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'concepts' } }],
 				},
 				{
+					label: 'Guides',
+					translations: {
+						'zh-TW': '操作指南',
+						'zh-CN': '操作指南',
+						ja: 'ガイド',
+						ko: '가이드',
+						fr: 'Guides',
+					},
+					items: [{ autogenerate: { directory: 'guides' } }],
+				},
+				{
 					label: 'Reference',
 					translations: {
 						'zh-TW': '參考手冊',
