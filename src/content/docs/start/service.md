@@ -104,7 +104,7 @@ server sent:
 ● pingclair.service - Pingclair High-Performance Web Server
      Loaded: loaded (/etc/systemd/system/pingclair.service; enabled; preset: enabled)
      Active: active (running) since Tue 2026-09-22 05:57:21 UTC; 18s ago
-       Docs: https://github.com/dorianverlaine/pingclair
+       Docs: https://pingclair.com/start/service/
    Main PID: 27630 (pingclair)
      Status: "Serving"
 ```

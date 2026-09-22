@@ -125,7 +125,7 @@ pc service status
 ● pingclair.service - Pingclair High-Performance Web Server
      Loaded: loaded (/etc/systemd/system/pingclair.service; enabled; preset: enabled)
      Active: active (running) since Tue 2026-09-22 03:21:55 UTC; 42s ago
-       Docs: https://github.com/dorianverlaine/pingclair
+       Docs: https://pingclair.com/start/service/
    Main PID: 1808 (pingclair)
      Status: "Serving"
       Tasks: 12 (limit: 627)

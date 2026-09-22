@@ -103,7 +103,7 @@ NoNewPrivileges=true
 ● pingclair.service - Pingclair High-Performance Web Server
      Loaded: loaded (/etc/systemd/system/pingclair.service; enabled; preset: enabled)
      Active: active (running)
-       Docs: https://github.com/dorianverlaine/pingclair
+       Docs: https://pingclair.com/start/service/
    Main PID: 1808 (pingclair)
      Status: "Serving (reloaded 1 listener(s) in 323.341µs)"
 ```
