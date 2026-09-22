@@ -1,98 +1,223 @@
 ---
 title: 快速开始
 h1_emoji: '🏃'
-description: 写出第一份 Pingclairfile，验证配置，然后开始提供服务。
+sidebar:
+  order: 2
+description: 编写第一份 Pingclairfile，校验它，以前台或后台方式运行，并提供真实目录。
 ---
 
-本页从一份全新安装走到可运行的服务器：先让 8080 端口提供静态站点，再放上一个反向代理。
+本页从一台装好的主机走到你完全掌握的服务器：磁盘上的配置、经过校验的编译、可以
+启动、停止和监视的服务进程，以及一个证明文件服务器确实应答了的验证步骤。前提是
+[安装](/zh-CN/start/install/) 已经完成。
 
-## 1. ✍️ 写一份配置
+## 🧾 开始之前
 
-创建名为 `Pingclairfile` 的文件：
+安装器留下了一个跑在 80 端口上的服务，它握着 `/etc/Pingclair/Pingclairfile`
+里的配置。做实验期间先把它停掉，腾出端口：
+
+```bash
+sudo pc service stop
+```
+
+```bash
+mkdir -p ~/demo/public
+cd ~/demo
+echo '<h1>hello from ~/demo/public</h1>' > public/index.html
+```
+
+## 1. ✍️ 编写配置
+
+创建 `~/demo/Pingclairfile`：
 
 ```caddyfile
-localhost:8080 {
+{
+    admin 127.0.0.1:2019
+}
+
+http://localhost:8080 {
     file_server ./public
 }
 ```
 
-文件中只有一个 site block。`localhost:8080` 是这个站点响应的地址，`file_server` 负责提供文件，`./public` 是文件的来源目录，相对于运行时的工作目录。
+有三点值得点名。顶部的无名代码块是全局选项，`admin` 让 `pingclair start`、
+`stop`、`reload` 能跟正在运行的服务器对话。站点地址带 scheme，`http://` 强制
+明文；不写它的话，Pingclair 会把 `localhost` 当成名字，用自带的证书颁发机构
+提供 HTTPS，明文 HTTP 客户端看到的只会是空响应（[HTTPS](/zh-CN/start/https/)）。
+`file_server` 的根目录相对于当前工作目录。
 
-## 2. ✅ 验证配置
+## 2. ✅ 运行前先校验
 
 ```bash
 pingclair validate
 ```
 
-`validate` 默认读取 `./Pingclairfile`，也会探测 `./Caddyfile`。它会编译配置、检查证书路径一类的语义条件，并在出问题时以非零状态退出。验证不是建议：验证失败的配置不会运行。
-
-编写配置时，另外两个命令很有用：
-
-```bash
-pingclair adapt --pretty   # 打印编译后的 JSON 形式
-pingclair fmt --diff       # 显示格式差异，但不写回文件
+```text
+✅ Configuration 'Pingclairfile' is valid!
 ```
 
-## 3. 🚀 运行
+`validate` 默认读取 `./Pingclairfile`，也能识别 `./Caddyfile`。它编译配置并
+执行语义检查，例如证书路径是否存在。校验不是建议：未通过的配置不会运行，最后
+一行会给出原因。
+
+## 3. 🧭 看配置会变成什么
+
+```bash
+pingclair adapt --pretty
+```
+
+```text
+{
+  "debug": false,
+  "servers": [
+    {
+      "name": "localhost",
+      "names": [
+        "localhost"
+      ],
+      "listen": [
+        "[::]:8080"
+      ],
+```
+
+编译后的 JSON 就是服务器真正执行的形式。当某个指令的行为与文档不符时，这里是
+第一个该看的地方。想反过来看 `pingclair fmt` 会改文件里的什么：
+
+```bash
+pingclair fmt --diff
+```
+
+```text
+-    file_server ./public
++  file_server ./public
+```
+
+`fmt` 输出规范形式，缩进是两个空格。
+
+## 4. 🚀 运行
+
+前台运行，日志留在终端里：
 
 ```bash
 pingclair run Pingclairfile
 ```
 
-进程会记录每个开启的 listener，随后持续处理请求，直到收到终止信号。
+```text
+🚀 Starting Pingclair with config: Pingclairfile
+🚀 Starting Pingclair v0.2.0-rc.3
+📄 Loaded configuration from: Pingclairfile
+🔧 Configured 1 server(s)
+🔐 Auto HTTPS: enabled
+```
 
-## 4. 🔍 验证结果
+加上 `--watch`，每次保存都会重新加载配置，这就是开发循环：
 
-另开一个终端：
+```bash
+pingclair run --watch Pingclairfile
+```
+
+```text
+♻️ Configuration reloaded successfully
+✅ Configuration reloaded completed successfully in 2.478622ms
+```
+
+也可以放到后台，让它不受 shell 影响：
+
+```bash
+pingclair start -c Pingclairfile
+```
+
+```text
+✅ Pingclair started in the background (pid 4432)
+```
+
+`pingclair start`、`stop`、`reload` 通过 Admin API 联系正在运行的服务器，这就是
+上面配置里要写 `admin` 的原因。`pingclair run` 不需要它。
+
+## 5. 🔍 验证
 
 ```bash
 curl -i http://localhost:8080/
 ```
 
-预期会看到 `200`，以及所提供文件的 `ETag` 与 `Last-Modified` 响应头。
-
-如果请求反而挂起，请检查是否有系统代理拦截了回环流量，并改用 `curl --noproxy '*'` 重试。
-
-## 5. 🔁 代理一个应用
-
-把 site block 换成指向 3000 端口后端服务的反向代理：
-
-```caddyfile
-localhost:8080 {
-    reverse_proxy localhost:3000
-}
+```text
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 34
+Last-Modified: Tue, 22 Sep 2026 03:26:39 GMT
+ETag: "22-6ab1f56f"
+Vary: Accept-Encoding
+Accept-Ranges: bytes
+server: Pingclair
 ```
 
-用相同的命令重新验证并运行。响应现在来自后端。多个上游、负载均衡策略、健康检查与失败行为，请见 [`reverse_proxy`](/zh-CN/reference/directives/#reverse_proxy)。
-
-## 6. 🔒 终止 TLS
-
-公开域名会自动申请证书：
-
-```caddyfile
-{
-    email admin@example.com
-}
-
-example.com {
-    reverse_proxy localhost:3000
-}
-```
-
-自动 HTTPS 需要站点地址是公开名称，并且 ACME 挑战能访问到服务器，通常意味着需要 80 端口。如果是私有源站，改用 `tls internal` 由本地证书颁发机构签发；客户端必须信任其根证书，位置在 `$PINGCLAIR_TLS_STORE/internal/root.crt`。
-
-## 7. ⚙️ 作为服务运行
-
-安装脚本会创建 `systemd` 单元，并由 `pc` 命令管理：
+`ETag` 和 `Last-Modified` 说明文件服务器从磁盘读取了文件，正文就是
+`public/index.html`。要停掉后台服务器：
 
 ```bash
-pc service start
-pc service status
-pc service reload   # 重新读取配置，不重启进程
+pingclair stop
 ```
+
+```text
+✅ Pingclair stopped
+```
+
+## ⚡ 一条命令起服务
+
+有三个子命令不需要配置文件就能提供服务，适合临时试验或一次性主机：
+
+```bash
+pingclair file-server --listen :8081 --root ./public
+pingclair reverse-proxy --from :8082 --to 127.0.0.1:8081
+pingclair respond --listen :8083 -s 200 -b "hello from respond"
+```
+
+启动时各自打印自己的监听地址：
+
+```text
+🚀 Starting file server on :8081 serving ./public (browse: false)
+🚀 Starting reverse proxy: :8082 -> ["127.0.0.1:8081"]
+Server address: [::]:8083
+```
+
+发给 `:8082` 的每个请求都会转给 `:8081` 上的文件服务器，`:8083` 直接返回你传入
+的正文。`respond` 只用于开发。
+
+## 🔁 交给服务
+
+服务运行的是 `/etc/Pingclair/Pingclairfile`，所以把配置放到那里才能扛过重启：
+
+```bash
+sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
+sudo pingclair validate /etc/Pingclair/Pingclairfile
+sudo pc service reload
+curl -i http://localhost/
+```
+
+先校验。`pc service reload` 报成功只说明信号送达了，不代表服务器接受了配置；
+拒绝配置的服务器会继续运行旧配置，而且不会把这次拒绝写进日志。只有校验命令
+会告诉你真相。
+
+## ⚠️ 出问题时
+
+- **`Address already in use`。** 安装器的服务还占着 `:80`，或者别的进程占着你
+  的端口。`sudo ss -ltnp | grep :80` 会显示占用者，`sudo pc service stop` 会
+  释放默认那个。
+- **在 `http://localhost:8080` 上收到 `Empty reply from server`。** 你在用明文
+  跟 TLS 监听器说话。给站点地址加上 `http://`，或者信任内部证书后用 `https://`
+  访问。
+- **`Cannot reach admin API at 127.0.0.1:2019`。** 配置里没有 `admin`，没有
+  对象接收 `pingclair stop` 和 `pingclair reload`。把它加进全局选项块，或者用
+  Ctrl-C 停掉前台进程。
+- **`curl` 在回环地址上卡住。** 系统代理拦截了请求。加上 `curl --noproxy '*'`
+  重试。
+- **校验以 `Unsupported feature` 失败。** 指令被识别但没有实现，消息会给出
+  替代方案，例如 `encode br`：代理响应没有实现 Brotli，于是消息指向
+  `encode zstd gzip`。
 
 ## 🧭 下一步
 
-- [配置模型](/zh-CN/concepts/configuration/)
-- [架构](/zh-CN/concepts/architecture/)
-- [指令参考](/zh-CN/reference/directives/)
+- [HTTPS](/zh-CN/start/https/)：为公开域名签发证书，走 Let's Encrypt 或内部
+  证书颁发机构。
+- [以服务方式运行](/zh-CN/start/service/)：unit、重载语义和日志。
+- [Pingclairfile](/zh-CN/reference/pingclairfile/)：语言本身，包括 matcher、
+  snippet 和 import。

@@ -1,114 +1,237 @@
 ---
 title: Quickstart
 h1_emoji: '🏃'
-description: Write a first Pingclairfile, validate it, and serve traffic.
+sidebar:
+  order: 2
+description: Write a first Pingclairfile, validate it, run it in the foreground or the background, and serve a real directory.
 ---
 
-This page takes a fresh installation to a running server: a static site on port
-8080, then a reverse proxy in front of a backend application.
+This page goes from an installed host to a running server you control: a
+configuration on disk, a validated compile, a server you can start, stop, and
+watch, and a verification step that proves the file server answered. It assumes
+the [installation](/start/install/) is done.
+
+## 🧾 Before you start
+
+The installer left a service running on port 80, and that service holds the
+configuration in `/etc/Pingclair/Pingclairfile`. Stop it while you experiment so
+the ports are free:
+
+```bash
+sudo pc service stop
+```
+
+```bash
+mkdir -p ~/demo/public
+cd ~/demo
+echo '<h1>hello from ~/demo/public</h1>' > public/index.html
+```
 
 ## 1. ✍️ Write a configuration
 
-Create a file named `Pingclairfile`:
+Create `~/demo/Pingclairfile`:
 
 ```caddyfile
-localhost:8080 {
+{
+    admin 127.0.0.1:2019
+}
+
+http://localhost:8080 {
     file_server ./public
 }
 ```
 
-The file contains a single site block. `localhost:8080` is the address the site
-answers on, `file_server` serves files, and `./public` is the directory they are
-read from, relative to the working directory.
+Three things are worth naming. The unnamed block at the top holds global
+options, and `admin` is what lets `pingclair start`, `stop`, and `reload` talk to
+the running server. The site address carries the scheme, and `http://` is what
+forces plaintext; without it Pingclair treats `localhost` as a name and serves
+HTTPS from its own certificate authority, which a plain HTTP client sees as an
+empty reply ([HTTPS](/start/https/)). The `file_server` root is relative to the
+working directory.
 
-## 2. ✅ Validate it
+## 2. ✅ Validate before you run
 
 ```bash
 pingclair validate
 ```
 
-`validate` reads `./Pingclairfile` by default; `./Caddyfile` is also detected.
-It compiles the configuration, applies semantic checks such as whether
-certificate paths exist, and exits non-zero when something is wrong. Validation
-is not advisory: a configuration that fails does not run.
-
-Two related commands are useful while writing configuration:
-
-```bash
-pingclair adapt --pretty   # print the compiled JSON form
-pingclair fmt --diff       # show formatting changes without writing them
+```text
+✅ Configuration 'Pingclairfile' is valid!
 ```
 
-## 3. 🚀 Run it
+`validate` reads `./Pingclairfile` by default and also detects `./Caddyfile`. It
+compiles the configuration and applies semantic checks, such as whether
+certificate paths exist. Validation is not advisory: a configuration that fails
+does not run, and a failing one prints the reason on the last line.
+
+## 3. 🧭 Read what the configuration becomes
+
+```bash
+pingclair adapt --pretty
+```
+
+```text
+{
+  "debug": false,
+  "servers": [
+    {
+      "name": "localhost",
+      "names": [
+        "localhost"
+      ],
+      "listen": [
+        "[::]:8080"
+      ],
+```
+
+The compiled JSON is the form the server actually runs. When a directive does
+not behave as the documentation says, this is the first place to look. To see
+what `pingclair fmt` would change in the file instead:
+
+```bash
+pingclair fmt --diff
+```
+
+```text
+-    file_server ./public
++  file_server ./public
+```
+
+`fmt` prints the canonical form, which indents with two spaces.
+
+## 4. 🚀 Run it
+
+In the foreground, where the log stays attached to your terminal:
 
 ```bash
 pingclair run Pingclairfile
 ```
 
-The process logs each listener it opens, then serves requests until it receives
-a termination signal.
+```text
+🚀 Starting Pingclair with config: Pingclairfile
+🚀 Starting Pingclair v0.2.0-rc.3
+📄 Loaded configuration from: Pingclairfile
+🔧 Configured 1 server(s)
+🔐 Auto HTTPS: enabled
+```
 
-## 4. 🔍 Verify
+Add `--watch` to reload the configuration every time you save it, which is the
+development loop:
 
-In a second terminal:
+```bash
+pingclair run --watch Pingclairfile
+```
+
+```text
+♻️ Configuration reloaded successfully
+✅ Configuration reloaded completed successfully in 2.478622ms
+```
+
+Or run it in the background, where it survives your shell:
+
+```bash
+pingclair start -c Pingclairfile
+```
+
+```text
+✅ Pingclair started in the background (pid 4432)
+```
+
+`pingclair start`, `stop`, and `reload` reach the running server through the
+Admin API, which is why the configuration above sets `admin`. `pingclair run`
+does not need it.
+
+## 5. 🔍 Verify
 
 ```bash
 curl -i http://localhost:8080/
 ```
 
-Expect `200` with `ETag` and `Last-Modified` headers for the file that was
-served.
-
-If the request hangs instead, check whether a system proxy is intercepting
-loopback traffic and repeat the request with `curl --noproxy '*'`.
-
-## 5. 🔁 Proxy an application
-
-Replace the site block with a reverse proxy in front of a backend listening on
-port 3000:
-
-```caddyfile
-localhost:8080 {
-    reverse_proxy localhost:3000
-}
+```text
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 34
+Last-Modified: Tue, 22 Sep 2026 03:26:39 GMT
+ETag: "22-6ab1f56f"
+Vary: Accept-Encoding
+Accept-Ranges: bytes
+server: Pingclair
 ```
 
-Validate and run again with the same commands. The response now comes from the
-backend. Multiple upstreams, load-balancing policy, health checks, and failure
-behavior are described under [`reverse_proxy`](/reference/directives/#reverse_proxy).
-
-## 6. 🔒 Terminate TLS
-
-Public names obtain certificates automatically:
-
-```caddyfile
-{
-    email admin@example.com
-}
-
-example.com {
-    reverse_proxy localhost:3000
-}
-```
-
-Automatic HTTPS requires the site address to be a public name and the ACME
-challenge to reach the server, which normally means port 80. For private
-origins, `tls internal` issues from a local certificate authority instead;
-clients must trust its root, published at
-`$PINGCLAIR_TLS_STORE/internal/root.crt`.
-
-## 7. ⚙️ Run as a service
-
-The installer creates a `systemd` unit that the `pc` command manages:
+`ETag` and `Last-Modified` mean the file server read the file from disk. The
+body is `public/index.html`. To stop a background server:
 
 ```bash
-pc service start
-pc service status
-pc service reload   # re-read the configuration without restarting
+pingclair stop
 ```
+
+```text
+✅ Pingclair stopped
+```
+
+## ⚡ Servers in one command
+
+Three subcommands serve without a configuration file, which is useful for
+trying something out or for a throwaway host:
+
+```bash
+pingclair file-server --listen :8081 --root ./public
+pingclair reverse-proxy --from :8082 --to 127.0.0.1:8081
+pingclair respond --listen :8083 -s 200 -b "hello from respond"
+```
+
+Each prints its listener on startup:
+
+```text
+🚀 Starting file server on :8081 serving ./public (browse: false)
+🚀 Starting reverse proxy: :8082 -> ["127.0.0.1:8081"]
+Server address: [::]:8083
+```
+
+Every request to `:8082` is proxied to the file server on `:8081`, and `:8083`
+answers with the body you passed. `respond` is for development only.
+
+## 🔁 Move it into the service
+
+The service runs `/etc/Pingclair/Pingclairfile`, so putting your configuration
+there is what makes it survive a reboot:
+
+```bash
+sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
+sudo pingclair validate /etc/Pingclair/Pingclairfile
+sudo pc service reload
+curl -i http://localhost/
+```
+
+Validate first. `pc service reload` reports success when the signal was
+delivered, not when the server accepted the configuration, and a server that
+refuses a configuration keeps the previous one running without logging a
+refusal. The validation command is the only one that tells you the truth.
+
+## ⚠️ When it does not work
+
+- **`Address already in use`.** The installer's service still holds `:80`, or
+  another process holds your port. `sudo ss -ltnp | grep :80` names the owner;
+  `sudo pc service stop` frees the default one.
+- **`Empty reply from server` on `http://localhost:8080`.** You are speaking
+  plaintext to a TLS listener. Add the `http://` scheme to the site address, or
+  talk to it with `https://` and trust the internal certificate.
+- **`Cannot reach admin API at 127.0.0.1:2019`.** The configuration has no
+  `admin` option, so nothing is listening for `pingclair stop` and
+  `pingclair reload`. Add it to the global options block, or stop the foreground
+  process with Ctrl-C.
+- **`curl` hangs on a loopback address.** A system proxy is intercepting the
+  request. Repeat it with `curl --noproxy '*'`.
+- **Validation fails with `Unsupported feature`.** The directive is recognized
+  but not implemented, and the message names the alternative, as in
+  `encode br`: Brotli is not implemented for proxied responses, so the message
+  points at `encode zstd gzip`.
 
 ## 🧭 Next steps
 
-- [Configuration model](/concepts/configuration/)
-- [Architecture](/concepts/architecture/)
-- [Directive reference](/reference/directives/)
+- [HTTPS](/start/https/): certificates for a public name, from Let's Encrypt or
+  the internal authority.
+- [Run it as a service](/start/service/): the unit, its reload semantics, and
+  its logs.
+- [Pingclairfile](/reference/pingclairfile/): the language itself, including
+  matchers, snippets, and imports.
