@@ -28,11 +28,26 @@ export function markdownRoute(contentType: string) {
 		const entry = await getEntry('docs', (props as { id: string }).id);
 		if (!entry?.body) return new Response('Not found\n', { status: 404 });
 
-		return new Response(toMarkdown(entry.body), {
+		return new Response(withTitle(entry, toMarkdown(entry.body)), {
 			headers: {
 				'Content-Type': `${contentType}; charset=utf-8`,
 				'Cache-Control': 'public, max-age=3600',
 			},
 		});
 	};
+}
+
+/**
+ * 🏷️ The page's own title, on top of its body.
+ *
+ * Starlight takes the title from the frontmatter, so the published Markdown
+ * starts with prose and an agent that fetched the file on its own has to guess
+ * which page it is holding. The twin gets the same heading the rendered page
+ * shows — emoji included — unless the body already opens with one.
+ */
+function withTitle(entry: { data: { title?: string; h1_emoji?: string } }, body: string): string {
+	const title = entry.data.title?.trim();
+	if (!title || /^#\s/.test(body)) return body;
+	const emoji = entry.data.h1_emoji?.trim();
+	return `# ${emoji ? `${emoji} ` : ''}${title}\n\n${body}`;
 }
