@@ -67,14 +67,10 @@ import proxied example.com {
 
 ## 🧰 命令列工具
 
-| 指令 | 用途 |
-| --- | --- |
-| `pingclair validate [path]` | 編譯並檢查設定。預設讀取 `./Pingclairfile`，其次 `./Caddyfile`。 |
-| `pingclair adapt --pretty` | 印出設定編譯後的 JSON 形式。 |
-| `pingclair fmt [--diff] [--overwrite]` | 格式化 Pingclairfile，或只顯示變更。 |
-| `pingclair run <path>` | 以指定的設定執行伺服器。 |
-| `pingclair list-modules` | 列出此二進位檔建置時包含的模組。 |
-| `pingclair build-info` | 印出建置資訊，包含使用的工具鏈。 |
+命令列有自己的一頁參考：[命令列](/zh-TW/reference/command-line/) 列出每個子指令
+及其旗標與預設值。寫設定時用得上的是其中三個：`pingclair validate` 編譯檔案並
+指出第一個問題，`pingclair adapt --pretty` 印出該檔案編譯出的 JSON，
+`pingclair fmt` 負責格式化。
 
 ## 🚫 不屬於語言的部分
 

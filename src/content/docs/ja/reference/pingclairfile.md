@@ -67,14 +67,12 @@ import proxied example.com {
 
 ## 🧰 コマンドラインツール
 
-| コマンド | 用途 |
-| --- | --- |
-| `pingclair validate [path]` | 設定をコンパイルして検査します。既定では `./Pingclairfile`、次に `./Caddyfile` を読みます。 |
-| `pingclair adapt --pretty` | コンパイル後の JSON 形式を出力します。 |
-| `pingclair fmt [--diff] [--overwrite]` | Pingclairfile を整形します。差分の表示だけも可能です。 |
-| `pingclair run <path>` | 指定した設定でサーバーを実行します。 |
-| `pingclair list-modules` | このバイナリがビルド時に含めたモジュールを一覧します。 |
-| `pingclair build-info` | 使用したツールチェーンを含むビルド情報を出力します。 |
+コマンドラインには専用のリファレンスがあります。
+[コマンドライン](/ja/reference/command-line/) がすべてのサブコマンドを、その
+フラグと既定値とともに一覧します。設定を書くときに使うのはそのうちの三つです。
+`pingclair validate` はファイルをコンパイルして最初の問題を名指しし、
+`pingclair adapt --pretty` はそのファイルがコンパイルされる JSON を出力し、
+`pingclair fmt` はそれを整形します。
 
 ## 🚫 言語に含まれないもの
 

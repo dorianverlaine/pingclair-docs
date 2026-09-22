@@ -67,14 +67,10 @@ import proxied example.com {
 
 ## 🧰 命令行工具
 
-| 命令 | 用途 |
-| --- | --- |
-| `pingclair validate [path]` | 编译并检查配置。默认读取 `./Pingclairfile`，其次是 `./Caddyfile`。 |
-| `pingclair adapt --pretty` | 打印配置编译后的 JSON 形式。 |
-| `pingclair fmt [--diff] [--overwrite]` | 格式化 Pingclairfile，或只显示变更。 |
-| `pingclair run <path>` | 用指定的配置运行服务器。 |
-| `pingclair list-modules` | 列出该二进制编译时包含的模块。 |
-| `pingclair build-info` | 打印构建信息，包括使用的工具链。 |
+命令行有自己的一页参考：[命令行](/zh-CN/reference/command-line/) 列出每个子命令
+及其选项和默认值。写配置时用得上的是其中三个：`pingclair validate` 编译文件并
+指出第一个问题，`pingclair adapt --pretty` 打印该文件编译出的 JSON，
+`pingclair fmt` 负责格式化。
 
 ## 🚫 不属于语言的部分
 

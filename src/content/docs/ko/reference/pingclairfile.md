@@ -67,14 +67,11 @@ import proxied example.com {
 
 ## 🧰 명령줄 도구
 
-| 명령 | 용도 |
-| --- | --- |
-| `pingclair validate [path]` | 설정을 컴파일하고 검사합니다. 기본은 `./Pingclairfile`, 다음으로 `./Caddyfile`을 읽습니다. |
-| `pingclair adapt --pretty` | 컴파일된 JSON 형식을 출력합니다. |
-| `pingclair fmt [--diff] [--overwrite]` | Pingclairfile을 서식화하거나 차이만 표시합니다. |
-| `pingclair run <path>` | 지정한 설정으로 서버를 실행합니다. |
-| `pingclair list-modules` | 이 바이너리가 빌드 시 포함한 모듈을 나열합니다. |
-| `pingclair build-info` | 사용한 도구 모음을 포함한 빌드 정보를 출력합니다. |
+명령줄에는 자체 레퍼런스가 있습니다. [명령줄](/ko/reference/command-line/)이 모든
+하위 명령을 플래그와 기본값까지 나열합니다. 설정을 작성할 때 쓰는 것은 그중 세
+가지입니다. `pingclair validate`는 파일을 컴파일하고 첫 번째 문제를 집어 주며,
+`pingclair adapt --pretty`는 그 파일이 컴파일되는 JSON을 출력하고,
+`pingclair fmt`는 그것을 서식화합니다.
 
 ## 🚫 언어에 포함되지 않는 것
 

@@ -76,14 +76,11 @@ A placeholder that receives nothing splices nothing, so a snippet written with
 
 ## 🧰 Command-line tooling
 
-| Command | Purpose |
-| --- | --- |
-| `pingclair validate [path]` | Compile and check a configuration. Defaults to `./Pingclairfile`, then `./Caddyfile`. |
-| `pingclair adapt --pretty` | Print the compiled JSON form of the configuration. |
-| `pingclair fmt [--diff] [--overwrite]` | Format a Pingclairfile, or show the changes. |
-| `pingclair run <path>` | Run the server with the given configuration. |
-| `pingclair list-modules` | List the modules the binary was built with. |
-| `pingclair build-info` | Print build metadata, including the toolchain used. |
+The command line has a reference of its own: [Command line](/reference/command-line/)
+lists every subcommand with its flags and defaults. Three of them belong to
+writing a configuration: `pingclair validate`, which compiles a file and names
+the first problem, `pingclair adapt --pretty`, which prints the JSON that file
+compiles to, and `pingclair fmt`, which formats it.
 
 ## 🚫 What is not part of the language
 

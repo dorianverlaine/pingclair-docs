@@ -79,14 +79,12 @@ Un placeholder qui ne reçoit rien n'insère rien : un fragment écrit avec
 
 ## 🧰 Outillage en ligne de commande
 
-| Commande | Objet |
-| --- | --- |
-| `pingclair validate [path]` | Compiler et vérifier une configuration. Par défaut `./Pingclairfile`, puis `./Caddyfile`. |
-| `pingclair adapt --pretty` | Afficher la forme JSON compilée de la configuration. |
-| `pingclair fmt [--diff] [--overwrite]` | Formater un Pingclairfile, ou montrer les changements. |
-| `pingclair run <path>` | Exécuter le serveur avec la configuration donnée. |
-| `pingclair list-modules` | Lister les modules avec lesquels le binaire a été compilé. |
-| `pingclair build-info` | Afficher les métadonnées de compilation, y compris la chaîne d'outils utilisée. |
+La ligne de commande a sa propre référence :
+[Ligne de commande](/fr/reference/command-line/) liste chaque sous-commande avec
+ses options et ses valeurs par défaut. Trois d'entre elles relèvent de l'écriture
+d'une configuration : `pingclair validate`, qui compile un fichier et nomme le
+premier problème, `pingclair adapt --pretty`, qui affiche le JSON dans lequel ce
+fichier se compile, et `pingclair fmt`, qui le formate.
 
 ## 🚫 Ce qui ne fait pas partie du langage
 
