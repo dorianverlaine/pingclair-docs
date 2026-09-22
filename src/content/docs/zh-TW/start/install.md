@@ -25,20 +25,20 @@ macOS 的原始碼建置只用於開發支援。macOS 不是發行平台。
 ## 📦 從發行版二進位檔安裝
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-指令稿會向 GitHub 的 release API 查詢最新 tag，先印出即將安裝的 tag，再驗證
-壓縮檔已發佈的 SHA-256 檢查碼，驗證不通過就拒絕安裝。接著它建立服務使用者、
-授予綁定低連接埠的能力、寫入預設設定、安裝 unit，並啟動服務。完整跑完會這樣
-結束：
+指令稿先讀 `releases.pingclair.com` 上的發佈通道，印出即將安裝的 tag，再用通道
+為該壓縮檔公佈的 SHA-256 核對——對不上就拒絕，不解壓。該主機連不上時會退回
+GitHub 的 release API 與壓縮檔旁邊公佈的檢查碼檔案，因此安裝不依賴單一提供者。
+接著它建立服務使用者、授予綁定低連接埠的能力、寫入預設設定、安裝 unit，並
+啟動服務。完整跑完會這樣結束：
 
 ```text
 Detected architecture: x86_64
-Fetching latest release from dorianverlaine/pingclair...
 Installing v0.2.0-rc.3 — a release candidate, not a final release.
-Downloading https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.3/pingclair-linux-x86_64.tar.gz...
-pingclair-linux-x86_64.tar.gz: OK
+Downloading https://releases.pingclair.com/pingclair/releases/0.2.0-rc.3/pingclair-linux-x86_64.tar.gz (from releases.pingclair.com)...
+✅ sha256 matches the release channel document
 Creating system user 'pingclair'...
 Setting capabilities...
 Configuring directories and assets...
@@ -54,7 +54,7 @@ Config: /etc/Pingclair/Pingclairfile
 需要尚未發佈的修正時，可以安裝 `main` 而不是發行版二進位檔：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash -s -- --main
+curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
 `--main` 會在主機上複製並編譯。它需要 Rust 1.98 或更新版本，以及 BoringSSL 與

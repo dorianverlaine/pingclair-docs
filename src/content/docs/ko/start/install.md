@@ -28,21 +28,22 @@ macOS에서의 소스 빌드는 개발용으로 지원됩니다. macOS는 배포
 ## 📦 릴리스 바이너리로 설치
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-스크립트는 GitHub 릴리스 API에 최신 태그를 묻고, 설치하려는 태그를 출력하며,
-공개된 아카이브의 SHA-256을 검증하고, 일치하지 않는 아카이브는 거부합니다.
-이어서 서비스 사용자를 만들고 낮은 포트에 바인딩할 권한을 주고, 기본 설정을
-쓰고, 유닛을 설치하고, 서비스를 시작합니다. 끝까지 진행하면 다음과 같이
-끝납니다.
+스크립트는 `releases.pingclair.com`의 릴리스 채널을 읽고, 설치하려는 태그를
+출력하며, 그 채널이 공개한 SHA-256과 아카이브를 대조합니다——일치하지 않는
+아카이브는 풀지 않고 거부합니다. 이 호스트에 닿을 수 없으면 GitHub 릴리스
+API와 아카이브 옆에 공개된 체크섬 파일로 물러서므로, 설치가 한 제공자에
+의존하지 않습니다. 이어서 서비스 사용자를 만들고 낮은 포트에 바인딩할 권한을
+주고, 기본 설정을 쓰고, 유닛을 설치하고, 서비스를 시작합니다. 끝까지
+진행하면 다음과 같이 끝납니다.
 
 ```text
 Detected architecture: x86_64
-Fetching latest release from dorianverlaine/pingclair...
 Installing v0.2.0-rc.3 — a release candidate, not a final release.
-Downloading https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.3/pingclair-linux-x86_64.tar.gz...
-pingclair-linux-x86_64.tar.gz: OK
+Downloading https://releases.pingclair.com/pingclair/releases/0.2.0-rc.3/pingclair-linux-x86_64.tar.gz (from releases.pingclair.com)...
+✅ sha256 matches the release channel document
 Creating system user 'pingclair'...
 Setting capabilities...
 Configuring directories and assets...
@@ -58,7 +59,7 @@ Config: /etc/Pingclair/Pingclairfile
 아직 릴리스되지 않은 수정이 필요하면 릴리스 바이너리 대신 `main`을 설치합니다.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash -s -- --main
+curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
 `--main`은 호스트에서 저장소를 복제해 컴파일합니다. Rust 1.98 이상과 BoringSSL,

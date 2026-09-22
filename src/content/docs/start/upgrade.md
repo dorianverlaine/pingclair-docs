@@ -25,7 +25,7 @@ and the teardown.
 ## ⬆️ Upgrade with the installer
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
 The script asks GitHub for the newest release tag, prints it, verifies the
@@ -91,15 +91,20 @@ container finds them where the old one left them. Two things to watch:
 
 ## ⏪ Roll back to an older release
 
-When a new release has to go, fetch the previous one from GitHub Releases,
-verify it, and put it in place of the binary:
+When a new release has to go, fetch the previous one from the release host,
+verify it against the digest that release published, and put it in place of the
+binary:
 
 ```bash
 mkdir -p /tmp/rollback && cd /tmp/rollback
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/pingclair-linux-x86_64.tar.gz
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/SHA256SUMS-x86_64.txt
-sha256sum -c SHA256SUMS-x86_64.txt
-mkdir -p extract && tar -xzf pingclair-linux-x86_64.tar.gz -C extract
+version=0.2.0-rc.2
+base="https://releases.pingclair.com/pingclair/releases/$version"
+curl -fsSL "$base/release.json" -o release.json
+tarball=pingclair-linux-x86_64.tar.gz
+expected="$(jq -r ".assets[] | select(.name == \"$tarball\") | .digest" release.json | sed 's/^sha256://')"
+curl -fsSLO "$base/$tarball"
+printf '%s  %s\n' "$expected" "$tarball" | sha256sum -c -
+mkdir -p extract && tar -xzf "$tarball" -C extract
 ```
 
 ```text

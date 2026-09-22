@@ -23,7 +23,7 @@ description: 重跑安装器完成升级、固定容器 tag、回滚到旧版本
 ## ⬆️ 用安装器升级
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
 脚本向 GitHub 查询最新 release tag，打印出来，校验压缩包的 SHA-256，替换二进制
@@ -83,14 +83,19 @@ docker logs pingclair 2>&1 | head -3
 
 ## ⏪ 回滚到旧版本
 
-新版本必须退回去时，从 GitHub Releases 取上一个版本、校验，然后替换二进制：
+新版本必须退回去时，从发版主机取上一个版本，用它公布的 digest 校验，然后替换
+二进制：
 
 ```bash
 mkdir -p /tmp/rollback && cd /tmp/rollback
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/pingclair-linux-x86_64.tar.gz
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/SHA256SUMS-x86_64.txt
-sha256sum -c SHA256SUMS-x86_64.txt
-mkdir -p extract && tar -xzf pingclair-linux-x86_64.tar.gz -C extract
+version=0.2.0-rc.2
+base="https://releases.pingclair.com/pingclair/releases/$version"
+curl -fsSL "$base/release.json" -o release.json
+tarball=pingclair-linux-x86_64.tar.gz
+expected="$(jq -r ".assets[] | select(.name == \"$tarball\") | .digest" release.json | sed 's/^sha256://')"
+curl -fsSLO "$base/$tarball"
+printf '%s  %s\n' "$expected" "$tarball" | sha256sum -c -
+mkdir -p extract && tar -xzf "$tarball" -C extract
 ```
 
 ```text

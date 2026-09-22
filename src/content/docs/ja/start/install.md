@@ -29,21 +29,22 @@ macOS でのソースビルドは開発用にサポートされます。macOS �
 ## 📦 リリースバイナリからのインストール
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-スクリプトは GitHub のリリース API に最新タグを問い合わせ、導入しようとして
-いるタグを表示し、公開されているアーカイブの SHA-256 を検証して、一致しない
-アーカイブを拒否します。続いてサービス用ユーザーを作成し、低いポートに
-バインドする権限を与え、既定の設定を書き、ユニットを導入してサービスを
-開始します。最後まで進むと次のように終わります。
+スクリプトは `releases.pingclair.com` のリリースチャネルを読み、導入しようと
+しているタグを表示し、そのチャネルが公開している SHA-256 とアーカイブを照合
+します——一致しないアーカイブは展開せずに拒否します。このホストに到達できない
+場合は GitHub のリリース API とアーカイブの隣に公開されているチェックサム
+ファイルに退避するので、導入が一つの提供元に依存しません。続いてサービス用
+ユーザーを作成し、低いポートにバインドする権限を与え、既定の設定を書き、
+ユニットを導入してサービスを開始します。最後まで進むと次のように終わります。
 
 ```text
 Detected architecture: x86_64
-Fetching latest release from dorianverlaine/pingclair...
 Installing v0.2.0-rc.3 — a release candidate, not a final release.
-Downloading https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.3/pingclair-linux-x86_64.tar.gz...
-pingclair-linux-x86_64.tar.gz: OK
+Downloading https://releases.pingclair.com/pingclair/releases/0.2.0-rc.3/pingclair-linux-x86_64.tar.gz (from releases.pingclair.com)...
+✅ sha256 matches the release channel document
 Creating system user 'pingclair'...
 Setting capabilities...
 Configuring directories and assets...
@@ -59,7 +60,7 @@ Config: /etc/Pingclair/Pingclairfile
 未リリースの修正が必要なときは、リリースバイナリではなく `main` を導入します。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash -s -- --main
+curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
 `--main` はホスト上でクローンしてコンパイルします。Rust 1.98 以降と、

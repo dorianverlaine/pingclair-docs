@@ -24,7 +24,7 @@ description: インストーラの再実行でアップグレードし、コン�
 ## ⬆️ インストーラでアップグレードする
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
 スクリプトは GitHub に最新リリースのタグを問い合わせ、表示し、アーカイブの
@@ -90,15 +90,19 @@ docker logs pingclair 2>&1 | head -3
 
 ## ⏪ 古いリリースに戻す
 
-新しい版を戻す必要があるときは、GitHub Releases から前の版を取得し、検証して、
-バイナリを差し替えます。
+新しい版を戻す必要があるときは、リリースホストから前の版を取得し、その版が
+公開しているダイジェストと照合して、バイナリを差し替えます。
 
 ```bash
 mkdir -p /tmp/rollback && cd /tmp/rollback
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/pingclair-linux-x86_64.tar.gz
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/SHA256SUMS-x86_64.txt
-sha256sum -c SHA256SUMS-x86_64.txt
-mkdir -p extract && tar -xzf pingclair-linux-x86_64.tar.gz -C extract
+version=0.2.0-rc.2
+base="https://releases.pingclair.com/pingclair/releases/$version"
+curl -fsSL "$base/release.json" -o release.json
+tarball=pingclair-linux-x86_64.tar.gz
+expected="$(jq -r ".assets[] | select(.name == \"$tarball\") | .digest" release.json | sed 's/^sha256://')"
+curl -fsSLO "$base/$tarball"
+printf '%s  %s\n' "$expected" "$tarball" | sha256sum -c -
+mkdir -p extract && tar -xzf "$tarball" -C extract
 ```
 
 ```text

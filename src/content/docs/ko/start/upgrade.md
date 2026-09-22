@@ -24,7 +24,7 @@ description: 설치 프로그램을 다시 실행해 업그레이드하고, 컨�
 ## ⬆️ 설치 프로그램으로 업그레이드
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
 스크립트는 GitHub에 최신 릴리스 태그를 묻고, 출력하고, 아카이브의 SHA-256을
@@ -89,15 +89,19 @@ docker logs pingclair 2>&1 | head -3
 
 ## ⏪ 이전 릴리스로 되돌리기
 
-새 버전을 되돌려야 할 때는 GitHub Releases에서 이전 버전을 받아 검증하고
-바이너리를 교체합니다.
+새 버전을 되돌려야 할 때는 릴리스 호스트에서 이전 버전을 받아, 그 버전이 공개한
+다이제스트와 대조한 뒤 바이너리를 교체합니다.
 
 ```bash
 mkdir -p /tmp/rollback && cd /tmp/rollback
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/pingclair-linux-x86_64.tar.gz
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/SHA256SUMS-x86_64.txt
-sha256sum -c SHA256SUMS-x86_64.txt
-mkdir -p extract && tar -xzf pingclair-linux-x86_64.tar.gz -C extract
+version=0.2.0-rc.2
+base="https://releases.pingclair.com/pingclair/releases/$version"
+curl -fsSL "$base/release.json" -o release.json
+tarball=pingclair-linux-x86_64.tar.gz
+expected="$(jq -r ".assets[] | select(.name == \"$tarball\") | .digest" release.json | sed 's/^sha256://')"
+curl -fsSLO "$base/$tarball"
+printf '%s  %s\n' "$expected" "$tarball" | sha256sum -c -
+mkdir -p extract && tar -xzf "$tarball" -C extract
 ```
 
 ```text

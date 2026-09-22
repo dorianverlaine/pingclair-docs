@@ -25,7 +25,7 @@ version doit reculer, et le démontage.
 ## ⬆️ Mettre à jour avec l'installateur
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
 Le script demande à GitHub le tag de la dernière version, l'affiche, vérifie la
@@ -93,15 +93,19 @@ surveiller :
 
 ## ⏪ Revenir à une version antérieure
 
-Quand une version doit reculer, récupérez la précédente depuis GitHub Releases,
-vérifiez-la et remplacez le binaire :
+Quand une version doit reculer, récupérez la précédente sur l'hôte de publication,
+vérifiez-la contre le condensé publié par cette version, et remplacez le binaire :
 
 ```bash
 mkdir -p /tmp/rollback && cd /tmp/rollback
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/pingclair-linux-x86_64.tar.gz
-curl -fsSLO https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.2/SHA256SUMS-x86_64.txt
-sha256sum -c SHA256SUMS-x86_64.txt
-mkdir -p extract && tar -xzf pingclair-linux-x86_64.tar.gz -C extract
+version=0.2.0-rc.2
+base="https://releases.pingclair.com/pingclair/releases/$version"
+curl -fsSL "$base/release.json" -o release.json
+tarball=pingclair-linux-x86_64.tar.gz
+expected="$(jq -r ".assets[] | select(.name == \"$tarball\") | .digest" release.json | sed 's/^sha256://')"
+curl -fsSLO "$base/$tarball"
+printf '%s  %s\n' "$expected" "$tarball" | sha256sum -c -
+mkdir -p extract && tar -xzf "$tarball" -C extract
 ```
 
 ```text

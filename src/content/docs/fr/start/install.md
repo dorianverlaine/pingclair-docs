@@ -29,22 +29,23 @@ développement. macOS n'est pas une plateforme de distribution.
 ## 📦 Installation depuis un binaire de version
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-Le script interroge l'API des releases GitHub pour connaître le tag le plus
-récent, affiche le tag qu'il s'apprête à installer, vérifie la somme SHA-256
-publiée de l'archive et refuse une archive qui ne correspond pas. Il crée ensuite
-l'utilisateur de service, lui accorde la capacité de se lier aux ports bas, écrit
-la configuration par défaut, installe l'unité et démarre le service. Une
-exécution complète se termine ainsi :
+Le script lit le canal de publication sur `releases.pingclair.com`, affiche le tag
+qu'il s'apprête à installer et vérifie l'archive contre la somme SHA-256 que ce
+canal publie — une archive qui ne correspond pas est refusée, pas extraite. Si
+cet hôte est injoignable, il se rabat sur l'API des releases GitHub et le fichier
+de sommes publié à côté de l'archive, de sorte que l'installation ne dépende pas
+d'un seul fournisseur. Il crée ensuite l'utilisateur de service, lui accorde la
+capacité de se lier aux ports bas, écrit la configuration par défaut, installe
+l'unité et démarre le service. Une exécution complète se termine ainsi :
 
 ```text
 Detected architecture: x86_64
-Fetching latest release from dorianverlaine/pingclair...
 Installing v0.2.0-rc.3 — a release candidate, not a final release.
-Downloading https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.3/pingclair-linux-x86_64.tar.gz...
-pingclair-linux-x86_64.tar.gz: OK
+Downloading https://releases.pingclair.com/pingclair/releases/0.2.0-rc.3/pingclair-linux-x86_64.tar.gz (from releases.pingclair.com)...
+✅ sha256 matches the release channel document
 Creating system user 'pingclair'...
 Setting capabilities...
 Configuring directories and assets...
@@ -61,7 +62,7 @@ Installez `main` plutôt que le binaire de version lorsqu'il vous faut un
 correctif non publié :
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash -s -- --main
+curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
 `--main` clone et compile le serveur sur l'hôte. Il exige Rust 1.98 ou plus

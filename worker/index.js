@@ -28,6 +28,21 @@ const CANONICAL_ORIGIN = 'https://pingclair.com';
  */
 const RETIRED_HOSTS = new Set(['pingclair.aqeo.dev']);
 
+/**
+ * 🧊 The one-line install address: `https://pingclair.com/install.sh`.
+ *
+ * The script itself lives in the server repository and is published to the R2
+ * release bucket by every release; this Worker proxies it rather than keeping a
+ * copy, so there is no second file to drift. The GitHub raw URL is the fallback
+ * for the same reason the installer has one: a documentation site that cannot
+ * install its own server is not much of a documentation site.
+ */
+const INSTALLER_SOURCES = [
+	['r2', 'https://releases.pingclair.com/pingclair/install.sh'],
+	['github', 'https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh'],
+];
+const INSTALLER_PATHS = new Set(['/install.sh', '/install']);
+
 const TOOLS = [
 	{
 		name: 'search_docs',
@@ -339,12 +354,54 @@ function retiredRedirect(request, url) {
 	return Response.redirect(new URL(`${url.pathname}${url.search}`, CANONICAL_ORIGIN), status);
 }
 
+/**
+ * 🧊 Answers `/install.sh` with the installer the release publisher published.
+ *
+ * The body is streamed rather than read into memory, `HEAD` is passed through
+ * so a client that probes before fetching sees the same headers, and the short
+ * `max-age` keeps a new release's installer from hiding behind an old cache.
+ */
+async function serveInstaller(request) {
+	for (const [source, target] of INSTALLER_SOURCES) {
+		try {
+			const upstream = await fetch(target, {
+				method: request.method === 'HEAD' ? 'HEAD' : 'GET',
+				cf: { cacheTtl: 60 },
+			});
+			if (!upstream.ok) continue;
+			return new Response(request.method === 'HEAD' ? null : upstream.body, {
+				status: 200,
+				headers: {
+					'content-type': 'text/x-shellscript; charset=utf-8',
+					'cache-control': 'public, max-age=300',
+					'x-installer-source': source,
+				},
+			});
+		} catch {
+			// Try the next source: a documentation site that cannot install its
+			// own server is not much of a documentation site.
+		}
+	}
+	return new Response(
+		'🚫 The installer could not be fetched from releases.pingclair.com or GitHub.\n' +
+			'The release channel is at https://releases.pingclair.com/pingclair/channels/latest\n',
+		{
+			status: 503,
+			headers: { 'content-type': 'text/plain; charset=utf-8' },
+		},
+	);
+}
+
 export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
 
 		const redirect = retiredRedirect(request, url);
 		if (redirect) return redirect;
+
+		if (INSTALLER_PATHS.has(url.pathname) && (request.method === 'GET' || request.method === 'HEAD')) {
+			return serveInstaller(request);
+		}
 
 		if (url.pathname === '/mcp' || url.pathname === '/a2a') {
 			try {

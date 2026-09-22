@@ -28,21 +28,23 @@ shipping platform.
 ## 📦 Install from a release binary
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash
+curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-The script asks the GitHub releases API for the newest tag, prints the tag it is
-about to install, verifies the published SHA-256 checksum of the archive, and
-refuses an archive that does not match. It then creates the service user, grants
-that user the capability to bind low ports, writes the default configuration,
-installs the unit, and starts the service. A complete run ends like this:
+The script reads the release channel at `releases.pingclair.com`, prints the tag
+it is about to install, and checks the archive against the SHA-256 that channel
+publishes for it — an archive that does not match is refused, not extracted. If
+that host cannot be reached it falls back to the GitHub releases API and the
+checksum file published beside the archive, so the install does not depend on
+one provider. It then creates the service user, grants that user the capability
+to bind low ports, writes the default configuration, installs the unit, and
+starts the service. A complete run ends like this:
 
 ```text
 Detected architecture: x86_64
-Fetching latest release from dorianverlaine/pingclair...
 Installing v0.2.0-rc.3 — a release candidate, not a final release.
-Downloading https://github.com/dorianverlaine/pingclair/releases/download/v0.2.0-rc.3/pingclair-linux-x86_64.tar.gz...
-pingclair-linux-x86_64.tar.gz: OK
+Downloading https://releases.pingclair.com/pingclair/releases/0.2.0-rc.3/pingclair-linux-x86_64.tar.gz (from releases.pingclair.com)...
+✅ sha256 matches the release channel document
 Creating system user 'pingclair'...
 Setting capabilities...
 Configuring directories and assets...
@@ -58,7 +60,7 @@ Config: /etc/Pingclair/Pingclairfile
 Install `main` instead of the release binary when you need an unreleased fix:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dorianverlaine/pingclair/main/scripts/install.sh | sudo bash -s -- --main
+curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
 `--main` clones and compiles the server on the host. It needs Rust 1.98 or newer
