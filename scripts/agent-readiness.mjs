@@ -3,10 +3,11 @@
  * 🛰️ Agent-readiness check for the published site.
  *
  * The public scan at isitagentready.com reads the discovery documents, the
- * Markdown negotiation, `/mcp`, `/a2a`, the WebMCP tools, and `robots.txt`, and
- * reports a level plus one status per check. Recording that result by hand in a
- * commit message let a regression land unnoticed, so this script runs the same
- * scan and fails on any result the repository does not expect.
+ * DNS-AID records, the Markdown negotiation, `/mcp`, `/a2a`, the WebMCP tools,
+ * and `robots.txt`, and reports a level plus one status per check. Recording
+ * that result by hand in a commit message let a regression land unnoticed, so
+ * this script runs the same scan and fails on any result the repository does
+ * not expect.
  *
  * Usage: pnpm scan:agents [url]        (default https://pingclair.com)
  *
@@ -27,7 +28,6 @@ const EXPECTED_FAILURES = new Map([
 	['discovery.oauthDiscovery', 'no OAuth authorization server is operated for this site'],
 	['discovery.oauthProtectedResource', 'nothing on this site is a protected resource'],
 	['discovery.authMd', 'auth.md is self-contained because there is no authorization server to point at'],
-	['discoverability.dnsAid', 'follows the pingclair.com DNSSEC state, which the maintainer sets outside this repository'],
 ]);
 
 const response = await fetch(ENDPOINT, {

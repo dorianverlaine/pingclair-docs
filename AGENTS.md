@@ -239,6 +239,7 @@ change has to leave it working. What exists, and what breaks it:
 | Documentation MCP server | `worker/index.js`, `/.well-known/mcp/server-card.json` | `POST /mcp` answers `initialize`, `tools/list`, and `tools/call` for `search_docs`, `read_page`, and `list_pages`, over the index at `/mcp-index.json`. The card's tool list and the worker's `TOOLS` array must not drift apart. |
 | Lookup agent | `worker/index.js`, `/.well-known/agent-card.json` | `POST /a2a` answers `message/send` with a completed task listing matching pages. It retrieves and never generates prose; the card says so, and the code has to keep that true. |
 | Catalogs | `/.well-known/ai-catalog.json`, `/.well-known/api-catalog`, `/openapi.json` | Discovery documents list what actually exists. Adding an endpoint without adding it to `openapi.json` makes the catalog lie. |
+| DNS-AID | Cloudflare DNS, `pingclair.com` zone | Three SVCB/HTTPS records — `_mcp`, `_a2a`, and `_index` under `_agents` — point at the origin with ALPN and port hints, so an agent can find the MCP and A2A endpoints without fetching a page. They live in the dashboard rather than in this repository, the zone is DNSSEC-signed, and `pnpm scan:agents` fails if they disappear. |
 | Skills | `public/.well-known/agent-skills/` | `index.json` carries a `sha256:` digest of every `SKILL.md`. Editing a skill without recomputing it publishes a file that fails its own integrity check: `shasum -a 256 public/.well-known/agent-skills/<name>/SKILL.md`. |
 | Browser tools | `public/webmcp.js` | Registers `search_pingclair_docs` and `read_pingclair_page` for browsers that implement WebMCP, and calls `/mcp` so there is one search implementation. Feature-detect, never assume the API exists. |
 | Access statement | `public/auth.md` | States that the site is anonymous and issues no credentials. This site operates no OAuth authorization server, so it publishes no OAuth metadata: inventing one would send agents to a dead end. |
@@ -277,14 +278,13 @@ pnpm scan:agents http://127.0.0.1:8788  # a local `wrangler dev`, if the checks 
 ```
 
 `scripts/agent-readiness.mjs` holds the expected-failure list, so a documented
-failure stays documented in one place instead of in everyone's memory. Four
+failure stays documented in one place instead of in everyone's memory. Three
 checks are expected to stay failed, and none of them is a defect to fix here:
 `oauthDiscovery`, `oauthProtectedResource`, and `authMd` want OAuth metadata for
-an authorization server this site does not operate, and `dnsAid` follows the
-`pingclair.com` zone's DNSSEC state, which the maintainer controls outside this
-repository on purpose. Do not "fix" them by publishing metadata for a server
-that does not exist, and do not widen the list to make a failing check pass:
-adding a new entry means the site stopped doing something it used to do.
+an authorization server this site does not operate. Do not "fix" them by
+publishing metadata for a server that does not exist, and do not widen the list
+to make a failing check pass: adding a new entry means the site stopped doing
+something it used to do.
 
 ## Traps that already cost a build or a check
 
