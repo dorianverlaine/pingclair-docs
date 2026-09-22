@@ -343,9 +343,10 @@ export default {
 
 		// 🧭 A page asked for without its trailing slash. The assets server
 		// answers those with a 307, and some agent fetch stacks do not follow
-		// redirects, so the page is served directly at the URL they asked for.
-		// The canonical link inside the page still names the slashed URL.
-		if (request.method === 'GET' && isPagePath(url.pathname) && !url.pathname.endsWith('/')) {
+		// redirects — or probe with HEAD before fetching — so the page is served
+		// directly at the URL they asked for, for both verbs. The canonical link
+		// inside the page still names the slashed URL.
+		if ((request.method === 'GET' || request.method === 'HEAD') && isPagePath(url.pathname) && !url.pathname.endsWith('/')) {
 			const page = await env.ASSETS.fetch(new URL(`${url.pathname}/index.html`, url.origin), { method: 'GET' });
 			if (page.ok && page.headers.get('content-type')?.startsWith('text/html')) {
 				return new Response(page.body, {

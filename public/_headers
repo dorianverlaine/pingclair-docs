@@ -5,6 +5,14 @@
 /pagefind/*
   Cache-Control: public, max-age=3600
 
+# 🤖 The Markdown twins are served as plain text. Several agent fetch stacks
+# answer `400 Unsupported content-type: text/markdown` for the real media type,
+# and the content is the same either way. Clients that ask for Markdown with
+# `Accept: text/markdown` still get `text/markdown` from the worker, which is
+# what the agent-readiness check looks for.
+/*.md
+  Content-Type: text/plain; charset=utf-8
+
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

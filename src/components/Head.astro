@@ -22,7 +22,7 @@ const slug = slugOf(entry?.filePath);
 	slug && (
 		<>
 			<link rel="alternate" type="text/plain" href={twinPath(slug, 'txt')} title="Plain text for agents" />
-			<link rel="alternate" type="text/markdown" href={twinPath(slug, 'md')} title="Markdown source" />
+			<link rel="alternate" type="text/plain" href={twinPath(slug, 'md')} title="Markdown source" />
 		</>
 	)
 }

@@ -4,10 +4,12 @@ import { slugOf, toMarkdown } from './agent-paths';
 /**
  * 📄 The shared machinery behind the `.md` and `.txt` twins.
  *
- * One route registers every page of every locale, and the two endpoints differ
- * only in the content type they answer with: `.md` is `text/markdown` for
- * clients that understand it, `.txt` is `text/plain` for the agent fetch stacks
- * that reject anything else. The bytes are identical.
+ * One route registers every page of every locale, and the two endpoints serve
+ * identical bytes: `.md` keeps the conventional name, `.txt` exists for clients
+ * that look for plain text. Both answer `text/plain` — `public/_headers`
+ * overrides the media type for `.md`, because several agent fetch stacks reject
+ * `text/markdown` outright — while the worker's `Accept: text/markdown`
+ * negotiation still returns the real media type for clients that ask for it.
  */
 
 export async function markdownStaticPaths() {
