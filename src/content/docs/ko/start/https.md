@@ -31,7 +31,7 @@ v0.2.0-rc.3에서 실제로 어떻게 동작하는지를 아래에 적었습니�
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 example.com {
@@ -93,7 +93,7 @@ DNS-01은 80 포트에서 응답하는 대신 TXT 레코드를 게시해 이름�
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 *.example.com {

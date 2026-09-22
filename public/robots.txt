@@ -17,8 +17,8 @@ User-agent: CCBot
 Allow: /
 Content-Signal: ai-train=yes, search=yes, ai-input=yes
 
-Sitemap: https://pingclair.aqeo.dev/sitemap.xml
+Sitemap: https://pingclair.com/sitemap.xml
 
 # Agentic Resource Discovery: the same answer as
 # /.well-known/ai-catalog.json, for crawlers that read it from here.
-Agentmap: https://pingclair.aqeo.dev/.well-known/ai-catalog.json
+Agentmap: https://pingclair.com/.well-known/ai-catalog.json

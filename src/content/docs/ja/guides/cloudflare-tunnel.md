@@ -73,7 +73,7 @@ ingress ルールが、どのホスト名をどのオリジンサービスへ送
 ```bash
 curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
   --data '{"config":{"ingress":[
-    {"hostname":"tunnel-test.aqeo.dev","service":"http://127.0.0.1:80"},
+    {"hostname":"tunnel-test.pingclair.com","service":"http://127.0.0.1:80"},
     {"service":"http_status:404"}]}}' \
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/configurations"
 ```
@@ -84,14 +84,14 @@ curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicatio
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
-  --data '{"type":"CNAME","name":"tunnel-test.aqeo.dev","content":"'$TUNNEL_ID'.cfargotunnel.com","proxied":true,"ttl":60}' \
+  --data '{"type":"CNAME","name":"tunnel-test.pingclair.com","content":"'$TUNNEL_ID'.cfargotunnel.com","proxied":true,"ttl":60}' \
   "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records"
 ```
 
 どこからでも:
 
 ```bash
-curl -I https://tunnel-test.aqeo.dev/
+curl -I https://tunnel-test.pingclair.com/
 ```
 
 ```text
@@ -110,7 +110,7 @@ server: cloudflare
 クライアントが誰かを何も語りません。
 
 ```text
-📝 Access … host="tunnel-test.aqeo.dev" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
+📝 Access … host="tunnel-test.pingclair.com" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
 ```
 
 `trusted_proxies` は、どの相手がクライアントアドレスを主張してよいかを Pingclair に

@@ -5,11 +5,11 @@ name = "pingclair-docs"
 main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
-# The docs domain. Deploying with this route requires the aqeo.dev zone to live
+# The docs domain. Deploying with this route requires the pingclair.com zone to live
 # in the same Cloudflare account: Wrangler creates the DNS record and the
 # certificate for the hostname. Top-level, not inside [assets]: TOML tables
 # swallow every key that follows them.
-routes = [{ pattern = "pingclair.aqeo.dev", custom_domain = true }]
+routes = [{ pattern = "pingclair.com", custom_domain = true }]
 
 [assets]
 directory = "./dist"

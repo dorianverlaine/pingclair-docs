@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ site }) => {
 	return new Response(
 		JSON.stringify(
 			{
-				origin: site?.origin ?? 'https://pingclair.aqeo.dev',
+				origin: site?.origin ?? 'https://pingclair.com',
 				generatedFrom: 'src/content/docs',
 				pages,
 			},

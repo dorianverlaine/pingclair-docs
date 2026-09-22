@@ -31,7 +31,7 @@ that loop and [Run it as a service](/start/service/) explains the reload.
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 example.com {
@@ -94,7 +94,7 @@ needs the provider block:
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 *.example.com {

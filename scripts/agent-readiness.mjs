@@ -8,14 +8,14 @@
  * commit message let a regression land unnoticed, so this script runs the same
  * scan and fails on any result the repository does not expect.
  *
- * Usage: pnpm scan:agents [url]        (default https://pingclair.aqeo.dev)
+ * Usage: pnpm scan:agents [url]        (default https://pingclair.com)
  *
  * Exit codes: 0 the site is at the required level with only the documented
  * failures, 1 a check regressed or the level dropped, 2 the scan itself could
  * not be reached.
  */
 
-const SITE = process.argv[2] ?? 'https://pingclair.aqeo.dev';
+const SITE = process.argv[2] ?? 'https://pingclair.com';
 const ENDPOINT = 'https://isitagentready.com/api/scan';
 const REQUIRED_LEVEL = 5;
 
@@ -27,7 +27,7 @@ const EXPECTED_FAILURES = new Map([
 	['discovery.oauthDiscovery', 'no OAuth authorization server is operated for this site'],
 	['discovery.oauthProtectedResource', 'nothing on this site is a protected resource'],
 	['discovery.authMd', 'auth.md is self-contained because there is no authorization server to point at'],
-	['discoverability.dnsAid', 'follows the aqeo.dev DNSSEC state, which the maintainer sets outside this repository'],
+	['discoverability.dnsAid', 'follows the pingclair.com DNSSEC state, which the maintainer sets outside this repository'],
 ]);
 
 const response = await fetch(ENDPOINT, {

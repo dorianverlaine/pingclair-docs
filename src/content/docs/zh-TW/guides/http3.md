@@ -25,7 +25,7 @@ HTTP/3 預設就是可用的：只要協定集合允許，伺服器就會在 UDP
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
     servers {
         protocols h1 h2 h3
     }

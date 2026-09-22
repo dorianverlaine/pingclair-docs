@@ -1,22 +1,22 @@
 {
   "linkset": [
     {
-      "anchor": "https://pingclair.aqeo.dev/",
+      "anchor": "https://pingclair.com/",
       "service-doc": [
         {
-          "href": "https://pingclair.aqeo.dev/",
+          "href": "https://pingclair.com/",
           "type": "text/html"
         }
       ],
       "service-desc": [
         {
-          "href": "https://pingclair.aqeo.dev/openapi.json",
+          "href": "https://pingclair.com/openapi.json",
           "type": "application/openapi+json"
         }
       ],
       "status": [
         {
-          "href": "https://pingclair.aqeo.dev/",
+          "href": "https://pingclair.com/",
           "type": "text/html"
         }
       ]

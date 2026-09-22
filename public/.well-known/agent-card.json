@@ -2,12 +2,12 @@
   "protocolVersion": "0.3.0",
   "name": "Pingclair documentation lookup",
   "description": "Answers questions about Pingclair, the reverse proxy and static file server written in Rust, by searching this documentation site and returning the matching pages with their Markdown URLs. It retrieves; it does not generate prose.",
-  "url": "https://pingclair.aqeo.dev/a2a",
+  "url": "https://pingclair.com/a2a",
   "preferredTransport": "JSONRPC",
   "version": "0.1.0",
   "supportedInterfaces": [
     {
-      "url": "https://pingclair.aqeo.dev/a2a",
+      "url": "https://pingclair.com/a2a",
       "protocolBinding": "JSONRPC",
       "protocolVersion": "0.3.0"
     }

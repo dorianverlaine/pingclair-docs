@@ -75,7 +75,7 @@ Les règles d'ingress décident quel nom atteint quel service d'origine :
 ```bash
 curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
   --data '{"config":{"ingress":[
-    {"hostname":"tunnel-test.aqeo.dev","service":"http://127.0.0.1:80"},
+    {"hostname":"tunnel-test.pingclair.com","service":"http://127.0.0.1:80"},
     {"service":"http_status:404"}]}}' \
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/configurations"
 ```
@@ -87,14 +87,14 @@ Ensuite, pointez le nom vers le tunnel, proxy activé :
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
-  --data '{"type":"CNAME","name":"tunnel-test.aqeo.dev","content":"'$TUNNEL_ID'.cfargotunnel.com","proxied":true,"ttl":60}' \
+  --data '{"type":"CNAME","name":"tunnel-test.pingclair.com","content":"'$TUNNEL_ID'.cfargotunnel.com","proxied":true,"ttl":60}' \
   "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records"
 ```
 
 Depuis n'importe où :
 
 ```bash
-curl -I https://tunnel-test.aqeo.dev/
+curl -I https://tunnel-test.pingclair.com/
 ```
 
 ```text
@@ -113,7 +113,7 @@ Par défaut, chaque requête arrive du connecteur sur la boucle locale : le jour
 d'accès ne dit alors rien de qui était le client.
 
 ```text
-📝 Access … host="tunnel-test.aqeo.dev" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
+📝 Access … host="tunnel-test.pingclair.com" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
 ```
 
 `trusted_proxies` indique à Pingclair quels pairs peuvent affirmer l'adresse du

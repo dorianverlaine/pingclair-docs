@@ -77,4 +77,4 @@ volumes:
 
 ## Source
 
-<https://pingclair.aqeo.dev/start/install.md>
+<https://pingclair.com/start/install.md>

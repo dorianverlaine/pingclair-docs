@@ -5,10 +5,10 @@
     "version": "0.1.0"
   },
   "description": "Search the Pingclair documentation and read any page as Markdown. Pingclair is a reverse proxy and static file server written in Rust.",
-  "endpoint": "https://pingclair.aqeo.dev/mcp",
+  "endpoint": "https://pingclair.com/mcp",
   "transport": {
     "type": "streamable-http",
-    "url": "https://pingclair.aqeo.dev/mcp"
+    "url": "https://pingclair.com/mcp"
   },
   "protocolVersion": "2025-06-18",
   "capabilities": {

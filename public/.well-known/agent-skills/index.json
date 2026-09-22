@@ -6,14 +6,14 @@
       "type": "skill-md",
       "description": "Install, upgrade, or verify Pingclair, the reverse proxy and static file server for Linux.",
       "url": "/.well-known/agent-skills/install-pingclair/SKILL.md",
-      "digest": "sha256:fefcc31cb4e80c584133e8cd7db171daefe4e928a30506f4c61271e8c4186261"
+      "digest": "sha256:7229de91ce81fa8e96cdf8512718b45ee7818a5c4a9368e253c7dfb05916200c"
     },
     {
       "name": "configure-pingclair",
       "type": "skill-md",
       "description": "Write, validate, and run a Pingclairfile that serves static files or reverse-proxies a backend application.",
       "url": "/.well-known/agent-skills/configure-pingclair/SKILL.md",
-      "digest": "sha256:57088553d7330969292fca9e09a69a87b0b563915fca5cbef75a37370369f480"
+      "digest": "sha256:f42c1521b1f6a9251120f27d87e30593741782371bd27c4f470cd20f39aa24b8"
     }
   ]
 }

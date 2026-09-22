@@ -25,7 +25,7 @@ HTTP/3 默认就是可用的：只要协议集合允许，服务器就会在 UDP
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
     servers {
         protocols h1 h2 h3
     }

@@ -74,7 +74,7 @@ ingress 규칙이 어느 호스트 이름이 어느 오리진 서비스로 가�
 ```bash
 curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
   --data '{"config":{"ingress":[
-    {"hostname":"tunnel-test.aqeo.dev","service":"http://127.0.0.1:80"},
+    {"hostname":"tunnel-test.pingclair.com","service":"http://127.0.0.1:80"},
     {"service":"http_status:404"}]}}' \
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/configurations"
 ```
@@ -86,14 +86,14 @@ curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicatio
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
-  --data '{"type":"CNAME","name":"tunnel-test.aqeo.dev","content":"'$TUNNEL_ID'.cfargotunnel.com","proxied":true,"ttl":60}' \
+  --data '{"type":"CNAME","name":"tunnel-test.pingclair.com","content":"'$TUNNEL_ID'.cfargotunnel.com","proxied":true,"ttl":60}' \
   "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records"
 ```
 
 어디서든:
 
 ```bash
-curl -I https://tunnel-test.aqeo.dev/
+curl -I https://tunnel-test.pingclair.com/
 ```
 
 ```text
@@ -112,7 +112,7 @@ server: cloudflare
 누구였는지 아무것도 말해 주지 않습니다.
 
 ```text
-📝 Access … host="tunnel-test.aqeo.dev" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
+📝 Access … host="tunnel-test.pingclair.com" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
 ```
 
 `trusted_proxies`는 어떤 피어가 클라이언트 주소를 주장할 수 있는지 Pingclair에

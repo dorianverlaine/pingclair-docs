@@ -26,7 +26,7 @@ description: 为公开域名取得证书、发布内部证书，或带自己的�
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 example.com {
@@ -86,7 +86,7 @@ DNS-01 用发布 TXT 记录来证明对域名的控制，而不是在 80 端口�
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 *.example.com {

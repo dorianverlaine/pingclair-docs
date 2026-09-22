@@ -27,7 +27,7 @@ HTTP/3 は、何かを導入しなくても使えるという意味で既定で�
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
     servers {
         protocols h1 h2 h3
     }

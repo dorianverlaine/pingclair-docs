@@ -28,7 +28,7 @@ ACME 向 Let's Encrypt 申請憑證，在 80 連接埠回應 HTTP-01 挑戰，�
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 example.com {
@@ -88,7 +88,7 @@ DNS-01 用發佈 TXT 記錄來證明對網域的控制，而不是在 80 連接�
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 *.example.com {

@@ -32,7 +32,7 @@ rechargement.
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 example.com {
@@ -95,7 +95,7 @@ besoin du bloc de fournisseur :
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 *.example.com {

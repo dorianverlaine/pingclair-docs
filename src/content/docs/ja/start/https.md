@@ -31,7 +31,7 @@ HTTP-01 チャレンジに応答し、結果を保存してバックグラウン
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 example.com {
@@ -93,7 +93,7 @@ DNS-01 は 80 ポートで応答する代わりに TXT レコードを公開し�
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
 }
 
 *.example.com {

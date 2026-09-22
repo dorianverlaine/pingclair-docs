@@ -280,7 +280,7 @@ failure stays documented in one place instead of in everyone's memory. Four
 checks are expected to stay failed, and none of them is a defect to fix here:
 `oauthDiscovery`, `oauthProtectedResource`, and `authMd` want OAuth metadata for
 an authorization server this site does not operate, and `dnsAid` follows the
-`aqeo.dev` zone's DNSSEC state, which the maintainer controls outside this
+`pingclair.com` zone's DNSSEC state, which the maintainer controls outside this
 repository on purpose. Do not "fix" them by publishing metadata for a server
 that does not exist, and do not widen the list to make a failing check pass:
 adding a new entry means the site stopped doing something it used to do.

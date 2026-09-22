@@ -21,7 +21,7 @@ const sitemapAlias = {
 // `site` is the origin used in canonical URLs, the sitemap, `llms.txt`, and
 // `robots.txt`. It has to match the domain the Worker is bound to.
 export default defineConfig({
-	site: 'https://pingclair.aqeo.dev',
+	site: 'https://pingclair.com',
 	integrations: [
 		starlight({
 			title: 'Pingclair',

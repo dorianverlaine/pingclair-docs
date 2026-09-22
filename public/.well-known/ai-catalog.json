@@ -2,15 +2,15 @@
   "specVersion": "1.0",
   "host": {
     "displayName": "Pingclair documentation",
-    "identifier": "did:web:pingclair.aqeo.dev"
+    "identifier": "did:web:pingclair.com"
   },
   "entries": [
     {
-      "identifier": "urn:air:pingclair.aqeo.dev:server:docs-mcp",
+      "identifier": "urn:air:pingclair.com:server:docs-mcp",
       "displayName": "Pingclair documentation MCP server",
       "description": "Streamable HTTP MCP server that searches the documentation and returns any page as Markdown.",
       "type": "application/mcp-server-card+json",
-      "url": "https://pingclair.aqeo.dev/.well-known/mcp/server-card.json",
+      "url": "https://pingclair.com/.well-known/mcp/server-card.json",
       "representativeQueries": [
         "how do I configure a reverse proxy in pingclair",
         "install pingclair on a linux server",
@@ -18,11 +18,11 @@
       ]
     },
     {
-      "identifier": "urn:air:pingclair.aqeo.dev:agent:docs-lookup",
+      "identifier": "urn:air:pingclair.com:agent:docs-lookup",
       "displayName": "Pingclair documentation lookup agent",
       "description": "A2A agent that answers documentation questions with page links and excerpts.",
       "type": "application/a2a-agent-card+json",
-      "url": "https://pingclair.aqeo.dev/.well-known/agent-card.json",
+      "url": "https://pingclair.com/.well-known/agent-card.json",
       "representativeQueries": [
         "what is pingclair",
         "how does pingclair handle http3",
@@ -30,11 +30,11 @@
       ]
     },
     {
-      "identifier": "urn:air:pingclair.aqeo.dev:skills:documentation",
+      "identifier": "urn:air:pingclair.com:skills:documentation",
       "displayName": "Pingclair documentation skills",
       "description": "Agent skills for installing and configuring Pingclair.",
       "type": "application/json",
-      "url": "https://pingclair.aqeo.dev/.well-known/agent-skills/index.json",
+      "url": "https://pingclair.com/.well-known/agent-skills/index.json",
       "representativeQueries": [
         "install pingclair skill",
         "write a pingclairfile skill"

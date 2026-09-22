@@ -71,7 +71,7 @@ ingress 規則決定哪個網域到達哪個源站服務：
 ```bash
 curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
   --data '{"config":{"ingress":[
-    {"hostname":"tunnel-test.aqeo.dev","service":"http://127.0.0.1:80"},
+    {"hostname":"tunnel-test.pingclair.com","service":"http://127.0.0.1:80"},
     {"service":"http_status:404"}]}}' \
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/configurations"
 ```
@@ -82,14 +82,14 @@ curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicatio
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
-  --data '{"type":"CNAME","name":"tunnel-test.aqeo.dev","content":"'$TUNNEL_ID'.cfargotunnel.com","proxied":true,"ttl":60}' \
+  --data '{"type":"CNAME","name":"tunnel-test.pingclair.com","content":"'$TUNNEL_ID'.cfargotunnel.com","proxied":true,"ttl":60}' \
   "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records"
 ```
 
 從任何地方：
 
 ```bash
-curl -I https://tunnel-test.aqeo.dev/
+curl -I https://tunnel-test.pingclair.com/
 ```
 
 ```text
@@ -106,7 +106,7 @@ server: cloudflare
 預設情況下每個請求都從連接器經回送位址到達，存取日誌對「用戶端是誰」一無所知：
 
 ```text
-📝 Access … host="tunnel-test.aqeo.dev" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
+📝 Access … host="tunnel-test.pingclair.com" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
 ```
 
 `trusted_proxies` 告訴 Pingclair 哪些對端可以聲明用戶端位址。連接器跑在同一台

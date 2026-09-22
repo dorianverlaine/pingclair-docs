@@ -29,7 +29,7 @@ ressemble exactement à un succès.
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
     servers {
         protocols h1 h2 h3
     }

@@ -107,7 +107,7 @@ page it is supposed to match.
 
 The site is fully static and is deployed as **Cloudflare Workers static assets,
 built from this GitHub repository** (Workers Builds). It answers on
-**https://pingclair.aqeo.dev**, which `wrangler.toml` binds as a custom domain.
+**https://pingclair.com**, which `wrangler.toml` binds as a custom domain.
 
 One-time setup in the Cloudflare dashboard, under Workers & Pages → Create →
 import a repository:
@@ -123,8 +123,8 @@ import a repository:
 No output directory has to be configured in the dashboard: `wrangler.toml`
 declares `dist` as the assets directory, so `wrangler deploy` uploads it as
 static assets. Pushes to `main` build and deploy; other branches get preview
-URLs. The same file also declares the `pingclair.aqeo.dev` custom domain, which
-requires the `aqeo.dev` zone to be in the same account.
+URLs. The same file also declares the `pingclair.com` custom domain, which
+requires the `pingclair.com` zone to be in the same account.
 
 To deploy to **Pages** instead, replace `[assets]` with
 `pages_build_output_dir = "dist"` and remove the `routes` entry; everything else,

@@ -26,7 +26,7 @@ HTTP/3는 무엇을 설치할 필요가 없다는 뜻에서 기본으로 켜져 
 
 ```caddyfile
 {
-    email pingclair@aqeo.dev
+    email pingclair@pingclair.com
     servers {
         protocols h1 h2 h3
     }

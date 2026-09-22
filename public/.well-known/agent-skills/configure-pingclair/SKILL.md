@@ -77,5 +77,5 @@ Caddyfile-compatible configuration language Pingclair reads.
 
 ## Source
 
-- <https://pingclair.aqeo.dev/start/quickstart.md>
-- <https://pingclair.aqeo.dev/reference/directives.md>
+- <https://pingclair.com/start/quickstart.md>
+- <https://pingclair.com/reference/directives.md>

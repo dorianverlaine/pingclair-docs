@@ -11,6 +11,6 @@ export const prerender = true;
  */
 export const GET: APIRoute = async ({ site }) => {
 	const docs = await getCollection('docs');
-	const origin = site ?? new URL('https://pingclair.dev');
+	const origin = site ?? new URL('https://pingclair.com');
 	return new Response(llmsFull(origin, docs, null), { headers: llmsHeaders });
 };

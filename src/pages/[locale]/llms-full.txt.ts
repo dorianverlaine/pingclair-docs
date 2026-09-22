@@ -10,7 +10,7 @@ export const getStaticPaths = localePaths;
 
 export const GET: APIRoute = async ({ site, params }) => {
 	const docs = await getCollection('docs');
-	const origin = site ?? new URL('https://pingclair.dev');
+	const origin = site ?? new URL('https://pingclair.com');
 	const locale = params.locale as Locale;
 	return new Response(llmsFull(origin, docs, locale), { headers: llmsHeaders });
 };
