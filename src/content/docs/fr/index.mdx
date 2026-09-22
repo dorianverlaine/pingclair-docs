@@ -1,0 +1,64 @@
+---
+title: Pingclair
+description: Un reverse proxy et serveur de fichiers statiques écrit en Rust, avec HTTP/1.1, HTTP/2, HTTP/3, HTTPS automatique et un langage de configuration compatible avec Caddyfile.
+template: splash
+hero:
+  tagline: Un reverse proxy et serveur de fichiers statiques écrit en Rust, avec HTTP/1.1, HTTP/2, HTTP/3, HTTPS automatique et un langage de configuration compatible avec Caddyfile.
+  actions:
+    - text: Installer Pingclair
+      link: /fr/start/install/
+      icon: right-arrow
+    - text: Démarrage rapide
+      link: /fr/start/quickstart/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Pingclair sert HTTP/1.1, HTTP/2 et HTTP/3 à partir d'une seule configuration,
+obtient et renouvelle les certificats publics via ACME, et sert des fichiers
+statiques avec compression et requêtes partielles. Son langage de
+configuration, le Pingclairfile, suit les conventions de Caddyfile.
+
+```caddyfile
+example.com {
+    encode zstd gzip
+    reverse_proxy 10.0.0.10:8080 10.0.0.11:8080
+}
+```
+
+## Commencer ici
+
+<CardGrid>
+	<Card title="🚀 Installation">
+		Depuis un binaire de version, depuis les sources ou avec Docker.
+		[Guide d'installation](/fr/start/install/)
+	</Card>
+	<Card title="🏃 Démarrage rapide">
+		Écrire un premier Pingclairfile, le valider et servir du trafic.
+		[Démarrage rapide](/fr/start/quickstart/)
+	</Card>
+	<Card title="🧠 Concepts">
+		Comment un fichier de configuration devient un état à l'exécution, et
+		comment une requête est traitée. [Modèle de configuration](/fr/concepts/configuration/)
+	</Card>
+	<Card title="📖 Référence">
+		Le langage de configuration et les directives qu'il accepte.
+		[Référence des directives](/fr/reference/directives/)
+	</Card>
+</CardGrid>
+
+## 📌 État de la version
+
+La version courante est **v0.2.0-rc.3**, une release candidate. Les pages de ce
+site décrivent cette version. La branche `v0.1.x` n'est plus maintenue et ne
+reçoit aucun correctif de sécurité. [État du projet](/fr/project/status/) liste
+ce qui est pris en charge, ce qui est refusé, et les défauts connus au moment du
+tag.
+
+## 📊 Performance
+
+Pingclair est mesuré face à nginx et Caddy sur la même machine, chaque candidat
+étant limité à deux cœurs avec une charge identique. Les chiffres mesurés,
+leurs conditions et les lignes où Pingclair est plus lent sont publiés dans
+[Benchmarks](/fr/project/benchmarks/).

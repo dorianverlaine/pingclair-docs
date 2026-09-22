@@ -3,6 +3,7 @@ const lang = Astro.locals.starlightRoute?.lang ?? 'en';
 
 const labels: Record<string, { label: string; system: string; light: string; dark: string }> = {
 	en: { label: 'Change theme preference', system: 'System', light: 'Light', dark: 'Dark' },
+	fr: { label: 'Changer de thème', system: 'Système', light: 'Clair', dark: 'Sombre' },
 	'zh-TW': { label: '切換佈景主題', system: '跟隨系統', light: '淺色', dark: '深色' },
 	'zh-CN': { label: '切换主题', system: '跟随系统', light: '浅色', dark: '深色' },
 	ja: { label: 'テーマを変更', system: 'システム', light: 'ライト', dark: 'ダーク' },

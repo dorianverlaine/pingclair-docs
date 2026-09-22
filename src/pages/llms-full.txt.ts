@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 
 export const prerender = true;
 
-const otherLocales = ['zh-TW', 'zh-CN', 'ja', 'ko'];
+const otherLocales = ['fr', 'ja', 'ko', 'zh-CN', 'zh-TW'];
 
 /** Astro lowercases entry ids, so the case-accurate path comes from `filePath`. */
 function slugOf(filePath: string | undefined): string {
@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ site }) => {
 	const chunks: string[] = [
 		'# Pingclair documentation',
 		'',
-		'Every page of the Pingclair documentation (https://github.com/dorianverlaine/pingclair) in one file. Each section names its source URL. The same pages are also published in Traditional Chinese, Simplified Chinese, Japanese, and Korean under /zh-TW/, /zh-CN/, /ja/, and /ko/.',
+		'Every page of the Pingclair documentation (https://github.com/dorianverlaine/pingclair) in one file. Each section names its source URL. The same pages are also published in French, Japanese, Korean, Simplified Chinese, and Traditional Chinese under /fr/, /ja/, /ko/, /zh-CN/, and /zh-TW/.',
 		'',
 	];
 

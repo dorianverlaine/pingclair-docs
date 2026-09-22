@@ -86,12 +86,27 @@ working because their keys are already lowercase.
 - The default locale is the `root` key, not `en`. Naming it `en` makes Starlight
   look for English pages under `en/`; the English sidebar then renders empty
   while the localized sidebars keep working.
-- English is the root locale. Chinese pages live under `src/content/docs/zh-TW/`
-  (Traditional) and `src/content/docs/zh-CN/` (Simplified); both are Starlight
-  locale codes, so their UI strings are built in.
-- Keep the three trees structurally identical: same page paths, same headings,
+- English is the root locale. The other five live in their own directories:
+  `fr/` (French), `ja/` (Japanese), `ko/` (Korean), `zh-CN/` (Simplified
+  Chinese) and `zh-TW/` (Traditional Chinese). Three of them are Starlight
+  locale codes, so their UI strings are built in; French and Korean are too,
+  which is why the directory names are exactly the codes.
+- The language menu is built from the `locales` object in `astro.config.mjs` in
+  insertion order, so that object *is* the menu order. The agreed order is
+  English, French, Japanese, Korean, Simplified Chinese, Traditional Chinese.
+  A new locale means: add it to that object, add its label map to
+  `src/components/PageTitle.astro`, `ThemeSelect.astro`, and `Footer.astro`,
+  add it to `otherLocales` in `src/pages/llms.txt.ts` and
+  `llms-full.txt.ts`, and translate every page.
+- Keep the six trees structurally identical: same page paths, same headings,
   same anchors. Directive entry headings stay in English in every locale
-  (`## reverse_proxy`) because other pages link to those anchors.
+  (`## reverse_proxy`) because other pages link to those anchors, and so do the
+  `Syntax:` / `Default:` / `Context:` labels inside their code fences.
+- French uses the register of `README.fr.md`: formal, second person for
+  instructions, French typography, and English technical terms where the
+  server's own documentation uses them (`reverse proxy`, `upstream`, `crate`).
+- Code-block comments stay in English in every locale. The snippets are shared
+  with the server repository and are read as configuration, not as prose.
 - Chinese pages use mainland terminology in `zh-CN` (文件, 配置, 服务器, 端口,
   证书) and Taiwan terminology in `zh-TW` (檔案, 設定, 伺服器, 連接埠, 憑證).
   A character-level conversion is not a translation.
@@ -115,6 +130,127 @@ Concept pages: the problem, the model, the consequences, links to reference.
 Reference entries: a fixed header (`Syntax`, `Default`, `Context`) followed by
 what the directive does, how invalid input is refused, differences from
 expected Caddyfile behavior, and a working example.
+
+## Adding or changing a page
+
+A page is not finished when it renders. Six locale trees, four generated
+surfaces, and three agent endpoints read from the same content, so the work ends
+when all of them agree. In order:
+
+1. **Write the English page first**, then port it into `fr/`, `ja/`, `ko/`,
+   `zh-CN/`, and `zh-TW/` at the same path. Never add a page to one tree only:
+   a missing translation falls back to English with an "untranslated" notice,
+   and a partial tree is what makes readers distrust the localized site.
+2. **Fill the frontmatter.** `title` names the page in the sidebar and the
+   search index; `description` is what `/llms.txt` and `/mcp-index.json` show
+   an agent before it fetches anything, so it has to say what the page is for;
+   `h1_emoji` carries the page's one emoji, the same one in every locale.
+3. **Keep anchors stable.** Someone links to `#reverse_proxy` and to
+   `/reference/directives/#tls`. Renaming a heading or moving a section is a
+   breaking change for those links, so translate headings rather than renaming
+   them, and if a heading must change, update every locale and every page that
+   links to it.
+4. **Build.** `pnpm build` must pass, and it is the gate for the generated
+   surfaces: the Markdown twins, `llms.txt`, `llms-full.txt`, `mcp-index.json`,
+   the sitemap, and the Pagefind index are all written during it.
+5. **Check the agent surfaces for that page:**
+
+   ```bash
+   pnpm build
+   pnpm preview --port 4321 &          # serves dist/ on a fresh port
+   PAGE=/start/quickstart               # the page path without a trailing slash
+   for l in "" fr/ ja/ ko/ zh-CN/ zh-TW/; do
+     [ -f "dist/$l$PAGE.md" ] || echo "MISSING dist/$l$PAGE.md"
+   done
+   curl -s -o /dev/null -w '%{http_code} %{content_type}\n' \
+     -H 'Accept: text/markdown' "http://127.0.0.1:4321$PAGE/"
+   curl -s http://127.0.0.1:4321/llms.txt | grep -c "$PAGE.md"
+   ```
+
+   The Markdown twinned path is `<path>.md` for ordinary pages and
+   `<path>/index.md` for a directory page (`/zh-TW/`, `/fr/`). `llms.txt`
+   indexes English pages only, which is deliberate; the localized pages are
+   reachable under their own prefix.
+
+6. **If the page changes what an agent can do**, update the machine-readable
+   surface in the same commit: `/openapi.json` for a new endpoint,
+   `public/.well-known/agent-skills/*/SKILL.md` plus its `sha256:` digest for a
+   new skill, `public/auth.md` for anything about access.
+
+## Keeping the site agent friendly
+
+This site is published twice: once as pages for people, and once as an API for
+agents. That second surface is a product feature, not a side effect, and every
+change has to leave it working. What exists, and what breaks it:
+
+| Surface | File | Invariant |
+| --- | --- | --- |
+| `robots.txt` | `public/robots.txt` | RFC 9309 rules plus `Content-Signal: ai-train=yes, search=yes, ai-input=yes` and the `Agentmap:` line. Never add a rule that blocks `/_astro/`: a crawler that cannot fetch CSS and JS cannot render the page it is reading. |
+| Sitemap | `astro.config.mjs` | `/sitemap.xml` is a copy of the index Starlight writes, produced by the `sitemap-alias` integration. That integration must stay **after** Starlight in the array: build hooks run in order, and the first attempt copied a file that did not exist yet. |
+| Markdown index | `src/pages/llms.txt.ts`, `llms-full.txt.ts` | English only, generated from the collection, so a new English page appears by itself. Update `otherLocales` when a locale is added. |
+| Markdown twins | `src/pages/[...slug].md.ts` | One twin per page per locale, at the page path plus `.md`. The "Copy page" button and `/mcp`'s `read_page` both fetch these; never delete the case-preserving `generateId` that makes their paths match the rendered routes. |
+| Content negotiation | `worker/index.js` | `Accept: text/markdown` on a page URL answers with the twin, `content-type: text/markdown`, and `x-markdown-tokens`. HTML responses carry `vary: accept`. The candidate list (`<path>.md`, then `<path>/index.md`) is derived from the twin layout, so changing that layout changes the worker in the same commit. |
+| Documentation MCP server | `worker/index.js`, `/.well-known/mcp/server-card.json` | `POST /mcp` answers `initialize`, `tools/list`, and `tools/call` for `search_docs`, `read_page`, and `list_pages`, over the index at `/mcp-index.json`. The card's tool list and the worker's `TOOLS` array must not drift apart. |
+| Lookup agent | `worker/index.js`, `/.well-known/agent-card.json` | `POST /a2a` answers `message/send` with a completed task listing matching pages. It retrieves and never generates prose; the card says so, and the code has to keep that true. |
+| Catalogs | `/.well-known/ai-catalog.json`, `/.well-known/api-catalog`, `/openapi.json` | Discovery documents list what actually exists. Adding an endpoint without adding it to `openapi.json` makes the catalog lie. |
+| Skills | `public/.well-known/agent-skills/` | `index.json` carries a `sha256:` digest of every `SKILL.md`. Editing a skill without recomputing it publishes a file that fails its own integrity check: `shasum -a 256 public/.well-known/agent-skills/<name>/SKILL.md`. |
+| Browser tools | `public/webmcp.js` | Registers `search_pingclair_docs` and `read_pingclair_page` for browsers that implement WebMCP, and calls `/mcp` so there is one search implementation. Feature-detect, never assume the API exists. |
+| Access statement | `public/auth.md` | States that the site is anonymous and issues no credentials. This site operates no OAuth authorization server, so it publishes no OAuth metadata: inventing one would send agents to a dead end. |
+
+`wrangler.toml` sets `run_worker_first = true`, which is what lets the worker
+see a page request before the assets server answers it. Removing it does not
+break the build or the tests; it silently disables Markdown negotiation, the
+MCP server, and the A2A endpoint in production. Keep it.
+
+### Verify agent-friendliness, cheapest first
+
+```bash
+pnpm build && pnpm preview --port 4321 &
+for p in /robots.txt /sitemap.xml /llms.txt /llms-full.txt /auth.md \
+         /.well-known/agent-skills/index.json /.well-known/mcp/server-card.json \
+         /.well-known/agent-card.json /.well-known/ai-catalog.json \
+         /.well-known/api-catalog /openapi.json /webmcp.js; do
+  printf '%-46s %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "http://127.0.0.1:4321$p")"
+done
+curl -s -o /dev/null -w '%{http_code} %{content_type}\n' \
+  -H 'Accept: text/markdown' http://127.0.0.1:4321/
+curl -s -X POST http://127.0.0.1:4321/mcp -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | jq -c '.result.serverInfo'
+```
+
+Anything that touches the worker, the discovery documents, or `robots.txt` also
+gets the published scan, and the release check is **Level 5 with no new
+failures**:
+
+```bash
+curl -s -X POST https://isitagentready.com/api/scan \
+  -H 'Content-Type: application/json' --data '{"url":"https://pingclair.aqeo.dev"}' \
+  | jq -r '{level, levelName}, (.checks | to_entries[] | .key as $c | .value
+    | to_entries[] | select(.value.status != "pass") | "\(.value.status)\t\($c).\(.key)")'
+```
+
+Four checks are expected to stay failed, and none of them is a defect to fix
+here: `oauthDiscovery`, `oauthProtectedResource`, and `authMd` want OAuth
+metadata for an authorization server this site does not operate, and `dnsAid`
+follows the `aqeo.dev` zone's DNSSEC state, which the maintainer controls
+outside this repository on purpose. Do not "fix" them by publishing metadata
+for a server that does not exist.
+
+## Traps that already cost a build or a check
+
+- **A colon in a frontmatter value breaks the build.** `description: Le langage
+  de configuration : structure…` fails with `bad indentation of a mapping
+  entry`, because YAML reads the `: ` as a new mapping. Rewrite the sentence
+  without the colon or quote the whole value.
+- **`wrangler dev` writes `.wrangler/`**, which is local state, not content:
+  it is gitignored, and `git add -A` after a dev run used to sweep miniflare
+  databases into a commit.
+- **The worker caches `/mcp-index.json` for the isolate's lifetime.** A content
+  change reaches `/mcp` only after a deployment, which is what pushing to `main`
+  does; there is no cache to purge.
+- **`public/` is copied verbatim.** A file added there is published whether or
+  not any page links to it, which is how `auth.md`, the `.well-known/`
+  documents, and `webmcp.js` reach production.
 
 ## Client-side behavior
 

@@ -54,14 +54,18 @@ export default defineConfig({
 			// the `root` key. Listing it as `en` instead would make Starlight look
 			// for English pages in an `en/` directory and leave the sidebar empty.
 			defaultLocale: 'root',
+			// Menu order follows this order: English, French, Japanese, Korean,
+			// Simplified Chinese, Traditional Chinese. `LanguageSelect.astro`
+			// renders the entries in the order they appear here.
 			locales: {
 				root: { label: 'English', lang: 'en' },
+				fr: { label: 'Français', lang: 'fr' },
+				ja: { label: '日本語', lang: 'ja' },
+				ko: { label: '한국어', lang: 'ko' },
+				'zh-CN': { label: '简体中文', lang: 'zh-CN' },
 				// Both Chinese locales ship UI translations with Starlight, so
 				// the locale keys are the standard ones rather than a bare `zh`.
 				'zh-TW': { label: '繁體中文', lang: 'zh-TW' },
-				'zh-CN': { label: '简体中文', lang: 'zh-CN' },
-				ja: { label: '日本語', lang: 'ja' },
-				ko: { label: '한국어', lang: 'ko' },
 			},
 			// Shiki ships no Caddyfile grammar. The fences stay `caddyfile` so the
 			// server repository's documentation tests recognize them, and the alias

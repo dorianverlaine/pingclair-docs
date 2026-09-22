@@ -11,7 +11,7 @@ function slugOf(filePath: string | undefined): string {
 	return filePath?.replace(/^.*?content\/docs\//, '').replace(/\.(md|mdx)$/, '') ?? '';
 }
 
-const otherLocales = ['zh-TW', 'zh-CN', 'ja', 'ko'];
+const otherLocales = ['fr', 'ja', 'ko', 'zh-CN', 'zh-TW'];
 
 /** English pages only: the root locale is the one without a prefix. */
 const isRootLocale = (slug: string) => !otherLocales.includes(slug.split('/')[0] ?? '');
@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ site }) => {
 			new URL('/llms-full.txt', origin).toString() +
 			'.',
 		'',
-		'> These pages are published in four other languages as well: /zh-TW/, /zh-CN/, /ja/, and /ko/.',
+		'> These pages are published in five other languages as well: /fr/, /ja/, /ko/, /zh-CN/, and /zh-TW/.',
 		'',
 	];
 
