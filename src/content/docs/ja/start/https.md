@@ -82,8 +82,10 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-証明書の実体は、`PINGCLAIR_TLS_STORE` が指すストアに保存されます。インストール
-されたユニットでは `/var/lib/pingclair/certs` です。
+証明書の実体はサービスアカウントのデータディレクトリ、
+`/var/lib/pingclair/.local/share/pingclair` に保存されます——そのアカウントのホームから
+バイナリが解決するパスで、別のユーザーでコマンドを走らせたときに
+`PINGCLAIR_TLS_STORE` が名指しするパスでもあります。
 
 ## 📡 DNS-01 とワイルドカード
 
@@ -146,7 +148,7 @@ https://internal.test {
 ルートはストアに公開されます。
 
 ```bash
-sudo ls -l /var/lib/pingclair/certs/internal/
+sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
 ```
 
 ```text
@@ -157,7 +159,7 @@ sudo ls -l /var/lib/pingclair/certs/internal/
 システムの信頼ストアに導入します。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 ```text
@@ -166,7 +168,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 
 `PINGCLAIR_TLS_STORE` の接頭辞が重要です。`pingclair trust` は実行したユーザーの
 ストア（root なら `/root/.local/share/pingclair`）を見ますが、サービスは
-`/var/lib/pingclair/certs` を使います。接頭辞が無いと
+`/var/lib/pingclair/.local/share/pingclair` を使います。接頭辞が無いと
 `No internal CA root at /root/.local/share/pingclair/internal/root.crt` と答えます。
 
 ルートを信頼したあとは、同じ要求が `-k` 無しで成功します。

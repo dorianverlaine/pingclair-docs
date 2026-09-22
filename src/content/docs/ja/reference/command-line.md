@@ -191,7 +191,7 @@ pingclair manpage --directory /usr/local/share/man/man1
 `-` を指定すると標準出力に書きます。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-export -o /tmp/store.tar
 ```
 
@@ -205,7 +205,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
 入力から読みます。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-import -i /tmp/store.tar
 ```
 
@@ -216,7 +216,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
 `PINGCLAIR_TLS_STORE` が指すストアから読みます。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 いつ必要か、そしてうまくいったかをどう確かめるかは
@@ -228,7 +228,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 証明書のファイルは残りますが、クライアントは信頼しなくなります。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair untrust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair untrust
 ```
 
 ## pingclair respond

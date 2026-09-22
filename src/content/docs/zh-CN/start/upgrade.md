@@ -15,7 +15,7 @@ description: 重跑安装器完成升级、固定容器 tag、回滚到旧版本
 | --- | --- |
 | `/etc/Pingclair/Pingclairfile` | 保留。安装器只在它缺失时才写入。 |
 | `/etc/Pingclair/Pingclairfile.example` | 被当前示例替换。 |
-| `/var/lib/pingclair/certs` | 保留。已签发的证书和 ACME 状态原地不动。 |
+| `/var/lib/pingclair/.local/share/pingclair` | 保留。已签发的证书和 ACME 状态原地不动。 |
 | `/var/lib/pingclair/html` | 保留。 |
 | `/usr/local/bin/pingclair` 与 `pc` | 被新版本替换。 |
 | `/etc/systemd/system/pingclair.service` | 被重写，然后服务重启。 |
@@ -135,12 +135,12 @@ found`，命令消失，80 端口上没有任何监听。留在磁盘上的，�
 
 ```text
 /etc/Pingclair/Pingclairfile      配置，仍然有效
-/var/lib/pingclair/certs          已签发证书与 ACME 状态
+/var/lib/pingclair/.local/share/pingclair          已签发证书与 ACME 状态
 /var/lib/pingclair/html           占位站点
 /var/log/pingclair                日志输出目录
 ```
 
-如果打算重新安装，请保留 `/var/lib/pingclair/certs`：证书和内部根都会存活，
+如果打算重新安装，请保留 `/var/lib/pingclair/.local/share/pingclair`：证书和内部根都会存活，
 信任该根的客户端也继续可用。若这台主机不再使用 Pingclair，就全部删掉，包括服务
 账号：
 
@@ -159,7 +159,7 @@ sudo userdel pingclair
 - **容器立刻退出。** `docker logs <container>` 会说明原因。常见原因是挂载的配置
   目录里没有 `/etc/pingclair/Pingclairfile`，或者主机上端口已被占用。
 - **重建存储后客户端拒绝证书。** 内部证书颁发机构重新生成后，旧根不再签任何
-  东西。用 `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust`
+  东西。用 `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust`
   装新的根。
 
 ## 🧭 下一步

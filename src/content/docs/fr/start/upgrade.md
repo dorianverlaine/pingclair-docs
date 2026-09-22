@@ -17,7 +17,7 @@ version doit reculer, et le démontage.
 | --- | --- |
 | `/etc/Pingclair/Pingclairfile` | Conservé. L'installateur ne l'écrit que s'il manque. |
 | `/etc/Pingclair/Pingclairfile.example` | Remplacé par l'exemple courant. |
-| `/var/lib/pingclair/certs` | Conservé. Certificats émis et état ACME restent en place. |
+| `/var/lib/pingclair/.local/share/pingclair` | Conservé. Certificats émis et état ACME restent en place. |
 | `/var/lib/pingclair/html` | Conservé. |
 | `/usr/local/bin/pingclair` et `pc` | Remplacés par la nouvelle version. |
 | `/etc/systemd/system/pingclair.service` | Réécrit, puis le service est redémarré. |
@@ -146,12 +146,12 @@ sur le disque est volontairement vos données :
 
 ```text
 /etc/Pingclair/Pingclairfile      la configuration, toujours valide
-/var/lib/pingclair/certs          certificats émis et état ACME
+/var/lib/pingclair/.local/share/pingclair          certificats émis et état ACME
 /var/lib/pingclair/html           le site d'attente
 /var/log/pingclair                le répertoire d'une destination de journal
 ```
 
-Gardez `/var/lib/pingclair/certs` si vous prévoyez de réinstaller : les
+Gardez `/var/lib/pingclair/.local/share/pingclair` si vous prévoyez de réinstaller : les
 certificats et la racine interne survivent, et les clients qui font confiance à
 cette racine continuent de fonctionner. Supprimez tout, y compris le compte de
 service, quand l'hôte a fini avec Pingclair :
@@ -176,7 +176,7 @@ sudo userdel pingclair
 - **Les clients rejettent le certificat après une reconstruction du magasin.**
   Si l'autorité interne a été régénérée, l'ancienne racine ne signe plus rien.
   Installez la nouvelle avec
-  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust`.
+  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust`.
 
 ## 🧭 Étapes suivantes
 

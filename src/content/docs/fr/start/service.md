@@ -28,7 +28,6 @@ Group=pingclair
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 Environment="RUST_LOG=info"
-Environment="PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs"
 ExecStart=/usr/local/bin/pingclair run /etc/Pingclair/Pingclairfile
 ExecReload=/bin/kill -USR1 $MAINPID
 WorkingDirectory=/var/lib/pingclair
@@ -49,10 +48,14 @@ Lisez-les dans l'ordre :
   puisse répondre, et non jusqu'à ce que le processus existe.
 - `User=pingclair` avec `AmbientCapabilities=CAP_NET_BIND_SERVICE` : le serveur
   tourne sans privilèges et peut tout de même se lier aux ports 80 et 443.
-- `PINGCLAIR_TLS_STORE` : les certificats vivent dans
-  `/var/lib/pingclair/certs`. Le compte de service n'a pas de répertoire
-  personnel ; laisser la valeur par défaut du binaire enverrait le magasin vers
-  un `$HOME` inexistant.
+- Il n'y a délibérément aucun `PINGCLAIR_TLS_STORE` ici. Le répertoire
+  personnel du compte de service est `/var/lib/pingclair`, donc les
+  certificats vivent dans `/var/lib/pingclair/.local/share/pingclair` : la valeur par défaut du
+  binaire, le répertoire que l'installateur crée et dans lequel il migre, et
+  le chemin que `pingclair environ` affiche. Nommer un magasin ici serait une
+  seconde réponse à une question qui en a déjà une.
+  l'installateur crée, que la documentation désigne et que l'image de conteneur
+  monte.
 - Il n'y a délibérément aucun `ExecStartPre` qui lancerait `validate`. Cela
   ressemble à l'endroit sûr pour ce contrôle, et c'est le piège : `systemd`
   applique `RestartPreventExitStatus=` au processus principal, pas à une
@@ -233,9 +236,9 @@ l'utilisateur de service.
   error code`.** Le serveur a refusé la configuration avant de lier quoi que ce
   soit, et la raison du compilateur est dans le journal, par exemple
   ``Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``.
-- **`TLS store /var/lib/pingclair/certs is not writable: Permission denied`.** Le
+- **`TLS store /var/lib/pingclair/.local/share/pingclair is not writable: Permission denied`.** Le
   magasin appartient au compte de service. Vérifiez
-  `sudo ls -ld /var/lib/pingclair/certs` : il doit appartenir à `pingclair`.
+  `sudo ls -ld /var/lib/pingclair/.local/share/pingclair` : il doit appartenir à `pingclair`.
 - **`systemd-analyze verify` signale `Missing '=', ignoring line` pour l'unité
   installée.** Une installation en une ligne plus ancienne écrivait une unité
   dont les commentaires avaient été développés par le shell — 25 lignes de sortie

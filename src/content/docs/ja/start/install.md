@@ -77,7 +77,7 @@ BoringSSL と jemalloc が必要とする C ツールチェーン（`cmake`、`c
 | `/usr/local/bin/pc` | 同じバイナリへのシンボリックリンク（短い名前）。 |
 | `/etc/Pingclair/Pingclairfile` | サービスが実行する設定。 |
 | `/etc/Pingclair/Pingclairfile.example` | コメント付きの例。アップグレードでも上書きされません。 |
-| `/var/lib/pingclair/certs` | 証明書ストア。ユニットの `PINGCLAIR_TLS_STORE` が指します。 |
+| `/var/lib/pingclair/.local/share/pingclair` | 証明書ストア。サービスアカウントのデータディレクトリで、バイナリの既定です。 |
 | `/var/lib/pingclair/html` | ポート 80 で配信される案内ページ。 |
 | `/var/log/pingclair` | `log` シンクを設定したときに書き出される場所。 |
 | `/etc/systemd/system/pingclair.service` | 有効化され、起動済みのユニット。 |
@@ -192,7 +192,7 @@ curl -i http://localhost/
 - **`command:` を足さないこと。** イメージの既定はすでに
   `run /etc/pingclair/Pingclairfile` で、上書きするとそのコマンドが置き換わり
   ます。
-- **`/var/lib/pingclair/certs` だけをマウントしないこと。** ストアは証明書
+- **`/var/lib/pingclair/.local/share/pingclair` だけをマウントしないこと。** ストアは証明書
   ディレクトリの隣にも状態を置くので、`certs` だけをマウントしてコンテナを
   作り直すとそれが失われます。`/var/lib/pingclair` をマウントします。
 - **公開タグを固定すること。** `latest` は最新リリースを追いかけます。本番は

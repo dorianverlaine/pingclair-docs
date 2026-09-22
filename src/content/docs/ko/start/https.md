@@ -82,8 +82,10 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-인증서 실체는 `PINGCLAIR_TLS_STORE`가 가리키는 저장소에 보관됩니다. 설치된
-유닛에서는 `/var/lib/pingclair/certs`입니다.
+인증서 실체는 서비스 계정의 데이터 디렉터리,
+`/var/lib/pingclair/.local/share/pingclair`에 보관됩니다——그 계정의 홈에서
+바이너리가 풀어내는 경로이고, 다른 사용자로 명령을 돌릴 때
+`PINGCLAIR_TLS_STORE`가 가리키는 경로이기도 합니다.
 
 ## 📡 DNS-01과 와일드카드
 
@@ -146,7 +148,7 @@ https://internal.test {
 루트는 저장소에 게시됩니다.
 
 ```bash
-sudo ls -l /var/lib/pingclair/certs/internal/
+sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
 ```
 
 ```text
@@ -157,7 +159,7 @@ sudo ls -l /var/lib/pingclair/certs/internal/
 신뢰 저장소에 넣습니다.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 ```text
@@ -166,7 +168,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 
 `PINGCLAIR_TLS_STORE` 접두사가 중요합니다. `pingclair trust`는 실행한 사용자의
 저장소(root라면 `/root/.local/share/pingclair`)를 보지만 서비스는
-`/var/lib/pingclair/certs`를 씁니다. 접두사가 없으면
+`/var/lib/pingclair/.local/share/pingclair`를 씁니다. 접두사가 없으면
 `No internal CA root at /root/.local/share/pingclair/internal/root.crt`라고
 답합니다.
 

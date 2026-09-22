@@ -196,7 +196,7 @@ pingclair manpage --directory /usr/local/share/man/man1
 tar. `-` comme chemin de sortie écrit l'archive sur la sortie standard.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-export -o /tmp/store.tar
 ```
 
@@ -211,7 +211,7 @@ Restaure un magasin depuis une archive écrite par `storage-export`. `-` lit
 l'archive sur l'entrée standard.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-import -i /tmp/store.tar
 ```
 
@@ -223,7 +223,7 @@ certificats que cette autorité émet. La racine est lue depuis le magasin nomm�
 `PINGCLAIR_TLS_STORE`.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 La page [HTTPS](/fr/start/https/) décrit quand c'est nécessaire et comment
@@ -235,7 +235,7 @@ Retire cette racine du magasin de confiance du système. Les certificats déjà 
 gardent leurs fichiers ; les clients cessent de leur faire confiance.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair untrust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair untrust
 ```
 
 ## pingclair respond

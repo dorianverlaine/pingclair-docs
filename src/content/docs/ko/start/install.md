@@ -75,7 +75,7 @@ jemalloc이 요구하는 C 도구 모음(`cmake`, `clang`, `libclang-dev`, `g++`
 | `/usr/local/bin/pc` | 같은 바이너리를 가리키는 심볼릭 링크(짧은 이름). |
 | `/etc/Pingclair/Pingclairfile` | 서비스가 실행하는 설정. |
 | `/etc/Pingclair/Pingclairfile.example` | 주석이 달린 예제. 업그레이드해도 덮어쓰지 않습니다. |
-| `/var/lib/pingclair/certs` | 인증서 저장소. 유닛의 `PINGCLAIR_TLS_STORE`가 가리킵니다. |
+| `/var/lib/pingclair/.local/share/pingclair` | 인증서 저장소. 서비스 계정의 데이터 디렉터리이며 바이너리의 기본값입니다. |
 | `/var/lib/pingclair/html` | 80 포트에서 제공되는 안내 페이지. |
 | `/var/log/pingclair` | `log` 싱크를 설정했을 때 기록되는 위치. |
 | `/etc/systemd/system/pingclair.service` | 활성화되어 실행 중인 유닛. |
@@ -188,7 +188,7 @@ curl -i http://localhost/
 
 - **`command:`를 추가하지 마세요.** 이미지 기본값이 이미
   `run /etc/pingclair/Pingclairfile`이고, 덮어쓰면 그 명령이 교체됩니다.
-- **`/var/lib/pingclair/certs`만 마운트하지 마세요.** 저장소는 인증서
+- **`/var/lib/pingclair/.local/share/pingclair`만 마운트하지 마세요.** 저장소는 인증서
   디렉터리 옆에도 상태를 두므로, `certs`만 마운트한 채 컨테이너를 다시 만들면
   그 상태를 잃습니다. `/var/lib/pingclair`를 마운트합니다.
 - **공개 태그를 고정하세요.** `latest`는 최신 릴리스를 따라갑니다. 운영에서는

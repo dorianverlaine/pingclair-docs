@@ -79,7 +79,7 @@ plusieurs minutes, car BoringSSL est compilé depuis les sources.
 | `/usr/local/bin/pc` | Un lien symbolique vers le même binaire, pour la forme courte. |
 | `/etc/Pingclair/Pingclairfile` | La configuration que le service exécute. |
 | `/etc/Pingclair/Pingclairfile.example` | Un exemple commenté, jamais écrasé par une mise à jour. |
-| `/var/lib/pingclair/certs` | Le magasin de certificats, nommé par `PINGCLAIR_TLS_STORE` dans l'unité. |
+| `/var/lib/pingclair/.local/share/pingclair` | Le magasin de certificats : le répertoire de données du compte de service, que le binaire utilise par défaut. |
 | `/var/lib/pingclair/html` | Le site d'attente servi sur le port 80. |
 | `/var/log/pingclair` | Là où une destination `log` écrit dès que vous en configurez une. |
 | `/etc/systemd/system/pingclair.service` | L'unité, activée et démarrée. |
@@ -193,7 +193,7 @@ Trois points sont faciles à manquer :
 
 - **N'ajoutez pas de `command:`.** La commande par défaut de l'image est déjà
   `run /etc/pingclair/Pingclairfile`, et la redéfinir remplace cette commande.
-- **Ne montez pas `/var/lib/pingclair/certs` seul.** Le magasin conserve de
+- **Ne montez pas `/var/lib/pingclair/.local/share/pingclair` seul.** Le magasin conserve de
   l'état à côté du répertoire des certificats, et un conteneur recréé avec
   seulement `certs` monté le perd. Montez `/var/lib/pingclair`.
 - **Épinglez un tag publié.** `latest` suit la version la plus récente ; la

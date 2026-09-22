@@ -17,7 +17,7 @@ and the teardown.
 | --- | --- |
 | `/etc/Pingclair/Pingclairfile` | Kept. The installer only writes it when it is missing. |
 | `/etc/Pingclair/Pingclairfile.example` | Replaced with the current example. |
-| `/var/lib/pingclair/certs` | Kept. Issued certificates and ACME state stay in place. |
+| `/var/lib/pingclair/.local/share/pingclair` | Kept. Issued certificates and ACME state stay in place. |
 | `/var/lib/pingclair/html` | Kept. |
 | `/usr/local/bin/pingclair` and `pc` | Replaced with the new release. |
 | `/etc/systemd/system/pingclair.service` | Rewritten, then the service is restarted. |
@@ -146,12 +146,12 @@ on disk is your data, on purpose:
 
 ```text
 /etc/Pingclair/Pingclairfile      the configuration, still valid
-/var/lib/pingclair/certs          issued certificates and ACME state
+/var/lib/pingclair/.local/share/pingclair          issued certificates and ACME state
 /var/lib/pingclair/html           the placeholder site
 /var/log/pingclair                a log sink's directory
 ```
 
-Keep `/var/lib/pingclair/certs` if you plan to reinstall: the certificates and
+Keep `/var/lib/pingclair/.local/share/pingclair` if you plan to reinstall: the certificates and
 the internal root survive, and clients that trust that root stay working. Delete
 everything, including the service account, when the host is finished with
 Pingclair:
@@ -176,7 +176,7 @@ sudo userdel pingclair
 - **Clients reject the certificate after a rebuild of the store.** If the
   internal authority was regenerated, the old root no longer signs anything.
   Install the new one with
-  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust`.
+  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust`.
 
 ## 🧭 Next steps
 

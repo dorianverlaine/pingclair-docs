@@ -182,7 +182,7 @@ Controls how certificates are obtained.
 | Mode | Behavior |
 | --- | --- |
 | `tls auto` | Obtains public certificates over ACME and renews them. |
-| `tls internal` | Issues from a persistent local certificate authority. The root is published at `$PINGCLAIR_TLS_STORE/internal/root.crt` and must be trusted by clients. |
+| `tls internal` | Issues from a persistent local certificate authority. The root is published at `<store>/internal/root.crt` — `/var/lib/pingclair/.local/share/pingclair/internal/root.crt` for a package install — and must be trusted by clients. |
 | `tls { cert ...; key ... }` | Uses the certificate and key files named in the block. |
 
 The block form also enables HTTP/3 with `http3`, and supports DNS-01 issuance

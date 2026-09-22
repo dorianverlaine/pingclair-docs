@@ -70,7 +70,7 @@ jemalloc 所需的 C 工具链：`cmake`、`clang`、`libclang-dev`、`g++` 和 
 | `/usr/local/bin/pc` | 指向同一二进制的软链接，用于短命令。 |
 | `/etc/Pingclair/Pingclairfile` | 服务实际运行的配置。 |
 | `/etc/Pingclair/Pingclairfile.example` | 带注释的示例，升级时不会被覆盖。 |
-| `/var/lib/pingclair/certs` | 证书存储，由 unit 中的 `PINGCLAIR_TLS_STORE` 指定。 |
+| `/var/lib/pingclair/.local/share/pingclair` | 证书存储：服务账号的数据目录，二进制的默认位置。 |
 | `/var/lib/pingclair/html` | 在 80 端口提供的占位站点。 |
 | `/var/log/pingclair` | 配置了 `log` 之后日志写入的位置。 |
 | `/etc/systemd/system/pingclair.service` | 已启用并正在运行的 unit。 |
@@ -180,7 +180,7 @@ curl -i http://localhost/
 
 - **不要加 `command:`。** 镜像默认值已经是
   `run /etc/pingclair/Pingclairfile`，覆盖它会替换掉那条命令。
-- **不要只挂 `/var/lib/pingclair/certs`。** 存储除了证书目录之外还保存其他状态，
+- **不要只挂 `/var/lib/pingclair/.local/share/pingclair`。** 存储除了证书目录之外还保存其他状态，
   容器只挂 `certs` 重建时会丢掉这些状态。请挂 `/var/lib/pingclair`。
 - **固定发布 tag。** `latest` 会跟随最新发布，生产环境应写明版本，如上面的例子。
   已发布的 tag 列在

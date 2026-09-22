@@ -78,8 +78,9 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-憑證實體保存在 `PINGCLAIR_TLS_STORE` 指定的儲存區；安裝出來的 unit 把它設為
-`/var/lib/pingclair/certs`。
+憑證實體保存在服務帳號的資料目錄，
+`/var/lib/pingclair/.local/share/pingclair`——二進位從該帳號的 home 解析出來的
+路徑，也是以別的執行者身分執行指令時 `PINGCLAIR_TLS_STORE` 指定的那一個。
 
 ## 📡 DNS-01 與萬用字元
 
@@ -138,7 +139,7 @@ https://internal.test {
 發佈在儲存區裡：
 
 ```bash
-sudo ls -l /var/lib/pingclair/certs/internal/
+sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
 ```
 
 ```text
@@ -148,7 +149,7 @@ sudo ls -l /var/lib/pingclair/certs/internal/
 用戶端還不信任它，所以不帶 `-k` 的請求會失敗。把根憑證裝進系統信任儲存區：
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 ```text
@@ -157,7 +158,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 
 `PINGCLAIR_TLS_STORE` 前綴很重要：`pingclair trust` 看的是執行它的使用者的儲存區
 （root 就是 `/root/.local/share/pingclair`），而服務用的是
-`/var/lib/pingclair/certs`。不加前綴，指令會回答
+`/var/lib/pingclair/.local/share/pingclair`。不加前綴，指令會回答
 `No internal CA root at /root/.local/share/pingclair/internal/root.crt`。
 
 信任根憑證之後，同樣的請求不帶 `-k` 也會成功：

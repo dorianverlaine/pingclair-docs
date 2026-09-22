@@ -188,11 +188,13 @@ pingclair manpage --directory /usr/local/share/man/man1
 
 ## pingclair storage-export
 
-Writes the certificate store named by `PINGCLAIR_TLS_STORE` into a tar archive.
-`-` as the output path writes the archive to standard output.
+Writes the certificate store into a tar archive: the data directory of the
+service user by default, or whatever `PINGCLAIR_TLS_STORE` names — the prefix in
+the example is what makes a root shell look at the service's store rather than
+its own. `-` as the output path writes the archive to standard output.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-export -o /tmp/store.tar
 ```
 
@@ -206,7 +208,7 @@ Restores a store from an archive written by `storage-export`. `-` reads the
 archive from standard input.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-import -i /tmp/store.tar
 ```
 
@@ -217,7 +219,7 @@ which browsers and command-line clients accept the certificates that authority
 issues. It reads the CA from the store named by `PINGCLAIR_TLS_STORE`.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 The [HTTPS](/start/https/) page covers when this is needed and how to check
@@ -229,7 +231,7 @@ Removes that root certificate from the system trust store again. Certificates
 already issued by it keep their files; clients stop trusting them.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair untrust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair untrust
 ```
 
 ## pingclair respond

@@ -98,22 +98,24 @@ https://internal.test {
 
 ## 📦 迁移证书存储
 
-`PINGCLAIR_TLS_STORE` 指定的存储（安装出来的 unit 里是
-`/var/lib/pingclair/certs`）保存着已签发的证书、ACME 账号与内部机构。
+存储里保存着已签发的证书、ACME 账号与内部机构，位置是
+`/var/lib/pingclair/.local/share/pingclair`——服务账号的数据目录。以别的用户
+运行时才需要 `PINGCLAIR_TLS_STORE` 指定它（下面例子里加前缀就是这个原因，
+root 的默认值会是 `/root/.local/share/pingclair`）。
 `storage-export` 与 `storage-import` 负责搬运：
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-export -o /tmp/store.tar
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-export -o /tmp/store.tar
 sudo systemctl stop pingclair
-sudo rm -rf /var/lib/pingclair/certs
-sudo mkdir -p /var/lib/pingclair/certs && sudo chown pingclair:pingclair /var/lib/pingclair/certs
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-import -i /tmp/store.tar
+sudo rm -rf /var/lib/pingclair/.local/share/pingclair
+sudo mkdir -p /var/lib/pingclair/.local/share/pingclair && sudo chown pingclair:pingclair /var/lib/pingclair/.local/share/pingclair
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-import -i /tmp/store.tar
 sudo systemctl start pingclair
 ```
 
 ```text
 ✅ Store exported to /tmp/store.tar
-✅ Store imported into /var/lib/pingclair/certs
+✅ Store imported into /var/lib/pingclair/.local/share/pingclair
 ```
 
 运行中发现的三个细节。归档不管叫什么名字都是**纯 tar**，而且以 `600` 权限写出，
@@ -121,7 +123,7 @@ sudo systemctl start pingclair
 （Admin API 最后应用的配置），导入会把它一起带回来。
 
 如果之后服务以 `Internal CA I/O error: Permission denied` 拒绝启动，说明存储里
-的文件对服务账号不可写；`sudo chown -R pingclair:pingclair /var/lib/pingclair/certs`
+的文件对服务账号不可写；`sudo chown -R pingclair:pingclair /var/lib/pingclair/.local/share/pingclair`
 能修好，站点随即恢复应答。
 
 ## 🚫 调不了的东西

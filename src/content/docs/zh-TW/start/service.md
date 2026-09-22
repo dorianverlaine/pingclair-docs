@@ -27,7 +27,6 @@ Group=pingclair
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 Environment="RUST_LOG=info"
-Environment="PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs"
 ExecStart=/usr/local/bin/pingclair run /etc/Pingclair/Pingclairfile
 ExecReload=/bin/kill -USR1 $MAINPID
 WorkingDirectory=/var/lib/pingclair
@@ -47,8 +46,10 @@ NoNewPrivileges=true
   `systemd`，所以 `systemctl start` 等到的是代理真的能應答，而不是行程存在。
 - `User=pingclair` 加上 `AmbientCapabilities=CAP_NET_BIND_SERVICE`：服務以
   非特權使用者執行，同時仍能綁定 80 與 443。
-- `PINGCLAIR_TLS_STORE`：憑證放在 `/var/lib/pingclair/certs`。服務帳號沒有家
-  目錄，交給二進位預設值會把儲存區指到不存在的 `$HOME`。
+- 這裡刻意不寫 `PINGCLAIR_TLS_STORE`。服務帳號的 home 是 `/var/lib/pingclair`，
+  所以憑證放在 `/var/lib/pingclair/.local/share/pingclair`：二進位自己的預設值、
+  安裝程式建立並搬移的目錄，也是 `pingclair environ` 印出的路徑。在這裡另寫
+  一個儲存區，等於給已經有答案的問題再答一次。
 - 這裡刻意不寫 `ExecStartPre` 去跑 `validate`。那看起來是放檢查的安全位置，恰恰
   也是陷阱：`systemd` 的 `RestartPreventExitStatus=` 作用於主行程，不作用於失敗
   的前置指令，所以編譯器拒絕的設定會每五秒被重試一次，而不是讓 unit 停在
@@ -201,8 +202,8 @@ ERROR pingclair::run:    💡 Previous configuration remains active, unchanged
   error code`。** 伺服器在綁定任何東西之前拒絕了設定，編譯器的原因在 journal
   裡，例如
   ``Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``。
-- **`TLS store /var/lib/pingclair/certs is not writable: Permission denied`。**
-  儲存區屬於服務帳號。用 `sudo ls -ld /var/lib/pingclair/certs` 確認擁有者是
+- **`TLS store /var/lib/pingclair/.local/share/pingclair is not writable: Permission denied`。**
+  儲存區屬於服務帳號。用 `sudo ls -ld /var/lib/pingclair/.local/share/pingclair` 確認擁有者是
   `pingclair`。
 - **`systemd-analyze verify` 對已安裝的 unit 回報 `Missing '=', ignoring line`。**
   舊的一鍵安裝寫出的 unit 裡，註解被 shell 展開過——25 行 `--help` 輸出，

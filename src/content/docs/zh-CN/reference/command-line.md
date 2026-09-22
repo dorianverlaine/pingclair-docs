@@ -182,7 +182,7 @@ pingclair manpage --directory /usr/local/share/man/man1
 输出。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-export -o /tmp/store.tar
 ```
 
@@ -194,7 +194,7 @@ bucket。[TLS 指南](/zh-CN/guides/tls-tuning/) 说明了它装了什么、什�
 从 `storage-export` 写出的归档恢复存储。`-` 表示从标准输入读归档。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-import -i /tmp/store.tar
 ```
 
@@ -204,7 +204,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
 证书。CA 从 `PINGCLAIR_TLS_STORE` 指定的存储里读取。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 什么时候需要它、怎么确认生效，见 [HTTPS](/zh-CN/start/https/)。
@@ -214,7 +214,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 再把这个根证书从系统信任存储移除。已经签发的证书文件还在，客户端不再信任它们。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair untrust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair untrust
 ```
 
 ## pingclair respond

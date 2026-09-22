@@ -103,22 +103,24 @@ https://internal.test {
 
 ## 📦 証明書ストアの移行
 
-`PINGCLAIR_TLS_STORE` が指すストア（インストール済みユニットでは
-`/var/lib/pingclair/certs`）には、発行済み証明書、ACME アカウント、内部認証局が
-入っています。`storage-export` と `storage-import` がそれを移します。
+ストアには発行済み証明書、ACME アカウント、内部認証局が入っており、
+その場所は `/var/lib/pingclair/.local/share/pingclair`——サービスアカウントのデータ
+ディレクトリです。別のユーザーで走らせるときに `PINGCLAIR_TLS_STORE` が
+それを名指しします（下の例が接頭辞を付けているのはそのためで、root の既定は
+`/root/.local/share/pingclair` です）。`storage-export` と `storage-import` がそれを移します。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-export -o /tmp/store.tar
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-export -o /tmp/store.tar
 sudo systemctl stop pingclair
-sudo rm -rf /var/lib/pingclair/certs
-sudo mkdir -p /var/lib/pingclair/certs && sudo chown pingclair:pingclair /var/lib/pingclair/certs
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-import -i /tmp/store.tar
+sudo rm -rf /var/lib/pingclair/.local/share/pingclair
+sudo mkdir -p /var/lib/pingclair/.local/share/pingclair && sudo chown pingclair:pingclair /var/lib/pingclair/.local/share/pingclair
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-import -i /tmp/store.tar
 sudo systemctl start pingclair
 ```
 
 ```text
 ✅ Store exported to /tmp/store.tar
-✅ Store imported into /var/lib/pingclair/certs
+✅ Store imported into /var/lib/pingclair/.local/share/pingclair
 ```
 
 実行から三つの点。アーカイブは名前に関わらず**ただの tar** で、モード `600` で
@@ -128,7 +130,7 @@ sudo systemctl start pingclair
 
 その後サービスが `Internal CA I/O error: Permission denied` で起動を拒むなら、
 ストアのファイルがサービスアカウントから書けません。
-`sudo chown -R pingclair:pingclair /var/lib/pingclair/certs` で直り、サイトは再び
+`sudo chown -R pingclair:pingclair /var/lib/pingclair/.local/share/pingclair` で直り、サイトは再び
 応答します。
 
 ## 🚫 調整できないもの

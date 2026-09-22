@@ -15,7 +15,7 @@ description: 重跑安裝程式完成升級、固定容器 tag、回滾到舊版
 | --- | --- |
 | `/etc/Pingclair/Pingclairfile` | 保留。安裝程式只在它缺失時才寫入。 |
 | `/etc/Pingclair/Pingclairfile.example` | 被目前範例替換。 |
-| `/var/lib/pingclair/certs` | 保留。已簽發的憑證與 ACME 狀態原地不動。 |
+| `/var/lib/pingclair/.local/share/pingclair` | 保留。已簽發的憑證與 ACME 狀態原地不動。 |
 | `/var/lib/pingclair/html` | 保留。 |
 | `/usr/local/bin/pingclair` 與 `pc` | 被新版本替換。 |
 | `/etc/systemd/system/pingclair.service` | 被重寫，然後服務重啟。 |
@@ -136,12 +136,12 @@ found`，指令消失，80 連接埠上沒有任何監聽。留在磁碟上的�
 
 ```text
 /etc/Pingclair/Pingclairfile      設定，仍然有效
-/var/lib/pingclair/certs          已簽發憑證與 ACME 狀態
+/var/lib/pingclair/.local/share/pingclair          已簽發憑證與 ACME 狀態
 /var/lib/pingclair/html           預留網站
 /var/log/pingclair                日誌輸出目錄
 ```
 
-如果打算重新安裝，請保留 `/var/lib/pingclair/certs`：憑證與內部根都會存活，
+如果打算重新安裝，請保留 `/var/lib/pingclair/.local/share/pingclair`：憑證與內部根都會存活，
 信任該根的用戶端也繼續可用。若這台主機不再使用 Pingclair，就全部刪掉，包括服務
 帳號：
 
@@ -160,7 +160,7 @@ sudo userdel pingclair
 - **容器立刻結束。** `docker logs <container>` 會說明原因。常見原因是掛載的設定
   目錄裡沒有 `/etc/pingclair/Pingclairfile`，或者主機上連接埠已被占用。
 - **重建儲存區後用戶端拒絕憑證。** 內部憑證授權單位重新產生後，舊根不再簽任何
-  東西。用 `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust`
+  東西。用 `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust`
   裝新的根。
 
 ## 🧭 下一步

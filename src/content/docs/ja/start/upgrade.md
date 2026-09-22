@@ -16,7 +16,7 @@ description: インストーラの再実行でアップグレードし、コン�
 | --- | --- |
 | `/etc/Pingclair/Pingclairfile` | 保持。インストーラは無いときだけ書きます。 |
 | `/etc/Pingclair/Pingclairfile.example` | 現在の例に置き換わります。 |
-| `/var/lib/pingclair/certs` | 保持。発行済み証明書と ACME の状態はそのままです。 |
+| `/var/lib/pingclair/.local/share/pingclair` | 保持。発行済み証明書と ACME の状態はそのままです。 |
 | `/var/lib/pingclair/html` | 保持。 |
 | `/usr/local/bin/pingclair` と `pc` | 新しいリリースに置き換わります。 |
 | `/etc/systemd/system/pingclair.service` | 書き直され、サービスが再起動します。 |
@@ -143,12 +143,12 @@ found` と答え、コマンドは消え、80 ポートで何も待ち受けま�
 
 ```text
 /etc/Pingclair/Pingclairfile      設定。そのまま有効です
-/var/lib/pingclair/certs          発行済み証明書と ACME の状態
+/var/lib/pingclair/.local/share/pingclair          発行済み証明書と ACME の状態
 /var/lib/pingclair/html           案内ページ
 /var/log/pingclair                ログ出力先のディレクトリ
 ```
 
-再導入する予定があるなら `/var/lib/pingclair/certs` を残します。証明書と内部
+再導入する予定があるなら `/var/lib/pingclair/.local/share/pingclair` を残します。証明書と内部
 ルートが生き残り、そのルートを信頼しているクライアントも動き続けます。その
 ホストで Pingclair を終えるなら、サービスアカウントごと削除します。
 
@@ -172,7 +172,7 @@ sudo userdel pingclair
   あることです。
 - **ストアの再生成後にクライアントが証明書を拒否する。** 内部認証局を作り直す
   と、古いルートは何も署名しません。新しいルートを
-  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust` で導入します。
+  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust` で導入します。
 
 ## 🧭 次の手順
 

@@ -28,7 +28,6 @@ Group=pingclair
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 Environment="RUST_LOG=info"
-Environment="PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs"
 ExecStart=/usr/local/bin/pingclair run /etc/Pingclair/Pingclairfile
 ExecReload=/bin/kill -USR1 $MAINPID
 WorkingDirectory=/var/lib/pingclair
@@ -49,9 +48,11 @@ NoNewPrivileges=true
   프록시가 응답할 수 있을 때까지 기다립니다.
 - `User=pingclair`와 `AmbientCapabilities=CAP_NET_BIND_SERVICE`: 서버는 비특권
   사용자로 실행되면서도 80과 443에 바인딩할 수 있습니다.
-- `PINGCLAIR_TLS_STORE`: 인증서는 `/var/lib/pingclair/certs`에 있습니다. 서비스
-  계정에는 홈 디렉터리가 없으므로 바이너리 기본값에 맡기면 존재하지 않는
-  `$HOME`을 가리키게 됩니다.
+- `PINGCLAIR_TLS_STORE`는 의도적으로 두지 않습니다. 서비스 계정의 홈이
+  `/var/lib/pingclair`이므로 인증서는 `/var/lib/pingclair/.local/share/pingclair`에
+  있습니다——바이너리 자체의 기본값이고, 설치 프로그램이 만들고 이전해 넣는
+  디렉터리이며, `pingclair environ`이 출력하는 경로입니다. 여기서 저장소를
+  이름으로 지정하면 이미 답이 있는 질문에 두 번째 답을 만드는 셈입니다.
 - `ExecStartPre`로 `validate`를 돌리는 일은 의도적으로 하지 않습니다. 안전한 검사
   자리처럼 보이지만 그것이 함정입니다. `systemd`가 `RestartPreventExitStatus=`를
   적용하는 대상은 주 프로세스이지 실패한 사전 명령이 아닙니다. 그래서 컴파일러가
@@ -220,8 +221,8 @@ ERROR pingclair::run:    💡 Previous configuration remains active, unchanged
   error code`.** 무엇이든 바인딩하기 전에 서버가 설정을 거부했고, 컴파일러의
   이유가 journal에 있습니다. 예:
   ``Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``.
-- **`TLS store /var/lib/pingclair/certs is not writable: Permission denied`.**
-  저장소는 서비스 계정의 것입니다. `sudo ls -ld /var/lib/pingclair/certs`로
+- **`TLS store /var/lib/pingclair/.local/share/pingclair is not writable: Permission denied`.**
+  저장소는 서비스 계정의 것입니다. `sudo ls -ld /var/lib/pingclair/.local/share/pingclair`로
   소유자가 `pingclair`인지 확인하십시오.
 - **`systemd-analyze verify`가 설치된 유닛에 대해 `Missing '=', ignoring line`을
   보고.** 옛 원라이너 설치는 주석이 셸에 의해 확장된 유닛을 썼습니다 —

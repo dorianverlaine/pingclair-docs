@@ -101,22 +101,24 @@ https://internal.test {
 
 ## 📦 인증서 저장소 옮기기
 
-`PINGCLAIR_TLS_STORE`가 가리키는 저장소(설치된 유닛에서는
-`/var/lib/pingclair/certs`)에는 발급된 인증서, ACME 계정, 내부 인증 기관이 들어
-있습니다. `storage-export`와 `storage-import`가 그것을 옮깁니다.
+저장소에는 발급된 인증서, ACME 계정, 내부 인증 기관이 들어 있고,
+그 자리는 `/var/lib/pingclair/.local/share/pingclair`——서비스 계정의 데이터
+디렉터리입니다. 다른 사용자로 돌릴 때 `PINGCLAIR_TLS_STORE`가 그것을
+가리킵니다(아래 예시가 접두사를 붙이는 이유이고, root의 기본값은
+`/root/.local/share/pingclair`입니다). `storage-export`와 `storage-import`가 그것을 옮깁니다.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-export -o /tmp/store.tar
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-export -o /tmp/store.tar
 sudo systemctl stop pingclair
-sudo rm -rf /var/lib/pingclair/certs
-sudo mkdir -p /var/lib/pingclair/certs && sudo chown pingclair:pingclair /var/lib/pingclair/certs
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-import -i /tmp/store.tar
+sudo rm -rf /var/lib/pingclair/.local/share/pingclair
+sudo mkdir -p /var/lib/pingclair/.local/share/pingclair && sudo chown pingclair:pingclair /var/lib/pingclair/.local/share/pingclair
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-import -i /tmp/store.tar
 sudo systemctl start pingclair
 ```
 
 ```text
 ✅ Store exported to /tmp/store.tar
-✅ Store imported into /var/lib/pingclair/certs
+✅ Store imported into /var/lib/pingclair/.local/share/pingclair
 ```
 
 실행에서 나온 세 가지. 아카이브는 이름과 무관하게 **그냥 tar**이고 모드 `600`으로
@@ -126,7 +128,7 @@ sudo systemctl start pingclair
 
 그 뒤 서비스가 `Internal CA I/O error: Permission denied`로 시작을 거부하면 저장소
 파일을 서비스 계정이 쓸 수 없는 것입니다.
-`sudo chown -R pingclair:pingclair /var/lib/pingclair/certs`로 고쳐지고 사이트가
+`sudo chown -R pingclair:pingclair /var/lib/pingclair/.local/share/pingclair`로 고쳐지고 사이트가
 다시 응답합니다.
 
 ## 🚫 조정할 수 없는 것

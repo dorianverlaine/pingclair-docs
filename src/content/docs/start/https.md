@@ -83,8 +83,10 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-The certificate material is kept in the store named by `PINGCLAIR_TLS_STORE`,
-which the installed unit sets to `/var/lib/pingclair/certs`.
+The certificate material is kept in the service user's data directory,
+`/var/lib/pingclair/.local/share/pingclair` — the path the binary resolves from
+that account's home, which is also what `PINGCLAIR_TLS_STORE` names when a
+command runs as somebody else.
 
 ## 📡 DNS-01 and wildcards
 
@@ -148,7 +150,7 @@ The site answers with a certificate issued by `CN=Pingclair Local Authority` for
 ten years, and the root is published in the store:
 
 ```bash
-sudo ls -l /var/lib/pingclair/certs/internal/
+sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
 ```
 
 ```text
@@ -159,7 +161,7 @@ Clients do not trust it yet, so a request without `-k` fails. Install the root
 into the system trust store:
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 ```text
@@ -168,7 +170,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 
 The `PINGCLAIR_TLS_STORE` prefix matters: `pingclair trust` looks in the store of
 the user who runs it, which for root is `/root/.local/share/pingclair`, while the
-service uses `/var/lib/pingclair/certs`. Without the prefix it answers `No
+service uses `/var/lib/pingclair/.local/share/pingclair`. Without the prefix it answers `No
 internal CA root at /root/.local/share/pingclair/internal/root.crt`.
 
 After trusting the root, the same request succeeds without `-k`:

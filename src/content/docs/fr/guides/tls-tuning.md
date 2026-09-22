@@ -106,22 +106,24 @@ démarrage avec
 
 ## 📦 Déplacer le magasin de certificats
 
-Le magasin nommé par `PINGCLAIR_TLS_STORE` — `/var/lib/pingclair/certs` dans
-l'unité installée — contient les certificats émis, le compte ACME et l'autorité
-interne. `storage-export` et `storage-import` le déplacent :
+Le magasin contient les certificats émis, le compte ACME et l'autorité
+interne, et il vit dans `/var/lib/pingclair/.local/share/pingclair` — le répertoire de données du
+compte de service. `PINGCLAIR_TLS_STORE` le nomme quand une commande tourne
+sous un autre utilisateur, d'où le préfixe des exemples ci-dessous : la valeur
+par défaut de root serait `/root/.local/share/pingclair`. `storage-export` et `storage-import` le déplacent :
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-export -o /tmp/store.tar
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-export -o /tmp/store.tar
 sudo systemctl stop pingclair
-sudo rm -rf /var/lib/pingclair/certs
-sudo mkdir -p /var/lib/pingclair/certs && sudo chown pingclair:pingclair /var/lib/pingclair/certs
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-import -i /tmp/store.tar
+sudo rm -rf /var/lib/pingclair/.local/share/pingclair
+sudo mkdir -p /var/lib/pingclair/.local/share/pingclair && sudo chown pingclair:pingclair /var/lib/pingclair/.local/share/pingclair
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-import -i /tmp/store.tar
 sudo systemctl start pingclair
 ```
 
 ```text
 ✅ Store exported to /tmp/store.tar
-✅ Store imported into /var/lib/pingclair/certs
+✅ Store imported into /var/lib/pingclair/.local/share/pingclair
 ```
 
 Trois détails issus de l'exécution. L'archive est un **tar simple**, quel que
@@ -133,7 +135,7 @@ import la restaure aussi.
 Si le service refuse ensuite de démarrer avec
 `Internal CA I/O error: Permission denied`, les fichiers du magasin ne sont pas
 inscriptibles par le compte de service :
-`sudo chown -R pingclair:pingclair /var/lib/pingclair/certs` corrige, et le site
+`sudo chown -R pingclair:pingclair /var/lib/pingclair/.local/share/pingclair` corrige, et le site
 répond de nouveau.
 
 ## 🚫 Ce qui ne se règle pas

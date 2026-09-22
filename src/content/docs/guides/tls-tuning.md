@@ -103,22 +103,25 @@ user.
 
 ## 📦 Moving the certificate store
 
-The store named by `PINGCLAIR_TLS_STORE` — `/var/lib/pingclair/certs` in the
-installed unit — holds the issued certificates, the ACME account, and the
-internal authority. `storage-export` and `storage-import` move it:
+The store holds the issued certificates, the ACME account, and the internal
+authority, and it lives at `/var/lib/pingclair/.local/share/pingclair` — the data
+directory of the service user's home. `PINGCLAIR_TLS_STORE` names it when a
+command runs as somebody else, which is why the examples below prefix it: root's
+own default would be `/root/.local/share/pingclair`. `storage-export` and
+`storage-import` move it:
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-export -o /tmp/store.tar
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-export -o /tmp/store.tar
 sudo systemctl stop pingclair
-sudo rm -rf /var/lib/pingclair/certs
-sudo mkdir -p /var/lib/pingclair/certs && sudo chown pingclair:pingclair /var/lib/pingclair/certs
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair storage-import -i /tmp/store.tar
+sudo rm -rf /var/lib/pingclair/.local/share/pingclair
+sudo mkdir -p /var/lib/pingclair/.local/share/pingclair && sudo chown pingclair:pingclair /var/lib/pingclair/.local/share/pingclair
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair storage-import -i /tmp/store.tar
 sudo systemctl start pingclair
 ```
 
 ```text
 ✅ Store exported to /tmp/store.tar
-✅ Store imported into /var/lib/pingclair/certs
+✅ Store imported into /var/lib/pingclair/.local/share/pingclair
 ```
 
 Three details from the run. The archive is a **plain tar** whatever it is named,
@@ -128,7 +131,7 @@ configuration the Admin API last applied, so an import restores that too.
 
 If the service refuses to start afterwards with
 `Internal CA I/O error: Permission denied`, the store's files are not writable by
-the service account; `sudo chown -R pingclair:pingclair /var/lib/pingclair/certs`
+the service account; `sudo chown -R pingclair:pingclair /var/lib/pingclair/.local/share/pingclair`
 fixes it, and the site answers again.
 
 ## 🚫 What cannot be tuned

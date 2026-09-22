@@ -16,7 +16,7 @@ description: 설치 프로그램을 다시 실행해 업그레이드하고, 컨�
 | --- | --- |
 | `/etc/Pingclair/Pingclairfile` | 유지. 설치 프로그램은 없을 때만 씁니다. |
 | `/etc/Pingclair/Pingclairfile.example` | 현재 예제로 교체됩니다. |
-| `/var/lib/pingclair/certs` | 유지. 발급된 인증서와 ACME 상태가 그대로 남습니다. |
+| `/var/lib/pingclair/.local/share/pingclair` | 유지. 발급된 인증서와 ACME 상태가 그대로 남습니다. |
 | `/var/lib/pingclair/html` | 유지. |
 | `/usr/local/bin/pingclair`와 `pc` | 새 릴리스로 교체됩니다. |
 | `/etc/systemd/system/pingclair.service` | 다시 쓰이고 서비스가 재시작됩니다. |
@@ -142,12 +142,12 @@ found`라고 답하고, 명령은 사라지며, 80 포트에서 아무것도 듣
 
 ```text
 /etc/Pingclair/Pingclairfile      설정. 그대로 유효합니다
-/var/lib/pingclair/certs          발급된 인증서와 ACME 상태
+/var/lib/pingclair/.local/share/pingclair          발급된 인증서와 ACME 상태
 /var/lib/pingclair/html           안내 페이지
 /var/log/pingclair                로그 출력 디렉터리
 ```
 
-다시 설치할 계획이면 `/var/lib/pingclair/certs`를 남기십시오. 인증서와 내부
+다시 설치할 계획이면 `/var/lib/pingclair/.local/share/pingclair`를 남기십시오. 인증서와 내부
 루트가 살아남고, 그 루트를 신뢰하는 클라이언트도 계속 동작합니다. 그 호스트에서
 Pingclair를 끝낸다면 서비스 계정까지 지웁니다.
 
@@ -170,7 +170,7 @@ sudo userdel pingclair
   것, 또는 호스트에서 포트가 이미 사용 중인 것입니다.
 - **저장소를 다시 만든 뒤 클라이언트가 인증서를 거부함.** 내부 인증 기관을
   재생성하면 옛 루트는 아무것도 서명하지 않습니다. 새 루트를
-  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust`로
+  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust`로
   설치하십시오.
 
 ## 🧭 다음 단계

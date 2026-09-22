@@ -84,8 +84,11 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-Le matériel du certificat est conservé dans le magasin nommé par
-`PINGCLAIR_TLS_STORE`, que l'unité installée fixe à `/var/lib/pingclair/certs`.
+Le matériel du certificat est conservé dans le répertoire de données du
+compte de service, `/var/lib/pingclair/.local/share/pingclair` — le chemin que le binaire
+résout depuis le répertoire personnel de ce compte, et celui que
+`PINGCLAIR_TLS_STORE` nomme quand une commande tourne sous un autre
+utilisateur.
 
 ## 📡 DNS-01 et noms génériques
 
@@ -150,7 +153,7 @@ Le site répond avec un certificat émis par `CN=Pingclair Local Authority` pour
 dix ans, et la racine est publiée dans le magasin :
 
 ```bash
-sudo ls -l /var/lib/pingclair/certs/internal/
+sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
 ```
 
 ```text
@@ -161,7 +164,7 @@ Les clients ne lui font pas encore confiance : une requête sans `-k` échoue.
 Installez la racine dans le magasin de confiance du système :
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 ```text
@@ -170,7 +173,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 
 Le préfixe `PINGCLAIR_TLS_STORE` compte : `pingclair trust` regarde le magasin de
 l'utilisateur qui l'exécute, soit `/root/.local/share/pingclair` pour root, alors
-que le service utilise `/var/lib/pingclair/certs`. Sans le préfixe, la commande
+que le service utilise `/var/lib/pingclair/.local/share/pingclair`. Sans le préfixe, la commande
 répond `No internal CA root at /root/.local/share/pingclair/internal/root.crt`.
 
 Après avoir fait confiance à la racine, la même requête réussit sans `-k` :

@@ -77,7 +77,7 @@ BoringSSL is compiled from source.
 | `/usr/local/bin/pc` | A symlink to the same binary, for the short form. |
 | `/etc/Pingclair/Pingclairfile` | The configuration the service runs. |
 | `/etc/Pingclair/Pingclairfile.example` | A commented example, never overwritten by an upgrade. |
-| `/var/lib/pingclair/certs` | The certificate store, named by `PINGCLAIR_TLS_STORE` in the unit. |
+| `/var/lib/pingclair/.local/share/pingclair` | The certificate store: the service user's data directory, which is where the binary looks by default. |
 | `/var/lib/pingclair/html` | The placeholder site served on port 80. |
 | `/var/log/pingclair` | Where a `log` sink writes once you configure one. |
 | `/etc/systemd/system/pingclair.service` | The unit, enabled and running. |
@@ -191,7 +191,7 @@ Three points are easy to get wrong:
 
 - **Do not add `command:`.** The image default is already
   `run /etc/pingclair/Pingclairfile`, and overriding it replaces that command.
-- **Do not mount `/var/lib/pingclair/certs` alone.** The store keeps state
+- **Do not mount `/var/lib/pingclair/.local/share/pingclair` alone.** The store keeps state
   beside the certificates directory, and a container recreated with only
   `certs` mounted loses it. Mount `/var/lib/pingclair`.
 - **Pin a released tag.** `latest` follows the newest release; production should

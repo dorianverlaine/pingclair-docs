@@ -190,7 +190,7 @@ pingclair manpage --directory /usr/local/share/man/man1
 `-`를 주면 표준 출력으로 씁니다.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-export -o /tmp/store.tar
 ```
 
@@ -204,7 +204,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
 아카이브를 읽습니다.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-import -i /tmp/store.tar
 ```
 
@@ -215,7 +215,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
 `PINGCLAIR_TLS_STORE`가 가리키는 저장소에서 읽습니다.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 언제 필요한지와 잘 되었는지 확인하는 방법은 [HTTPS](/ko/start/https/)에 있습니다.
@@ -226,7 +226,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 파일은 남지만 클라이언트는 더 이상 신뢰하지 않습니다.
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair untrust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair untrust
 ```
 
 ## pingclair respond

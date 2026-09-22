@@ -70,7 +70,7 @@ jemalloc 所需的 C 工具鏈：`cmake`、`clang`、`libclang-dev`、`g++` 與 
 | `/usr/local/bin/pc` | 指向同一二進位檔的符號連結，用於短指令。 |
 | `/etc/Pingclair/Pingclairfile` | 服務實際執行的設定。 |
 | `/etc/Pingclair/Pingclairfile.example` | 帶註解的範例，升級時不會被覆蓋。 |
-| `/var/lib/pingclair/certs` | 憑證儲存區，由 unit 中的 `PINGCLAIR_TLS_STORE` 指定。 |
+| `/var/lib/pingclair/.local/share/pingclair` | 憑證儲存區：服務帳號的資料目錄，二進位的預設位置。 |
 | `/var/lib/pingclair/html` | 在 80 連接埠提供的預留網站。 |
 | `/var/log/pingclair` | 設定 `log` 之後日誌寫入的位置。 |
 | `/etc/systemd/system/pingclair.service` | 已啟用並正在執行的 unit。 |
@@ -180,7 +180,7 @@ curl -i http://localhost/
 
 - **不要加 `command:`。** 映像預設值已經是
   `run /etc/pingclair/Pingclairfile`，覆蓋它會取代掉那條指令。
-- **不要只掛 `/var/lib/pingclair/certs`。** 儲存區除了憑證目錄之外還保存其他
+- **不要只掛 `/var/lib/pingclair/.local/share/pingclair`。** 儲存區除了憑證目錄之外還保存其他
   狀態，容器只掛 `certs` 重建時會遺失這些狀態。請掛 `/var/lib/pingclair`。
 - **固定發佈 tag。** `latest` 會跟隨最新發佈，正式環境應寫明版本，如上面的
   範例。已發佈的 tag 列在

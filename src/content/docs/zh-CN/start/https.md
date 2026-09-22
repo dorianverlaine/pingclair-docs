@@ -76,8 +76,9 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-证书实体保存在 `PINGCLAIR_TLS_STORE` 指定的存储里；安装出来的 unit 把它设为
-`/var/lib/pingclair/certs`。
+证书实体保存在服务账号的数据目录，
+`/var/lib/pingclair/.local/share/pingclair`——二进制从该账号的 home 解析出来的
+路径，也是以别的用户运行命令时 `PINGCLAIR_TLS_STORE` 指定的那个。
 
 ## 📡 DNS-01 与通配符
 
@@ -135,7 +136,7 @@ https://internal.test {
 存储里：
 
 ```bash
-sudo ls -l /var/lib/pingclair/certs/internal/
+sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
 ```
 
 ```text
@@ -145,7 +146,7 @@ sudo ls -l /var/lib/pingclair/certs/internal/
 客户端还不信任它，所以不带 `-k` 的请求会失败。把根证书装进系统信任存储：
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 ```text
@@ -154,7 +155,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 
 `PINGCLAIR_TLS_STORE` 前缀很重要：`pingclair trust` 看的是执行它的用户的存储
 （root 就是 `/root/.local/share/pingclair`），而服务用的是
-`/var/lib/pingclair/certs`。不加前缀，命令会回答
+`/var/lib/pingclair/.local/share/pingclair`。不加前缀，命令会回答
 `No internal CA root at /root/.local/share/pingclair/internal/root.crt`。
 
 信任根证书之后，同样的请求不带 `-k` 也会成功：

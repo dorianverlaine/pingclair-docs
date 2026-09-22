@@ -28,7 +28,6 @@ Group=pingclair
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 Environment="RUST_LOG=info"
-Environment="PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs"
 ExecStart=/usr/local/bin/pingclair run /etc/Pingclair/Pingclairfile
 ExecReload=/bin/kill -USR1 $MAINPID
 WorkingDirectory=/var/lib/pingclair
@@ -49,9 +48,12 @@ Read them in order:
   rather than until the process exists.
 - `User=pingclair` with `AmbientCapabilities=CAP_NET_BIND_SERVICE`: the server
   runs unprivileged and can still bind ports 80 and 443.
-- `PINGCLAIR_TLS_STORE`: certificates live in `/var/lib/pingclair/certs`. The
-  service account has no home directory, so leaving this to the binary's default
-  would send the store to a `$HOME` that does not exist.
+- There is deliberately no `PINGCLAIR_TLS_STORE` here. The service account's home
+  is `/var/lib/pingclair`, so certificates live at
+  `/var/lib/pingclair/.local/share/pingclair`: the binary's own default, the
+  directory the installer creates and migrates into, and the path `pingclair
+  environ` prints. Naming a store here would be a second answer to a question
+  that already has one.
 - There is deliberately no `ExecStartPre` running `validate`. It looks like the
   safe place for that check, and it is the trap: `systemd` applies
   `RestartPreventExitStatus=` to the main process, not to a failing pre-command,
@@ -221,9 +223,9 @@ For a log of its own, with rotation, configure a `log` sink and write it under
   error code`.** The server refused the configuration before it bound anything,
   and the compiler's reason is in the journal, for example
   ``Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``.
-- **`TLS store /var/lib/pingclair/certs is not writable: Permission denied`.** The
+- **`TLS store /var/lib/pingclair/.local/share/pingclair is not writable: Permission denied`.** The
   store belongs to the service account. Check
-  `sudo ls -ld /var/lib/pingclair/certs`; it should be owned by `pingclair`.
+  `sudo ls -ld /var/lib/pingclair/.local/share/pingclair`; it should be owned by `pingclair`.
 - **`systemd-analyze verify` reports `Missing '=', ignoring line` for the
   installed unit.** An older one-liner install wrote a unit whose comments had
   been expanded by the shell — 25 lines of `--help` output, which `systemd`

@@ -181,7 +181,7 @@ pingclair manpage --directory /usr/local/share/man/man1
 標準輸出。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-export -o /tmp/store.tar
 ```
 
@@ -193,7 +193,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
 從 `storage-export` 寫出的封存檔還原儲存區。`-` 表示從標準輸入讀封存檔。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-import -i /tmp/store.tar
 ```
 
@@ -203,7 +203,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs \
 憑證。CA 從 `PINGCLAIR_TLS_STORE` 指定的儲存區讀取。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
 ```
 
 什麼時候需要它、怎麼確認生效，見 [HTTPS](/zh-TW/start/https/)。
@@ -213,7 +213,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair trust
 再把這個根憑證從系統信任儲存區移除。已經簽發的憑證檔案還在，用戶端不再信任它們。
 
 ```bash
-sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/certs pingclair untrust
+sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair untrust
 ```
 
 ## pingclair respond
