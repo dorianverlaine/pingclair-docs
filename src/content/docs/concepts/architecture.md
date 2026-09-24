@@ -1,25 +1,33 @@
 ---
 title: Architecture
 h1_emoji: '🏗️'
-description: The components of the server and the path a request takes through them.
+description: The crates that make up the server, the path a request takes through them, and where HTTP/1.1, HTTP/2, and HTTP/3 behave differently.
 ---
 
-## 🧱 Components
+A web server that speaks three HTTP versions has two ways to go wrong: each
+protocol grows its own copy of the rules, or one protocol quietly misses a rule
+the others follow. Pingclair avoids both by giving each transport only the job
+of moving bytes, and sending every request through one shared policy layer.
+This page describes the components, the path a request takes, and the few
+places where the protocols still differ. It describes **v0.2.0-rc.3**.
 
-Pingclair is a Cargo workspace. The running server is the `pingclair` binary,
-which links the crates below.
+## 🧱 The server is one binary built from a few crates
+
+Pingclair is a Cargo workspace. The `pingclair` binary links the crates below;
+each one owns a single responsibility.
 
 | Crate | Responsibility |
 | --- | --- |
-| `pingclair` | Command-line entry point: argument parsing, logging, startup, and the service wrapper. |
-| `pingclair-config` | Configuration compiler: lexes, parses, and semantically checks the Pingclairfile. |
-| `pingclair-proxy` | HTTP/1.1 and HTTP/2 proxying on Pingora, the HTTP/3 listener on quiche, load balancing, and the shared request policy layer. |
-| `pingclair-static` | Static file serving: file reads, MIME types, range requests, and streaming. |
-| `pingclair-tls` | Certificate management: manual certificates, a persistent internal certificate authority, and automatic ACME issuance. |
+| `pingclair` | Command-line entry point: argument parsing, logging, startup, shutdown, and reload. |
+| `pingclair-config` | Configuration compiler: reads the Pingclairfile, checks it, and produces the configuration the server runs. |
+| `pingclair-proxy` | HTTP/1.1 and HTTP/2 on Pingora, HTTP/3 on quiche, load balancing, and the shared request policy layer. |
+| `pingclair-static` | Static file serving: file reads, MIME types, range and conditional requests, and streaming. |
+| `pingclair-fastcgi` | The FastCGI client that `php_fastcgi` uses to reach PHP-FPM. |
+| `pingclair-tls` | Certificate management: certificate files, the internal certificate authority, and ACME issuance. |
 | `pingclair-api` | Admin API for inspecting state and reloading configuration. |
-| `pingclair-core` | Data structures and server lifecycle shared by the crates above. |
+| `pingclair-core` | Data structures and lifecycle shared by the crates above. |
 
-## 🚦 The path of a request
+## 🚦 Every request crosses the same policy layer
 
 ```text
 client
@@ -41,40 +49,55 @@ handler              file server | reverse proxy | FastCGI | static response
 upstream or disk
 ```
 
-Both transports converge on the same policy layer, so routing, header
-handling, rate limiting, and access logging behave the same on HTTP/1.1,
-HTTP/2, and HTTP/3. The transports differ only where the protocol requires it,
-and those differences are listed below.
+The transport adapter turns protocol frames into a request and hands it on.
+Routing, header rules, rate limiting, and access logging live once, in the
+policy layer, so they behave the same on HTTP/1.1, HTTP/2, and HTTP/3. Both
+transports also reach upstreams through the same connector, so connection
+pooling, upstream TLS, and timeouts are shared as well.
 
-## 🌊 Request handling properties
+## 🌊 What holds for every request
 
-- **Bodies are streamed.** Request and response bodies move through the proxy in
-  bounded chunks. Compression, middleware, and proxying do not buffer a
-  complete body, so a large upload or a slow reader does not consume memory
-  proportional to the body size.
-- **Upstream connections are pooled.** Keepalive connections to backends are
-  reused. Hostname upstreams are re-resolved on the interval set by
-  `dns_refresh`, so a container that restarts on a new address is followed
-  without an operator action.
-- **Runtime state is immutable at request time.** Requests read a published
-  snapshot. A reload publishes a new snapshot instead of mutating the one in
-  use.
+- **Bodies are streamed.** Request and response bodies move through the server
+  in bounded chunks. Compression and proxying do not collect a complete body
+  first, so a large upload or a slow reader does not cost memory in proportion
+  to the body size.
+- **Upstream connections are reused.** Keepalive connections to backends are
+  pooled. A hostname upstream is resolved again on the interval set by
+  `dns_refresh`, so a backend container that restarts on a new address is
+  followed without operator action.
+- **Configuration is read, never changed, while requests run.** Each request
+  reads a published snapshot of the compiled configuration. A reload builds a
+  new snapshot and swaps it in; requests already running finish on the old one.
 
-## 🌐 Protocol-specific behavior
+## 🌐 Where the protocols differ
 
-Some behavior differs by protocol by design. It is listed here rather than
-discovered later:
+A few behaviors differ by protocol. They are listed here so that nobody has to
+discover them in production.
 
-| Area | Behavior |
+| Area | Behavior in v0.2.0-rc.3 |
 | --- | --- |
-| Trailers | Declared request trailers are not forwarded. The server answers `501` before the response is committed, resets an already committed HTTP/3 stream, and answers `502` when an upstream advertises response trailers. |
-| CONNECT | `CONNECT` and extended `CONNECT` return `501` on HTTP/3 until tunnel support is implemented. |
-| FastCGI | `php_fastcgi` works on HTTP/1.1 and HTTP/2. Routes that need FastCGI return `501` on HTTP/3 until that path has its own FastCGI client. |
+| Trailers | Request trailers are not forwarded on any protocol. A request that declares them is answered `501` before the response starts; an HTTP/3 stream whose response has already started is reset instead. An upstream response that advertises trailers is answered `502`. |
+| `CONNECT` | Pingclair opens no tunnels. HTTP/1.1 and HTTP/2 answer `405`. HTTP/3 resets a standard `CONNECT` request as malformed, and answers `501` to one that also carries `:scheme` and `:path`. |
+| FastCGI | `php_fastcgi` works on HTTP/1.1 and HTTP/2. On HTTP/3, a route that needs FastCGI is answered `501`. |
 
-## ⚠️ Known defect
+📌 **Upcoming.** On `main`, `CONNECT` is answered `405` with an `Allow` header
+on every protocol, and `TRACE` is answered the same way. These changes are not
+in v0.2.0-rc.3; the
+[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
+records them under Unreleased.
 
-WebSocket upgrades fail intermittently under load: roughly 10-15% of upgrades on
-a busy machine. The cause is a race in the upstream `pingora-proxy` crate rather
-than in Pingclair's own upgrade handling, and it is invisible on an idle
-developer machine, which is why it is documented here. Upstream issue:
+## ⚠️ WebSocket upgrades fail intermittently under load
+
+Pingclair proxies WebSocket, but roughly 10-15% of upgrades fail when the
+machine is busy. From the outside, a failed upgrade is a connection closed
+immediately after the `101 Switching Protocols` response. The cause is a race
+in the upstream `pingora-proxy` crate, not in Pingclair's upgrade handling, and
+no configuration avoids it. An idle developer machine rarely reproduces it,
+which is why it is stated here. Upstream issue:
 [cloudflare/pingora#946](https://github.com/cloudflare/pingora/issues/946).
+
+## 🧭 Related pages
+
+- [Configuration model](/concepts/configuration/): how a Pingclairfile becomes
+  the snapshot described above.
+- [Project status](/project/status/): what the release supports and refuses.
