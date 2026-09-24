@@ -129,8 +129,8 @@ differences are where HTTP/3 cannot carry something:
 
 | Area | On HTTP/3 |
 | --- | --- |
-| Declared request trailers | Not forwarded: `501` before the response is committed, stream reset after. |
-| Upstream response trailers | `502`. |
+| Declared request trailers | Not forwarded, as on every protocol: `501` before the response is committed; on HTTP/3 the stream is reset after that. |
+| Upstream response trailers | `502`, as on every protocol. |
 | `CONNECT` | Pingclair opens no tunnels. A standard `CONNECT` is reset as malformed, and one that also carries `:scheme` and `:path` is answered `501`. **Next release:** `405` with `Allow`, the same answer as on HTTP/1.1 and HTTP/2. |
 
 A CDN in front of the origin terminates HTTP/3 itself and talks HTTP/1.1 or
