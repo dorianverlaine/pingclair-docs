@@ -41,13 +41,14 @@ http://localhost:8080 {
 }
 ```
 
-三点だけ名前を付けておきます。先頭の無名ブロックはグローバルオプションで、
-`admin` があると `pingclair start`、`stop`、`reload` が実行中のサーバーと話せ
-ます。サイトアドレスはスキームを含み、`http://` が平文を強制します。これが
-無いと Pingclair は `localhost` を名前として扱い、独自の認証局で HTTPS を
-提供するため、平文の HTTP クライアントには空の応答として見えます
-（[HTTPS](/ja/start/https/)）。`file_server` のルートは作業ディレクトリからの
-相対パスです。
+大事な点が三つあります。
+
+- 先頭の無名ブロックはグローバルオプションです。`admin` は Admin API を開き、
+  `pingclair start`、`stop`、`reload` はこれを通じて実行中のサーバーに到達します。
+- サイトアドレスの `http://` スキームが平文を強制します。これが無いと Pingclair
+  は `localhost` を名前として扱い、独自の認証局の証明書で HTTPS を提供するため、
+  平文の HTTP クライアントには空の応答が返ります（[HTTPS](/ja/start/https/)）。
+- `file_server` のルートは作業ディレクトリからの相対パスです。
 
 ## 2. ✅ 実行前に検証する
 

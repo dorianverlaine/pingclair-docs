@@ -169,11 +169,17 @@ $ systemctl status pingclair --no-pager | grep Status
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-例外はプロセス全体に関わるポリシーです。`trusted_proxies` のような起動時に
+例外は、実行中のプロセスが取り込めない変更です。`trusted_proxies` のような起動時に
 確立されるオプションは、再起動後にしか効きません: `sudo pc service restart`。
 リスナーを追加・移動する設定も同じように拒否されます——status line が追加・削除
 されたアドレスを示します——再読み込みが適用するのはポリシーであり、新しい
 待ち受けソケットではないからです。
+
+## 🛑 停止の意味
+
+`systemctl stop` は `SIGTERM` を送ります。v0.2.0-rc.3 では、`grace_period` の値にかかわらず、プロセスはその約 0.25 秒後に終了します。その時点でまだ処理中のリクエストは、応答を返さないまま切断されます。停止や再起動は短い中断が許されるときに行い、サイトの設定だけを変えたときは再読み込みを使ってください。
+
+📌 **次のリリース。** `main` では、停止はまずドレインを行います。`/ready` が `503` を返し、リスナーが閉じ、実行中のリクエストが完了し、最後のリクエストが終わるか `grace_period`（既定 30 秒）が経過した時点でプロセスが終了します。
 
 ## 📜 ログ
 
@@ -211,11 +217,11 @@ ERROR pingclair::run:    💡 Previous configuration remains active, unchanged
 
 ## ⚠️ サービスが立ち上がらないとき
 
-- **`is-active` が `activating` のままで `NRestarts` が増え続ける。** 導入された
-  これは古いユニットで引退した挙動です。`RestartPreventExitStatus` を伴わない
-  `Restart=always` を積んでいたため、サーバーが拒否する設定は 5 秒ごとに再試行
+- **`is-active` が `activating` のままで `NRestarts` が増え続ける。** ユニットが
+  古いインストーラで書かれており、そのインストーラには欠陥が二つありました。
+  一つは `RestartPreventExitStatus` を伴わない `Restart=always` を積んでいたことで、そのため、サーバーが拒否する設定は 5 秒ごとに再試行
   され、「一度失敗したユニット」ではなく「いつまでも落ち着かないユニット」に
-  見えていました。原因はもう一つあります。`validate` を `ExecStartPre` として
+  見えていました。もう一つは `validate` を `ExecStartPre` として
   走らせていたことで、`RestartPreventExitStatus` はそれを覆いません。導入される
   ユニットは `Restart=on-failure` + `RestartPreventExitStatus=1` を積み、
   事前コマンドを持ちません。拒否された起動は `is-active` を `failed` のまま、

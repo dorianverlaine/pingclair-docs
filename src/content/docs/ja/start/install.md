@@ -57,7 +57,7 @@ Use pc service status to check the service.
 Config: /etc/Pingclair/Pingclairfile
 ```
 
-未リリースの修正が必要なときは、リリースバイナリではなく `main` を導入します。
+未リリースの修正を使うには、代わりにホスト上で `main` をビルドします。
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
@@ -158,8 +158,8 @@ server: Pingclair
 
 公開イメージは設定ファイルモードで動きます。entrypoint は `pingclair`、既定の
 コマンドは `run /etc/pingclair/Pingclairfile` です。イメージは
-`/etc/pingclair` と `/var/lib/pingclair` をボリュームとして宣言し、80 と 443 を
-公開します。
+`/etc/pingclair` と `/var/lib/pingclair` をボリュームとして宣言し、ポート 80 と 443 を
+公開（expose）します。
 
 ```yaml
 services:
@@ -192,9 +192,9 @@ curl -i http://localhost/
 - **`command:` を足さないこと。** イメージの既定はすでに
   `run /etc/pingclair/Pingclairfile` で、上書きするとそのコマンドが置き換わり
   ます。
-- **`/var/lib/pingclair/.local/share/pingclair` だけをマウントしないこと。** ストアは証明書
-  ディレクトリの隣にも状態を置くので、`certs` だけをマウントしてコンテナを
-  作り直すとそれが失われます。`/var/lib/pingclair` をマウントします。
+- **証明書ディレクトリだけでなく `/var/lib/pingclair` 全体をマウントすること。**
+  ストアは証明書の隣にも状態を置くので、その一部だけをマウントしてコンテナを
+  作り直すと、その状態が失われます。
 - **公開タグを固定すること。** `latest` は最新リリースを追いかけます。本番は
   例のようにバージョンを指定します。公開タグは
   [パッケージページ](https://github.com/dorianverlaine/pingclair/pkgs/container/pingclair)
