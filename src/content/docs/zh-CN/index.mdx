@@ -15,7 +15,8 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-Pingclair 用一份配置同时提供 HTTP/1.1、HTTP/2 与 HTTP/3，通过 ACME 申请并续期公开证书，并以压缩和范围请求提供静态文件。它的配置语言 Pingclairfile 遵循 Caddyfile 的约定。
+Pingclair 用一份配置同时提供 HTTP/1.1、HTTP/2 和 HTTP/3，通过 ACME 获取并续期公网证书，
+并以压缩和范围请求的方式提供静态文件。它的配置语言 Pingclairfile 遵循 Caddyfile 的约定。
 
 ```caddyfile
 example.com {
@@ -28,18 +29,18 @@ example.com {
 
 <CardGrid>
 	<Card title="🚀 安装">
-		使用发布版二进制、从源码编译，或使用 Docker。
-		[安装说明](/zh-CN/start/install/)
+		通过发布版二进制文件、从源码构建，或使用 Docker。
+		[安装指南](/zh-CN/start/install/)
 	</Card>
 	<Card title="🏃 快速开始">
-		写出第一份 Pingclairfile，验证配置，然后开始提供服务。
+		编写第一个 Pingclairfile，校验它，然后开始提供服务。
 		[快速开始](/zh-CN/start/quickstart/)
 	</Card>
 	<Card title="🧠 核心概念">
 		配置文件如何变成运行时状态，以及请求如何被处理。
 		[配置模型](/zh-CN/concepts/configuration/)
 	</Card>
-	<Card title="📖 参考手册">
+	<Card title="📖 参考">
 		配置语言本身，以及它接受的指令。
 		[指令参考](/zh-CN/reference/directives/)
 	</Card>
@@ -47,8 +48,10 @@ example.com {
 
 ## 📌 发布状态
 
-当前版本是 **v0.2.0-rc.3**，属于 release candidate。本站各页描述的就是这个版本。`v0.1.x` 系列已不再维护，也不会收到安全修复。[项目状态](/zh-CN/project/status/)列出了已支持的功能、会被拒绝的配置，以及打标签时已知的缺陷。
+当前版本是 **v0.2.0-rc.3**，属于候选版本。本站各页描述的就是这个版本。`v0.1.x` 系列已停止维护，
+不再接收安全修复。[项目状态](/zh-CN/project/status/)列出了支持什么、拒绝什么，以及打标签时已知的缺陷。
 
 ## 📊 性能
 
-Pingclair 与 nginx、Caddy 在同一台主机上测量：每个候选者都限制在两颗 CPU，并使用完全相同的负载。实测数字、测量条件，以及 Pingclair 落后的行，都公布在[性能测量](/zh-CN/project/benchmarks/)。
+Pingclair 与 nginx、Caddy 在同一台主机上进行测量，每个参与者都限制为两个 CPU，并使用完全相同的负载。
+实测数字、测量条件，以及 Pingclair 落后的那几行，都发布在[性能测量](/zh-CN/project/benchmarks/)中。
