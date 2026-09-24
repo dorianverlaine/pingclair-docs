@@ -107,9 +107,9 @@ HTTP/3 與 HTTP/1.1、HTTP/2 共用政策程式碼，所以路由、匹配器、
 
 | 領域 | 在 HTTP/3 上 |
 | --- | --- |
-| 宣告的 request trailers | 不轉送：回應確定送出前回 `501`，之後則重設 stream。 |
-| 上游回應的 trailers | `502`。 |
-| `CONNECT` | Pingclair 不建立 tunnel。**下一版**：回應附帶 `Allow` 的 `405`，與 HTTP/1.1 和 HTTP/2 相同。 |
+| 宣告的 request trailers | 與每種協定一樣不轉送：回應確定送出前回 `501`；在 HTTP/3 上，之後則重設 stream。 |
+| 上游回應的 trailers | 與每種協定一樣回 `502`。 |
+| `CONNECT` | Pingclair 不建立 tunnel。標準的 `CONNECT` 會被當成格式錯誤而重設，同時帶有 `:scheme` 與 `:path` 的則回 `501`。**下一版**：回應附帶 `Allow` 的 `405`，與 HTTP/1.1 和 HTTP/2 相同。 |
 
 源站前面若有 CDN，CDN 會自己終結 HTTP/3，再以 HTTP/1.1 或 HTTP/2 與源站溝通。這時這裡的監聽器完全無法告訴你訪客的瀏覽器用了什麼；請改查 CDN 本身的 HTTP/3 設定。
 

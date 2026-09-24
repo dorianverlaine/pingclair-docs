@@ -299,7 +299,7 @@ example.com {
 | `auto_https` | `auto_https on \| off \| disable_redirects` | 控制自動 HTTPS 與 80 連接埠的重新導向。`disable_certs` 與 `ignore_loaded_certs` 會被指名拒絕。 |
 | `dns_refresh` | `dns_refresh <duration> \| off` | 重新解析主機名稱上游的間隔。預設為 `30s`。`off` 會沿用啟動時解析的位址。單獨的數字會被拒絕。 |
 | `email` | `email <address>` | ACME 帳號的 email。 |
-| `grace_period` | `grace_period <duration>` | 優雅停止時等待進行中請求的時間。 |
+| `grace_period` | `grace_period <duration>` | 優雅停止時等待進行中請求的時間。在 v0.2.0-rc.3 中，不論這個值為何，停止都會在約 250 ms 後結束；**下一版**：停止時最多等待這麼久讓請求完成。 |
 | `protocols` | `protocols h1 h2 h3` | 是否建立 HTTP/3 監聽器。請見 [TLS：可以調整什麼](/zh-TW/guides/tls-tuning/#-提供哪些協定)。 |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | 可以在轉送標頭中聲明用戶端位址的對端。變更它需要重啟。**下一版**：也接受 Caddy 的寫法 `trusted_proxies static <cidr \| private_ranges> ...`。 |
 

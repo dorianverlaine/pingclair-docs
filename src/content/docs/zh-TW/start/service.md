@@ -121,7 +121,7 @@ $ systemctl status pingclair --no-pager | grep Status
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-執行中的行程無法吸收的變更是例外。啟動時就確定的選項（例如 `trusted_proxies`）只有在重啟後才會生效：`sudo pc service restart`。新增或搬移監聽器的設定也會以同樣方式被拒絕——狀態列會列出新增與移除的位址——因為重載套用的是政策，而不是新的監聽 socket。
+執行中的行程無法吸收的變更是例外。對全域選項區塊的任何變更（例如 `trusted_proxies`）都會被重載拒絕，只有在重啟後才會生效：`sudo pc service restart`。新增或搬移監聽器的設定也會以同樣方式被拒絕——狀態列會列出新增與移除的位址——因為重載套用的是政策，而不是新的監聽 socket。
 
 ## 🛑 停止意味著什麼
 
