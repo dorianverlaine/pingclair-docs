@@ -41,13 +41,16 @@ http://localhost:8080 {
 }
 ```
 
-Three things are worth naming. The unnamed block at the top holds global
-options, and `admin` is what lets `pingclair start`, `stop`, and `reload` talk to
-the running server. The site address carries the scheme, and `http://` is what
-forces plaintext; without it Pingclair treats `localhost` as a name and serves
-HTTPS from its own certificate authority, which a plain HTTP client sees as an
-empty reply ([HTTPS](/start/https/)). The `file_server` root is relative to the
-working directory.
+Three details matter:
+
+- The unnamed block at the top holds global options. `admin` opens the Admin
+  API, which `pingclair start`, `stop`, and `reload` use to reach the running
+  server.
+- The `http://` scheme in the site address forces plaintext. Without it,
+  Pingclair treats `localhost` as a name, serves HTTPS with a certificate from
+  its own authority, and a plain HTTP client sees an empty reply
+  ([HTTPS](/start/https/)).
+- The `file_server` root is relative to the working directory.
 
 ## 2. ✅ Validate before you run
 

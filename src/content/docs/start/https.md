@@ -91,8 +91,17 @@ command runs as somebody else.
 ## 📡 DNS-01 and wildcards
 
 DNS-01 proves control of a name by publishing a TXT record instead of answering
-on port 80, which is what a wildcard certificate requires. The configuration
-needs the provider block:
+on port 80. A wildcard certificate requires it, and so does a host whose port 80
+is closed.
+
+⚠️ **DNS-01 does not complete in v0.2.0-rc.3.** That release publishes the
+wrong value in the TXT record, so every order ends `Invalid`. The fix, and the
+single wildcard certificate described below, are on `main` and not yet
+released. To use DNS-01 today, install `main` with the installer's `--main`
+flag ([Install](/start/install/#-install-from-a-release-binary)). The output
+in this section shows the behavior of that build.
+
+The configuration needs the provider block:
 
 ```caddyfile
 {
@@ -110,10 +119,10 @@ needs the provider block:
 }
 ```
 
-Two details are easy to miss. The `auto` line inside the block is what puts the
+Two details are easy to miss. First, the `auto` line inside the block is what puts the
 name on the issuance list; without it the server logs `authorised for 0
 hostname(s)` and never asks for a certificate, leaving every handshake to fail
-with `NO_CERTIFICATE_SET`. And the token is a Cloudflare API token with
+with `NO_CERTIFICATE_SET`. Second, the token is a Cloudflare API token with
 `Zone:DNS:Edit` for the zone that holds the name.
 
 🃏 **One leaf covers the site.** A `*.example.com` site orders `*.example.com`
@@ -198,6 +207,12 @@ curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
 ```
 
 `pingclair untrust` removes it again, with the same store prefix.
+
+📌 **Upcoming.** The next release files the internal authority the way Caddy
+does, under `pki/authorities/local/` in the store, with an intermediate that
+signs the leaves. The old `internal/` directory is not migrated: after the
+upgrade the server creates a new root, and every client must trust it again
+with `pingclair trust`.
 
 ## 📜 Certificates you supply
 

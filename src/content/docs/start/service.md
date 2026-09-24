@@ -168,11 +168,23 @@ one running, so the site keeps answering. Validate first:
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-Process-wide policy is the exception. Options that are established at startup,
+Changes that a running process cannot absorb are the exception. Options that are established at startup,
 such as `trusted_proxies`, only take effect after a restart:
 `sudo pc service restart`. A configuration that adds or moves a listener is
 refused the same way — the status line names the addresses that were added and
 removed — because reload applies policy, not a new listening socket.
+
+## 🛑 What a stop means
+
+`systemctl stop` sends `SIGTERM`. In v0.2.0-rc.3 the process exits about a
+quarter of a second later, whatever `grace_period` says, so a request still
+running at that moment is cut without a response. Stop or restart when a short
+interruption is acceptable, and prefer a reload when only the site
+configuration changed.
+
+📌 **Upcoming.** On `main`, a stop drains first: `/ready` answers `503`, the
+listeners close, running requests finish, and the process exits when the last
+one is done or when `grace_period` (30 seconds by default) has passed.
 
 ## 📜 Logs
 
@@ -208,8 +220,8 @@ For a log of its own, with rotation, configure a `log` sink and write it under
 
 ## ⚠️ When the service will not come up
 
-- **`is-active` says `activating` and `NRestarts` keeps climbing.** That is the
-  retired behaviour of an older unit, and it had two causes. It carried
+- **`is-active` says `activating` and `NRestarts` keeps climbing.** The unit
+  was written by an older installer, which had two faults. It carried
   `Restart=always` with no `RestartPreventExitStatus`, and it ran `validate` as
   an `ExecStartPre` command, which `RestartPreventExitStatus` does not cover —
   so a configuration the compiler refuses was retried every five seconds and

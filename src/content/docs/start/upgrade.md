@@ -28,8 +28,11 @@ and the teardown.
 curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-The script asks GitHub for the newest release tag, prints it, verifies the
-archive's SHA-256, replaces the binary and the unit, and restarts the service.
+The script finds the newest release on the release channel, prints its tag,
+verifies the archive's SHA-256, replaces the binary and the unit, and restarts
+the service. When the channel host cannot be reached, it asks the GitHub
+releases API instead; the run below took that path, which is why it prints
+`Fetching latest release`.
 A configuration file that already exists is not touched, which is what makes
 this an upgrade rather than a reset:
 
@@ -56,6 +59,17 @@ v0.2.0-rc.3
 
 The installer always installs the newest release. There is no flag for
 installing a specific version; that is what the rollback below is for.
+
+## ⚠️ Read the upgrade notes before 0.2.0
+
+The next release changes behavior that an unchanged configuration can notice:
+which route answers a request, whether a site without `encode` compresses, the
+default request-body limit, what `remote_ip` matches, and where the internal
+authority keeps its root. [Project status](/project/status/#-what-changes-in-the-next-release)
+summarizes them, and the
+[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
+gives each one an upgrade note. Validate your configuration with the new binary
+before you restart the service on it.
 
 ## 🐳 Upgrade a container
 

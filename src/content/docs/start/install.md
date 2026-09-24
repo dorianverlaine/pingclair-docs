@@ -57,7 +57,7 @@ Use pc service status to check the service.
 Config: /etc/Pingclair/Pingclairfile
 ```
 
-Install `main` instead of the release binary when you need an unreleased fix:
+To run an unreleased fix, build `main` on the host instead:
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
@@ -158,8 +158,7 @@ body is the placeholder page in `/var/lib/pingclair/html`.
 
 The published image runs config-file mode: its entrypoint is `pingclair` and its
 default command is `run /etc/pingclair/Pingclairfile`. The image declares
-`/etc/pingclair` and `/var/lib/pingclair` as volumes, and exports ports 80 and
-443.
+`/etc/pingclair` and `/var/lib/pingclair` as volumes, and exposes ports 80 and 443.
 
 ```yaml
 services:
@@ -191,9 +190,9 @@ Three points are easy to get wrong:
 
 - **Do not add `command:`.** The image default is already
   `run /etc/pingclair/Pingclairfile`, and overriding it replaces that command.
-- **Do not mount `/var/lib/pingclair/.local/share/pingclair` alone.** The store keeps state
-  beside the certificates directory, and a container recreated with only
-  `certs` mounted loses it. Mount `/var/lib/pingclair`.
+- **Mount all of `/var/lib/pingclair`, not only the certificate directory.**
+  The store keeps state beside the certificates, and a container recreated
+  with only part of it mounted loses that state.
 - **Pin a released tag.** `latest` follows the newest release; production should
   name the version, as the example does. Published tags are listed on the
   [package page](https://github.com/dorianverlaine/pingclair/pkgs/container/pingclair).
