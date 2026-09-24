@@ -1,29 +1,33 @@
 ---
 title: Command line
 h1_emoji: '⌨️'
-description: Every subcommand the binary exposes, with its flags, defaults, and prerequisites, checked against `pingclair --help`.
+description: Every pingclair subcommand with its flags, defaults, and prerequisites, checked against the binary's own --help output.
 ---
 
-Pingclair ships as a single binary with a command line in the usual Unix shape:
+Pingclair is one binary. Every task, from running the server to checking a
+configuration, is a subcommand of it:
 
 ```bash
 pingclair <command> [<args…>]
 ```
 
-Angle brackets mark something required, square brackets something optional, and
-`…` a value that can be repeated. Every command answers `--help` with the same
-text this page was written from, and `pingclair help <command>` prints it as
-well. Running the binary with no command prints the list.
+Angle brackets mark a required value, square brackets an optional one, and `…`
+a value that can be repeated. Every command answers `--help`, and
+`pingclair help <command>` prints the same text. Running the binary with no
+command prints the list of commands.
+
+📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
+that exist only on the server's `main` branch are marked **Next release**.
 
 The installer also links the binary as `pc`, so every command below has a
 two-letter spelling: `pc validate`, `pc service reload`, and so on. The two are
-the same program; `pc` is a symlink, not a second binary.
+the same program: `pc` is a symbolic link, not a second binary.
 
 ## 🚩 Global flags
 
 | Flag | What it does |
 | --- | --- |
-| `-v`, `--verbose` | Raise the log level to `debug` for this run. Accepted before or after the command. |
+| `-v`, `--verbose` | Raise the log level to `debug` for this run. Accepted before or after the command. Unlike `caddy -v`, it does not print the version. |
 | `-h`, `--help` | Print the help for the command it is attached to. |
 | `-V`, `--version` | Print the version. Top level only. |
 
@@ -40,7 +44,7 @@ the same program; `pc` is a symlink, not a second binary.
 | `list-modules` | List the modules compiled into this binary. |
 | `build-info` | Print build metadata, including the toolchain. |
 | `manpage` | Write man pages into a directory. |
-| `storage-export` | Move the certificate store into a tarball. |
+| `storage-export` | Write the certificate store into a tar archive. |
 | `storage-import` | Restore a certificate store from that tarball. |
 | `trust` | Install the internal CA root into the system trust store. |
 | `untrust` | Remove it again. |
@@ -52,7 +56,11 @@ the same program; `pc` is a symlink, not a second binary.
 | `fmt` | Format a Pingclairfile, or show what formatting would change. |
 | `hash-password` | Produce a password hash for `basic_auth`. |
 | `version` | Print the version. |
-| `service` | Drive the installed systemd unit. |
+| `service` | Control the installed systemd unit. |
+
+**Next release:** `storage export` and `storage import` are added as Caddy's
+spellings of `storage-export` and `storage-import`. The hyphenated names keep
+working.
 
 ## pingclair run
 
@@ -70,22 +78,25 @@ pingclair run [OPTIONS] [CONFIG]
 | Flag | What it does |
 | --- | --- |
 | `-r`, `--resume` | Load the configuration the Admin API last autosaved instead of the file, the way `caddy run --resume` does. Overrides `CONFIG` when both are present. |
-| `-w`, `--watch` | Watch the configuration file — mtime, polled once a second — and send the process the reload signal after every change. Intended for local development, where a rejected edit is quickly visible. |
+| `-w`, `--watch` | Check the configuration file's modification time once a second, and reload after every change. Intended for local development. |
 
 ```bash
 pingclair run --watch
 ```
 
-For a server that survives the terminal, use the installed unit
-([Run it as a service](/start/service/)) or [Quickstart](/start/quickstart/),
-which walks through the same command as a service.
+With no `CONFIG` and neither default file present, `run` exits with status 1.
+Caddy starts an empty server in that case; Pingclair refuses, so a `run` typed
+in the wrong directory fails visibly.
+
+For a server that outlives the terminal, use the installed unit
+([Run it as a service](/start/service/)).
 
 ## pingclair reload
 
-Applies an edited configuration to a running server through the Admin API.
-Because the request is answered by the server, this command reports what the
-server made of the file — unlike a signal, which systemd can only confirm was
-delivered.
+Sends a configuration file to a running server through the Admin API
+(`POST /load`). The server answers the request itself, so the command reports
+whether the file was applied. A signal cannot do that: systemd can only confirm
+that it was delivered.
 
 ```bash
 pingclair reload [OPTIONS]
@@ -96,10 +107,10 @@ pingclair reload [OPTIONS]
 | `-c`, `--config <CONFIG>` | `./Pingclairfile`, then `./Caddyfile` | Configuration file to apply. |
 | `--address <ADDRESS>` | `127.0.0.1:2019` | Admin API address. |
 
-The Admin API has to be running: the global `admin` option enables it, and a
-configuration without that option has no endpoint to reach. A reload that the
-running server cannot apply — a changed listener topology is the common case —
-leaves the previous configuration serving.
+The running configuration must enable the Admin API with the global `admin`
+option; without it there is nothing to reach. When the server cannot apply the
+new file, most often because a listener was added or moved, the command fails
+and the previous configuration keeps serving.
 
 ```bash
 sudo pingclair reload -c /etc/Pingclair/Pingclairfile
@@ -107,8 +118,8 @@ sudo pingclair reload -c /etc/Pingclair/Pingclairfile
 
 ## pingclair start
 
-Starts a copy of the server that keeps running after the shell exits, without a
-service manager in the picture.
+Starts the server as a background process that keeps running after the shell
+exits, without a service manager.
 
 ```bash
 pingclair start [OPTIONS]
@@ -118,15 +129,15 @@ pingclair start [OPTIONS]
 | --- | --- | --- |
 | `-c`, `--config <CONFIG>` | `./Pingclairfile`, then `./Caddyfile` | Configuration file to load. |
 
-The process is detached from the terminal and its output is discarded, so
-nothing is logged anywhere. On a host with systemd, the installed unit is the
+The process is detached from the terminal and its output is discarded, so its
+log is not kept anywhere. On a host with systemd, the installed unit is the
 better tool: it captures the log, restarts on failure, and knows when the
 listeners are bound. See [Run it as a service](/start/service/).
 
 ## pingclair stop
 
-Stops a running server through the Admin API — the same `POST /stop` the Admin
-API exposes. Requires the `admin` option, like `reload`.
+Stops a running server with the Admin API's `POST /stop`. Like `reload`, it
+needs the `admin` option in the running configuration.
 
 ```bash
 pingclair stop [OPTIONS]
@@ -151,9 +162,9 @@ pingclair completion zsh > ~/.zfunc/_pingclair
 
 ## pingclair environ
 
-Prints the environment the server will run with, so a value such as
-`PINGCLAIR_TLS_STORE` can be checked before a start rather than inferred from a
-failure afterwards.
+Prints the environment this process inherited, one `NAME=value` per line, so a
+value such as `PINGCLAIR_TLS_STORE` can be checked before a start. Unlike
+`caddy environ`, it does not print paths the server computed.
 
 ```bash
 pingclair environ
@@ -161,8 +172,11 @@ pingclair environ
 
 ## pingclair list-modules
 
-Lists the modules and features compiled into this binary. `--json` prints the
-same list as structured output, for scripts.
+Lists the modules compiled into this binary. `--json` prints the same list as
+JSON, for scripts.
+
+**Next release:** `--versions`, `--packages`, and `-s`/`--skip-standard` are
+accepted, so scripts written for `caddy list-modules` run unchanged.
 
 ```bash
 pingclair list-modules [--json]
@@ -188,10 +202,10 @@ pingclair manpage --directory /usr/local/share/man/man1
 
 ## pingclair storage-export
 
-Writes the certificate store into a tar archive: the data directory of the
-service user by default, or whatever `PINGCLAIR_TLS_STORE` names — the prefix in
-the example is what makes a root shell look at the service's store rather than
-its own. `-` as the output path writes the archive to standard output.
+Writes the certificate store into a tar archive. The store is the one named by
+`PINGCLAIR_TLS_STORE`, or else the data directory of the user running the
+command. The prefix in the example points a root shell at the service account's
+store instead of root's own. `-o -` writes the archive to standard output.
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
@@ -204,8 +218,12 @@ encrypted media rather than in a backup that ships to a bucket. The
 
 ## pingclair storage-import
 
-Restores a store from an archive written by `storage-export`. `-` reads the
+Restores a store from an archive written by `storage-export`. `-i -` reads the
 archive from standard input.
+
+**Next release:** both commands take `-c`/`--config <file>`, and a global
+`storage file_system <path>` option in that file names the store. An import
+that would restore nothing is refused.
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
@@ -214,9 +232,10 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
 
 ## pingclair trust
 
-Installs the internal CA root certificate into the system trust store, after
-which browsers and command-line clients accept the certificates that authority
-issues. It reads the CA from the store named by `PINGCLAIR_TLS_STORE`.
+Installs the root certificate of the internal authority (`tls internal`) into
+the system trust store. Afterwards, clients that use that store accept the
+certificates the authority issues. The root is read from the store named by
+`PINGCLAIR_TLS_STORE`.
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
@@ -227,8 +246,8 @@ that it worked.
 
 ## pingclair untrust
 
-Removes that root certificate from the system trust store again. Certificates
-already issued by it keep their files; clients stop trusting them.
+Removes that root certificate from the system trust store. The issued
+certificates stay on disk, but clients stop trusting them.
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair untrust
@@ -236,8 +255,9 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair unt
 
 ## pingclair respond
 
-Serves a fixed response — status, headers, body — for development and for
-testing clients against an origin that always answers the same way.
+Serves one fixed response (status, headers, and body) for every request. It is
+meant for development, and for testing a client against an origin that always
+answers the same way.
 
 ```bash
 pingclair respond [OPTIONS]
@@ -254,16 +274,15 @@ pingclair respond [OPTIONS]
 pingclair respond --status 503 --header 'Retry-After: 30' --body 'down for maintenance'
 ```
 
-With no `--listen`, the port is chosen for you and printed, which keeps two
-development servers from fighting over a fixed one.
+With no `--listen`, a free loopback port is chosen and printed, so two
+development servers never compete for one port.
 
 ## pingclair reverse-proxy
 
-Starts a proxy from a listener to one or more upstreams without writing a
-configuration file. This is the one-line version of
-[the reverse proxy guide](/guides/reverse-proxy/), and it serves a
-production-shaped configuration rather than a toy: the upstream is required,
-and multiple `--to` values load-balance.
+Proxies a listener to one or more upstreams without a configuration file.
+`--to` is required; repeating it spreads requests over several upstreams. The
+[reverse proxy guide](/guides/reverse-proxy/) covers the same ground with a
+configuration file.
 
 ```bash
 pingclair reverse-proxy [OPTIONS] --to <TO>
@@ -275,7 +294,7 @@ pingclair reverse-proxy [OPTIONS] --to <TO>
 | `--to <TO>` | required | Upstream address. Repeat for several. |
 | `--header-up <HEADERS_UP>` | none | Request header to send upstream, as `Field: value`. Repeatable. |
 | `--header-down <HEADERS_DOWN>` | none | Response header to send downstream, as `Field: value`. Repeatable. |
-| `--insecure` | off | Skip TLS verification when the upstream's certificate does not match. |
+| `--insecure` | off | Do not verify the upstream's TLS certificate. |
 | `--internal-certs` | off | Issue this listener's certificates from the internal CA instead of trying a public one. |
 | `--disable-redirects` | off | Do not provision the HTTP-to-HTTPS redirect listener. |
 | `-c`, `--change-host-header` | off | Rewrite the upstream `Host` header to the upstream address, as Caddy does. |
@@ -313,8 +332,8 @@ configuration file; the [static site guide](/guides/static-site/) covers them.
 ## pingclair validate
 
 Compiles a configuration and reports the first problem it finds, without
-starting anything. Exit status is non-zero when the configuration is refused,
-which is what makes it usable in a pipeline or a deployment script.
+starting anything. The exit status is non-zero when the configuration is
+refused, so the command works as a gate in a deployment script.
 
 ```bash
 pingclair validate [/etc/Pingclair/Pingclairfile]
@@ -330,9 +349,17 @@ sudo pingclair validate /etc/Pingclair/Pingclairfile
 
 ## pingclair adapt
 
-Prints the JSON form that the configuration compiles to. `--pretty` indents it
-for reading, and `--validate` runs the checks that need the filesystem —
-certificate paths, for example — instead of only the syntax.
+Prints the JSON document a Pingclairfile compiles to. This is Pingclair's own
+schema, the one `validate`, `run`, and the Admin API's `/load` accept. Unlike
+`caddy adapt`, the output is not Caddy's `{"apps": …}` shape, and Caddy cannot
+load it.
+
+`--pretty` indents the JSON. `--validate` also runs the checks that
+`validate` runs, such as whether certificate files exist.
+
+**Next release:** `adapt` always validates before printing, so exit status 0
+means this build can load the result. `--validate` is still accepted and
+changes nothing.
 
 ```bash
 pingclair adapt [OPTIONS]
@@ -342,7 +369,7 @@ pingclair adapt [OPTIONS]
 | --- | --- | --- |
 | `-c`, `--config <CONFIG>` | `./Pingclairfile`, then `./Caddyfile` | Configuration file to read. |
 | `-p`, `--pretty` | off | Indent the JSON. |
-| `--validate` | off | Also validate what the adapted document refers to. |
+| `--validate` | off | Also run the checks `validate` runs. |
 
 ```bash
 pingclair adapt --pretty --validate
@@ -352,6 +379,11 @@ pingclair adapt --pretty --validate
 
 Formats a Pingclairfile and prints the result. With no path, it reads
 `./Pingclairfile`; `-` reads standard input.
+
+**Next release:** `fmt` exits with status 1 when the input was not already
+formatted, so it can gate a commit the way `caddy fmt` does; `--overwrite`
+still exits 0. `--config <path>` and `-w` are accepted as Caddy's spellings,
+and the indent becomes one tab per level instead of two spaces.
 
 ```bash
 pingclair fmt [OPTIONS] [PATH]
@@ -405,9 +437,8 @@ pingclair version
 
 ## pingclair service
 
-Manages the systemd unit the installer wrote. It wraps `systemctl`, so the two
-are interchangeable; this exists so that the commands for the unit are in the
-same place as the rest of them.
+Controls the systemd unit the installer wrote. It wraps `systemctl`, so either
+can be used; this subcommand keeps the unit's commands next to the others.
 
 ```bash
 pingclair service <start|stop|restart|reload|status>
@@ -421,13 +452,11 @@ pingclair service <start|stop|restart|reload|status>
 | `reload` | Ask the running server to read its configuration file again, by signal. The result is on the unit's status line and in the journal, not in this command's exit code. |
 | `status` | Print the unit's state. |
 
-Linux with systemd only. On any other platform the command refuses rather than
-pretending, and [Run it as a service](/start/service/) is where the unit itself
-is documented.
+It works only on Linux with systemd; on any other platform it refuses to run.
+[Run it as a service](/start/service/) documents the unit itself.
 
 ## 🧾 Where these options come from
 
-The command line is defined in one file in the server source,
-`pingclair/src/cli/mod.rs`, and the page above follows its order. The version on
-each `--help` screen and the version this page was checked against are the same
-one; when a command's flags change, this page changes with them.
+The command line is defined in one file of the server source,
+`pingclair/src/cli/mod.rs`, and this page follows its order. When a command's
+flags change there, this page changes with them.
