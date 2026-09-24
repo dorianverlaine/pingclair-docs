@@ -6,10 +6,13 @@ sidebar:
 description: Put Pingclair in front of an application, spread traffic over several instances, and keep serving when one of them dies.
 ---
 
-A reverse proxy is the configuration most people arrive for: one public address,
-one or more application instances behind it, and no changes to the application.
-This page builds that up from a single upstream to a pool with health checks,
-timeouts, and a backup, and shows what the application sees on the other side.
+A reverse proxy puts one public address in front of one or more application
+instances, without changing the application. This page starts with a single
+upstream and builds up to a pool with health checks, timeouts, and a backup. It
+ends with what the application sees on the other side.
+
+📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
+that exist only on the server's `main` branch are marked **Next release**.
 
 ## 🧾 Before you start
 
@@ -38,9 +41,9 @@ sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 curl -i http://localhost:8080/
 ```
 
-The response is the application's, and its own headers are passed through. The
-`admin` option is there so `pingclair reload` can reach the running server;
-`SIGUSR1` does not need it ([what a reload means](/start/service/#-what-a-reload-means)).
+The response is the application's, with its own headers. The `admin` option
+lets `pingclair reload` reach the running server; the `SIGUSR1` reload shown
+above works without it ([what a reload means](/start/service/#-what-a-reload-means)).
 
 ## ⚖️ Several upstreams
 
@@ -56,8 +59,8 @@ http://:8080 {
 }
 ```
 
-Six requests across two live instances alternate, measured with an application
-that reports which port answered:
+With an application that reports which port answered, six requests alternate
+between the two instances:
 
 ```text
 3000 3001 3000 3001 3000 3001
@@ -65,16 +68,20 @@ that reports which port answered:
 
 | `lb_policy` | Behavior |
 | --- | --- |
-| `round_robin` | One request per upstream, in order. The default. |
+| `round_robin` | One request per upstream, in order. The default in v0.2.0-rc.3. |
 | `random` | Any upstream, chosen at random. |
 | `least_conn` | The upstream with the fewest connections in flight. |
 | `ip_hash` | The same client address always reaches the same upstream. |
-| `first` | The first upstream that is available. |
+| `first` | Intended to pick the first available upstream. In v0.2.0-rc.3 it behaves like `round_robin`. |
 | `header <name>`, `cookie <name>`, `query <name>` | Hash on that field, so a session sticks to one instance. |
 | `weighted_round_robin <w> …` | One weight per upstream, on the same line. |
 
-Weights also work per upstream, which reads better when the reasons differ per
-instance:
+**Next release:** with no `lb_policy`, an upstream is picked at random, which
+is Caddy's default; write `lb_policy round_robin` to keep the alternation. And
+`first` really does pin to the first available upstream.
+
+A weight can also be set on each upstream, which reads better when each instance
+has its own reason:
 
 ```caddyfile
 http://:8080 {
@@ -87,9 +94,9 @@ http://:8080 {
 }
 ```
 
-⚠️ `lb_policy weighted_round_robin 3 1` counts the upstreams that have already
-been written, so the `to` lines have to come **before** it. Written the other way
-round, `validate` refuses the file with
+⚠️ `lb_policy weighted_round_robin 3 1` matches its weights to the upstreams
+written above it, so the `to` lines must come **before** it. In the other order,
+`validate` refuses the file with
 `2 weights were given for 0 upstreams`.
 
 An upstream marked `backup` is used only when every other upstream is
@@ -111,8 +118,9 @@ request is answered by `3001`.
 
 ## 🩺 Health checks
 
-Without a check, an upstream is only removed once a request to it fails. A check
-takes it out of rotation first:
+Without a health check, an upstream leaves rotation only after a request to it
+fails. A health check probes each upstream in the background and removes a
+failing one before a user request reaches it:
 
 ```caddyfile
 http://:8080 {
@@ -131,19 +139,20 @@ http://:8080 {
 }
 ```
 
-The application needs an endpoint that answers cheaply — here `/health`. Each
-state change is logged, which is how you find out why an instance left rotation:
+The application needs an endpoint that answers cheaply, here `/health`. Each
+change of state is logged, which is how to find out when an instance left
+rotation:
 
 ```text
 INFO pingclair_proxy::health_check: 🩺 Active upstream health changed backend=Inet(127.0.0.1:3001) healthy=false
 INFO pingclair_proxy::health_check: 🩺 Active upstream health changed backend=Inet(127.0.0.1:3001) healthy=true
 ```
 
-Measured on this configuration: with the second instance killed, all traffic went
-to the first; when it came back, it rejoined after `consecutive_success`
-successful probes. The same options exist in the flat spelling real Caddyfiles
-use (`health_uri`, `health_interval`, `health_timeout`, `health_status`,
-`health_fails`, `health_passes`), and they configure the same check.
+Measured on this configuration: with the second instance stopped, all traffic
+went to the first; when it came back, it rejoined after `consecutive_success`
+successful probes. Caddy's flat spelling (`health_uri`, `health_interval`,
+`health_timeout`, `health_status`, `health_fails`, `health_passes`) configures
+the same check.
 
 ## ⏱️ Timeouts
 
@@ -177,8 +186,8 @@ the file with `Unknown directive 'reverse_proxy: dial_timeout'`. The name inside
 
 ## 🔁 Hostname upstreams
 
-An upstream may be a name instead of an address, which is what a container that
-restarts on a new IP needs:
+An upstream can be a hostname instead of an address. That is what a container
+that restarts on a new IP address needs:
 
 ```caddyfile
 {
@@ -192,7 +201,7 @@ http://:8080 {
 }
 ```
 
-The name is re-resolved on that interval, and the change is logged:
+The name is resolved again on that interval, and each refresh is logged:
 
 ```text
 INFO pingclair_proxy::dns: 🔄 Upstream DNS scheduler enabled interval_secs=5 pools=1
@@ -226,18 +235,20 @@ guide](/guides/cloudflare-tunnel/) covers that case.
 
 - **`502` from the proxy.** No upstream answered. Check that the application is
   listening (`sudo ss -ltnp | grep :3000`) and that the address matches.
+  **Next release:** a `502` or `504` that Pingclair generated carries
+  `Proxy-Status: pingclair; error=…`; one without that field came from the
+  application.
 - **`504` after a pause.** A timeout fired: `first_byte_timeout` for a slow
   backend, `read_timeout` for a slow body, `connect_timeout` for a host that
   never accepts.
 - **`Unknown directive 'reverse_proxy: …'`.** The option belongs to a nested
   block — timeouts under `transport http`, checks under `health_check` — and
   `validate` names the exact spelling it refused.
-- **A configuration change does not take effect.** Reload applies policy, not a
-  new listener: when a reload added or moved one, the unit's status line names
-  the addresses that changed and `sudo pc service restart` is what applies
-  them. See [Run it as a service](/start/service/#-what-a-reload-means).
-- **Every request lands on one instance.** It is the only healthy one. The health
-  check log says when the others left rotation, and why (`ConnectRefused`,
+- **A configuration change does not take effect.** A reload cannot add or move
+  a listener. When the new file does, the unit's status line names the
+  addresses that changed, and `sudo pc service restart` applies them. See [Run it as a service](/start/service/#-what-a-reload-means).
+- **Every request lands on one instance.** It is the only healthy one. The
+  health check log says when the others left rotation, and why (`ConnectRefused`,
   `failure_statuses`, and so on).
 
 ## 🧭 Next steps
