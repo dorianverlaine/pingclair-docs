@@ -59,7 +59,7 @@ upstream or disk
 | --- | --- |
 | トレーラー | リクエストのトレーラーはどのプロトコルでも転送しません。トレーラーを宣言したリクエストには、レスポンス開始前であれば `501` を返します。レスポンスがすでに始まっている HTTP/3 ストリームは、代わりにリセットします。トレーラーを予告するアップストリームのレスポンスには `502` を返します。 |
 | `CONNECT` | Pingclair はトンネルを開きません。HTTP/1.1 と HTTP/2 は `405` を返します。HTTP/3 は標準的な `CONNECT` リクエストを不正な形式としてリセットし、`:scheme` と `:path` も持つものには `501` を返します。 |
-| FastCGI | `php_fastcgi` は HTTP/1.1 と HTTP/2 で動作します。HTTP/3 では、FastCGI を必要とするルートに `501` を返します。 |
+| FastCGI | `php_fastcgi` は HTTP/3 を含むすべてのプロトコルで動作します。 |
 
 📌 **次のリリース。** `main` では、`CONNECT` にはどのプロトコルでも `Allow` ヘッダー付きの `405` を返し、`TRACE` にも同じように応答します。これらの変更は v0.2.0-rc.3 には含まれず、[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md) の Unreleased に記録されています。
 
