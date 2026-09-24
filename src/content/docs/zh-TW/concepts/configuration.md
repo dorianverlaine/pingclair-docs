@@ -1,14 +1,12 @@
 ---
 title: 設定模型
 h1_emoji: '🧠'
-description: Pingclairfile 如何被解析、編譯、驗證，並轉換成執行期狀態。
+description: Pingclairfile 的結構、它在任何請求抵達前如何被編譯與驗證、路由如何被選出，以及重載會改變什麼。
 ---
 
-Pingclairfile 在載入時編譯一次，成為伺服器實際執行的執行期狀態。由此產生兩個結果，也解釋了這個專案大部分的行為：設定能決定的事都在第一個請求之前完成；而無法被滿足的設定會讓伺服器停止，而不是在請求當下妥協。
+Pingclairfile 只在載入時編譯一次，變成伺服器實際執行的狀態。這帶來兩個結果，而它們解釋了 Pingclair 大部分的行為。第一，凡是設定就能決定的工作，例如解析位址或編譯匹配器，都在第一個請求之前完成，而不是每個請求都做一次。第二，無法兌現的設定會在載入時就讓伺服器停下，而不是等到某個沒人測過的請求才出錯。本頁描述的是 **v0.2.0-rc.3**。
 
-## 🗂️ 檔案結構
-
-檔案包含一個選用的 global options 區塊，後面接著一或多個 site block。
+## 🗂️ 檔案由全域選項與網站區塊組成
 
 ```caddyfile
 {
@@ -25,15 +23,15 @@ example.com {
 }
 ```
 
-- **Global options** 寫在檔案最前面、沒有名稱的區塊裡，用於設定不屬於單一 site 的狀態：ACME 帳號信箱、Admin API、自動 HTTPS 行為、trusted proxies，以及主機名上游的 DNS 重新解析。可用選項列在[指令參考](/zh-TW/reference/directives/#global-options)。
-- **Site block** 以位址命名：主機、連接埠，或兩者兼具。連接埠屬於位址的一部分，而不是另一個獨立指令，因此只有一個地方需要保持兩者一致。
-- **Directive** 是 site block 內的敘述句。有些接受參數串列，有些接受巢狀區塊，有些兩者都接受。
-- **註解**以 `#` 開始，延伸到行尾。
-- **含空白的值要加引號。** 時間長度要帶單位：`30s` 是三十秒，而在需要時間長度的地方寫裸數字 `30` 會被拒絕。
+- **全域選項**寫在檔案最上方一個沒有名稱的區塊裡。它們設定不屬於任何單一網站的事：ACME 帳號的 email、Admin API、自動 HTTPS、受信任的代理，以及主機名稱上游的 DNS 重新解析。[指令參考](/zh-TW/reference/directives/#global-options)列出了所有全域選項。
+- **網站區塊**以位址命名：主機、連接埠，或兩者皆有。連接埠是位址的一部分，而不是另一個指令，所以位址與監聽器不可能互相矛盾。
+- **指令**是網站區塊內的敘述。有些接受參數，有些接受巢狀區塊，有些兩者都接受。
+- **註解**以 `#` 開頭，直到該行結尾。
+- **含有空白的值要加引號。**時間長度必須帶單位：`30s` 是三十秒，在需要時間長度的地方寫一個單獨的 `30` 會被拒絕。
 
-## 🧭 Matcher
+## 🧭 匹配器選出指令適用的請求
 
-Matcher 用來選出某個 directive 要套用到哪些請求。具名 matcher 以 `@name` 宣告，之後以名稱引用：
+具名匹配器以 `@name` 宣告，使用時把名稱寫在指令後面：
 
 ```caddyfile
 example.com {
@@ -45,7 +43,7 @@ example.com {
 }
 ```
 
-`handle` 區塊依路由群組化行為，並支援不帶 matcher 的 fallback：
+`handle` 區塊把同一條路由的指令放在一起。一個請求只會由一個 `handle` 區塊回應，而沒有匹配器的 `handle` 會接住其他區塊沒接到的所有請求：
 
 ```caddyfile
 example.com {
@@ -59,9 +57,15 @@ example.com {
 }
 ```
 
-## 🧩 Snippet 與 import
+## 🚦 哪一條路由回應請求
 
-Snippet 是可重複使用的片段，以 `(name) { ... }` 宣告，並用 `import name` 引入。Snippet 也能接收呼叫端提供的區塊，並把它插入到片段中寫 `{block}` 的位置：
+當網站裡有好幾條路由都匹配同一個請求時，只能由其中一條回應。在 v0.2.0-rc.3 中，路徑最具體的路由勝出，不論它寫在檔案的哪個位置。
+
+📌 **下一版**（不相容變更）。在 `main` 上，路由改為遵循 Caddy 的指令順序：指令依種類排序（例如 `respond` 排在 `file_server` 與 `reverse_proxy` 前面），依此順序第一條匹配的路由負責回應。如果你的網站依賴一條寫在較寬路由下方、而那條較寬路由的排序又比較前面的窄路由，升級後回應就會不同。有兩種寫法能讓兩個版本得到相同的結果：把每條路由放進各自的 `handle` 區塊（上面的範例就是這樣做），或把路由列在 `route` 區塊裡，它會保留書寫順序。完整的排序記錄在 [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md) 的 Unreleased 底下。
+
+## 🧩 以片段與匯入重複使用設定
+
+片段（snippet）是以 `(name) { ... }` 宣告、以 `import name` 插入的可重用設定。呼叫端可以傳入參數與一個區塊；片段在寫著 `{block}` 的地方接收那個區塊：
 
 ```caddyfile
 (site) {
@@ -75,28 +79,43 @@ import site example.com {
 }
 ```
 
-在被 import 的檔案裡定義的 snippet，對之後的 import 是可見的。放在參數串列中的 placeholder 會被拒絕，因為 directive 樹無法像 token 層那樣在插入後重新解析該行。
+在被匯入的檔案中定義的片段，後續的匯入都看得到。指令參數清單內的佔位符會被拒絕：Caddy 在插入片段後會重新讀取那一行，而 Pingclair 的 parser 做不到，所以它會直接說明，而不是去猜那一行原本想寫什麼。
 
-## 🛡️ 驗證
+## 🛡️ 驗證會拒絕伺服器做不到的事
 
-`pingclair validate` 會編譯檔案並套用語意檢查：指令參數、matcher 語法、憑證與金鑰路徑，以及諸如「哪些對端可以宣稱用戶端身分標頭」之類的策略限制。
+`pingclair validate` 會編譯檔案，並執行語法以外的檢查：指令參數、匹配器語法、憑證與金鑰檔案是否存在，以及政策限制，例如哪些對端可以設定用戶端身分相關的標頭。
 
-失敗一律明確且封閉：
+沒通過這些檢查的設定不會執行。判斷失敗與否的規則有三條：
 
-- **未實作的名稱會以名稱拒絕。** 格式定義的每個名稱都會被辨識，伺服器未實作的會產生「功能不存在」的訊息。它不會被當成拼字錯誤，也不會被忽略：含有這類名稱的設定不會啟動。
-- **無法兌現的選項會被拒絕，而不是降級。** 例如在 `encode` 中指定 Brotli 會是編譯錯誤，因為代理沒有串流 Brotli 編碼器；伺服器不會悄悄改用 gzip。
-- **語法正確但引用不存在素材的檔案仍會被拒絕。** 倉庫中的 `examples/full_featured.pingclair` 是合法的 Caddyfile 語法，但仍然會被拒絕，而且理由正確：它指名的憑證路徑不存在於執行檢查的機器上。
+- **未實作的名稱會被指名拒絕。**Pingclair 認得 Caddyfile 格式定義的每一個名稱。對於沒有實作的名稱，它會回報該功能不存在；絕不會把它當成拼錯的字，也絕不會默默忽略。
+- **無法兌現的選項會被拒絕，而不是降級。**`encode br` 是編譯錯誤，因為沒有串流式的 Brotli 編碼器；伺服器不會悄悄改用 gzip。
+- **語法正確但指向不存在的檔案，仍然是錯誤。**伺服器儲存庫中的 `examples/full_featured.pingclair` 語法正確，但在它所指的憑證路徑不存在的機器上，`validate` 仍會拒絕它。
 
-同樣的檢查會在載入時執行，因此重新載入時若設定驗證失敗，先前的狀態會保持不變。
+伺服器載入檔案時也會執行相同的檢查，重載時也一樣。
 
-## 🔁 重新載入
+## 🔁 重載在不重啟的情況下替換設定
 
-重載會重新讀取設定，而不重啟行程。訊號是 `SIGUSR1`：
+重載會重新讀取檔案、編譯，並在行程持續執行的同時把結果換上去。如果新檔案編譯失敗，先前的設定會繼續提供服務。要求重載有三種方式：
 
-```bash
-sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
-```
+- `pc service reload`（或 `systemctl reload pingclair`）透過已安裝的 unit 送出 `SIGUSR1`。
+- `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` 直接送出同一個訊號。
+- `pingclair reload` 透過 Admin API 進行，並印出伺服器的判定結果。它需要 `admin` 全域選項。
 
-`pingclair reload` 透過 Admin API 走到同一段程式碼，並回報伺服器對檔案的判斷，需要在全域選項區塊裡寫 `admin`。
+`systemctl reload` 只能回報訊號已送達，所以伺服器的判定結果會出現在 unit 的狀態列與 journal 中。
 
-`pc service reload` 透過安裝出來的 unit 送出這個訊號，所以那條理所當然的指令就是能用的指令。答案不在結束碼裡——`systemctl reload` 只能回報訊號已經送達——而在 unit 的 status line 與日誌裡；被拒絕的重載會讓舊設定繼續執行（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66) 記錄的是那個即使如此也回報成功的 unit 版本）。於啟動階段建立的行程級策略，例如 `trusted_proxies`，要在重啟後才會生效；改動監聽器的設定同樣需要重啟。
+有些變更無法透過重載套用；這時伺服器會拒絕重載並保留舊設定，而不是只套用其中一部分：
+
+- **監聽器的變更。**新增、移除或搬移位址，或讓監聽器在明文與 TLS 之間切換，都需要重啟，因為監聽 socket 是在啟動時建立的。
+- **全域選項。**啟動時就確定的選項（例如 `trusted_proxies`）作用於整個行程，所以全域選項區塊的任何變更都需要重啟。
+- **憑證拓撲。**新增 TLS 主機名稱，或改變網站取得憑證的方式，都需要重啟。
+
+拒絕訊息會指出是哪一項變更，例如 `listener topology changed (added:
+…, removed: …)`；執行 `sudo pc service restart` 即可套用。
+
+[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)展示了每種結果看起來的樣子。
+
+## 🧭 相關頁面
+
+- [Pingclairfile](/zh-TW/reference/pingclairfile/)：完整的語言說明。
+- [指令參考](/zh-TW/reference/directives/)：所有指令與選項。
+- [架構](/zh-TW/concepts/architecture/)：執行編譯後設定的是什麼。
