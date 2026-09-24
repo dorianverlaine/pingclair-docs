@@ -1,18 +1,29 @@
 ---
 title: Benchmarks
 h1_emoji: '📊'
-description: What is measured, under which conditions, and where the numbers come from.
+description: How Pingclair compares with nginx and Caddy on one controlled workload, the conditions of that measurement, and what the numbers do not show.
 ---
 
-Pingclair is measured against nginx and Caddy on the same host, with every
-candidate running in a container capped at two CPUs, the same worker count, and
-the same 1 KiB payload. The reverse-proxy backend runs in its own container on
-the same Docker network, and the load generator runs natively.
+A throughput number means something only next to the conditions that produced
+it. This page gives the latest comparison and, beside it, every condition that
+limits what it shows.
+
+## 🧭 How the comparison was run
+
+- **Versions.** Pingclair `v0.2.0-rc.3` (the release binary), nginx 1.31.6, and
+  Caddy 2.11.4.
+- **Host.** One Apple M2 laptop running OrbStack.
+- **Limits.** Every server runs in a container capped at two CPUs, with the
+  same worker count and the same 1 KiB payload.
+- **Topology.** The reverse-proxy backend runs in its own container on the same
+  Docker network.
+- **Load generator.** HTTP/1.1, HTTPS/1.1, and HTTP/2 use a native `h2load`.
+  HTTP/3 uses an ngtcp2-enabled `h2load` inside the same Docker network.
 
 ## 📊 Results
 
-Each value is the median of three interleaved rounds of 50,000 requests, and a
-row counts only when every request succeeded.
+Each value is requests per second: the median of three interleaved rounds of
+50,000 requests. A row counts only when every request succeeded.
 
 | Scenario | Pingclair | nginx 1.31.6 | Caddy 2.11.4 |
 | --- | ---: | ---: | ---: |
@@ -25,7 +36,7 @@ row counts only when every request succeeded.
 | HTTP/2 reverse proxy | 23,181 | 20,396 | not completed |
 | HTTP/3 reverse proxy | 28,078 | 22,213 | not completed |
 
-Numbers are requests per second. Against nginx, Pingclair is ahead on the
+Against nginx, Pingclair is ahead on the
 HTTP/1.1, HTTPS/1.1, and HTTP/2 static rows (1.2x, 1.3x, and 2.2x
 respectively), while HTTP/3 static is effectively level. On the reverse-proxy
 workload it is 14% ahead on HTTP/2 and 26% ahead on HTTP/3, while HTTP/1.1 and
@@ -33,11 +44,10 @@ HTTPS/1.1 remain about 8% behind nginx.
 
 ## 📐 Conditions that limit these numbers
 
-- **The host is a laptop.** The measurements ran on an Apple M2 with OrbStack.
-  Absolute throughput is not a capacity claim, and the ratios describe relative
+- **The host is a laptop.** Absolute throughput is not a capacity claim, and the ratios describe relative
   performance under this controlled workload only.
-- **Rows compare within a protocol.** HTTP/3 uses a different load generator
-  from the other rows, so absolute throughput should not be compared across
+- **Compare within a row.** The HTTP/3 load generator runs in a different
+  environment from the others, so absolute throughput should not be compared across
   protocols, only between servers within a row.
 - **Incomplete rows are not comparisons.** On this host and harness, Caddy did
   not complete the proxied HTTP/2 and HTTP/3 rows: upstream connection churn
@@ -49,11 +59,11 @@ HTTPS/1.1 remain about 8% behind nginx.
 
 ## 🧾 Source
 
-The methodology, configuration files, harness, and the complete result tables
-live in the server repository:
+The table is the one published in the server repository's README. The
+methodology, the rules a run must meet before a number counts, and the harness
+are in the server repository as well:
 
 - [Benchmark methodology](https://github.com/dorianverlaine/pingclair/blob/main/benchmarks/README.md)
-- [Current results section](https://github.com/dorianverlaine/pingclair#-benchmarks)
+- [Published comparison](https://github.com/dorianverlaine/pingclair#-benchmarks)
 
-Raw run evidence is kept locally by the maintainer and is intentionally not
-published.
+Raw per-run evidence is not published.
