@@ -169,8 +169,8 @@ $ systemctl status pingclair --no-pager | grep Status
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-例外は、実行中のプロセスが取り込めない変更です。`trusted_proxies` のような起動時に
-確立されるオプションは、再起動後にしか効きません: `sudo pc service restart`。
+例外は、実行中のプロセスが取り込めない変更です。`trusted_proxies` のような
+グローバルオプションブロックへの変更はリロードでは拒否され、再起動後にしか効きません: `sudo pc service restart`。
 リスナーを追加・移動する設定も同じように拒否されます——status line が追加・削除
 されたアドレスを示します——再読み込みが適用するのはポリシーであり、新しい
 待ち受けソケットではないからです。

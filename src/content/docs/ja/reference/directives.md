@@ -299,7 +299,7 @@ example.com {
 | `auto_https` | `auto_https on \| off \| disable_redirects` | 自動 HTTPS とポート 80 のリダイレクトを制御します。`disable_certs` と `ignore_loaded_certs` は名前を挙げて拒否されます。 |
 | `dns_refresh` | `dns_refresh <duration> \| off` | ホスト名で指定したアップストリームを再解決する間隔です。既定は `30s` です。`off` は起動時に解決したアドレスを使い続けます。単位の無い数値は拒否されます。 |
 | `email` | `email <address>` | ACME アカウントのメールアドレス。 |
-| `grace_period` | `grace_period <duration>` | グレースフルな停止が、処理中のリクエストを待つ時間。 |
+| `grace_period` | `grace_period <duration>` | グレースフルな停止が、処理中のリクエストを待つ時間。v0.2.0-rc.3 では、この値にかかわらず約 250 ms で終了します。**次のリリース：** 停止時に最大この時間までリクエストの完了を待ちます。 |
 | `protocols` | `protocols h1 h2 h3` | HTTP/3 のリスナーを用意するかどうか。[TLS で調整できること](/ja/guides/tls-tuning/#-どのプロトコルを配信するか)を参照してください。 |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | 転送ヘッダーでクライアントのアドレスを伝えることを許すピア。変更には再起動が必要です。**次のリリース：** Caddy の書き方である `trusted_proxies static <cidr \| private_ranges> ...` も受け付けます。 |
 
