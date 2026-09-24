@@ -182,7 +182,7 @@ running at that moment is cut without a response. Stop or restart when a short
 interruption is acceptable, and prefer a reload when only the site
 configuration changed.
 
-📌 **Upcoming.** On `main`, a stop drains first: `/ready` answers `503`, the
+📌 **Next release.** On `main`, a stop drains first: `/ready` answers `503`, the
 listeners close, running requests finish, and the process exits when the last
 one is done or when `grace_period` (30 seconds by default) has passed.
 

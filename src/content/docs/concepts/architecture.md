@@ -80,7 +80,7 @@ discover them in production.
 | `CONNECT` | Pingclair opens no tunnels. HTTP/1.1 and HTTP/2 answer `405`. HTTP/3 resets a standard `CONNECT` request as malformed, and answers `501` to one that also carries `:scheme` and `:path`. |
 | FastCGI | `php_fastcgi` works on HTTP/1.1 and HTTP/2. On HTTP/3, a route that needs FastCGI is answered `501`. |
 
-📌 **Upcoming.** On `main`, `CONNECT` is answered `405` with an `Allow` header
+📌 **Next release.** On `main`, `CONNECT` is answered `405` with an `Allow` header
 on every protocol, and `TRACE` is answered the same way. These changes are not
 in v0.2.0-rc.3; the
 [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)

@@ -208,7 +208,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
 
 `pingclair untrust` removes it again, with the same store prefix.
 
-📌 **Upcoming.** The next release files the internal authority the way Caddy
+📌 **Next release.** The next release files the internal authority the way Caddy
 does, under `pki/authorities/local/` in the store, with an intermediate that
 signs the leaves. The old `internal/` directory is not migrated: after the
 upgrade the server creates a new root, and every client must trust it again

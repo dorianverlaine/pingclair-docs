@@ -80,7 +80,7 @@ When several routes in a site match the same request, one of them has to
 answer. In v0.2.0-rc.3, the route with the most specific path wins, wherever it
 is written in the file.
 
-📌 **Upcoming, and breaking.** On `main`, routes follow Caddy's directive
+📌 **Next release, breaking.** On `main`, routes follow Caddy's directive
 order instead: the directives are ranked by kind (for example, `respond` ranks
 ahead of `file_server` and `reverse_proxy`), and the first matching route in
 that order answers. A site that relies on a narrower route written below a
