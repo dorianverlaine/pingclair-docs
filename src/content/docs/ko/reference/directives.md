@@ -363,7 +363,7 @@ Caddy가 `servers { … }` 아래에 두는 옵션도 이곳에서 받아들입�
 | `auto_https` | `auto_https on \| off \| disable_redirects` | 자동 HTTPS와 80번 포트 리디렉션을 제어합니다. `disable_certs`와 `ignore_loaded_certs`는 이름을 밝혀 거부됩니다. |
 | `dns_refresh` | `dns_refresh <duration> \| off` | 호스트 이름 업스트림을 다시 해석하는 간격입니다. 기본값은 `30s`입니다. `off`는 시작할 때 해석한 주소를 유지합니다. 숫자만 쓰면 거부됩니다. |
 | `email` | `email <address>` | ACME 계정 이메일입니다. |
-| `grace_period` | `grace_period <duration>` | 정상 종료가 처리 중인 요청을 기다리는 시간입니다. |
+| `grace_period` | `grace_period <duration>` | 정상 종료가 처리 중인 요청을 기다리는 시간입니다. v0.2.0-rc.3에서는 이 값과 관계없이 약 250 ms 뒤에 종료합니다. **다음 릴리스**: 중지할 때 최대 이 시간까지 요청이 끝나기를 기다립니다. |
 | `protocols` | `protocols h1 h2 h3` | HTTP/3 리스너를 둘지 정합니다. [TLS에서 조정할 수 있는 것](/ko/guides/tls-tuning/#-어떤-프로토콜을-서비스하는가)을 참고합니다. |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | 포워딩 헤더로 클라이언트 주소를 알려도 되는 피어입니다. 바꾸려면 재시작이 필요합니다. **다음 릴리스**: Caddy식 표기인 `trusted_proxies static <cidr \| private_ranges> ...`도 받습니다. |
 
