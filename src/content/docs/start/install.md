@@ -186,7 +186,7 @@ docker compose up -d
 curl -i http://localhost/
 ```
 
-Three points are easy to get wrong:
+Three points require attention:
 
 - **Do not add `command:`.** The image default is already
   `run /etc/pingclair/Pingclairfile`, and overriding it replaces that command.
@@ -222,7 +222,7 @@ the build, so the first build takes several minutes.
   installer adds it, but a hand-built host may lack it, and without the
   capability the service cannot bind ports 80 and 443.
 - **`Job for pingclair.service failed` right after the install.** Read
-  `journalctl -u pingclair -n 20`. The usual causes are a configuration that does
+  `journalctl -u pingclair -n 20`. Common causes are a configuration that does
   not validate, or something already listening on port 80.
 - **The service is running but nothing answers from outside.** The listeners are
   bound and the packets never arrive. Check the provider's firewall or security

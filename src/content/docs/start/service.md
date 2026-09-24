@@ -118,13 +118,13 @@ sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 
 `pc service reload` — or `sudo systemctl reload pingclair`, which is the same
 call — sends that signal for you. The unit's `ExecReload` is
-`/bin/kill -USR1 $MAINPID`, so the obvious command is now the working one; a
-unit that sent `SIGHUP` instead reported success and applied nothing, which is
-what [issue #66](https://github.com/dorianverlaine/pingclair/issues/66) recorded.
+`/bin/kill -USR1 $MAINPID`, so this command performs the intended reload. A unit
+that sent `SIGHUP` instead reported success and applied nothing, which is what
+[issue #66](https://github.com/dorianverlaine/pingclair/issues/66) recorded.
 
-`pingclair reload` reaches the same code through the Admin API and reports what
-the server thought of the file, which needs the `admin` option from the global
-options block:
+`pingclair reload` reaches the same code through the Admin API and reports
+whether the server accepted the file. This path requires the `admin` option from
+the global options block:
 
 ```text
 ✅ Configuration reloaded successfully

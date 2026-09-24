@@ -6,7 +6,7 @@ sidebar:
 description: Which TLS and protocol settings Pingclair honors, which it refuses by name, and how to require client certificates or move a certificate store between hosts.
 ---
 
-Pingclair has few TLS settings on purpose: a name gets a certificate
+Pingclair intentionally exposes few TLS settings: a name gets a certificate
 automatically, and the settings on this page decide how. Any other TLS setting
 Caddy accepts is refused by name rather than ignored, so a configuration never
 quietly does less than it says. Each result below was measured on a real host.

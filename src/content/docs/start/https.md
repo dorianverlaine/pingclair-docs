@@ -14,7 +14,8 @@ files you supply — are covered below.
 
 ## 🧾 Before you start
 
-- A name that resolves to this host. Check it before blaming the server:
+- A name that resolves to this host. Verify DNS resolution before
+  troubleshooting the server:
   `dig +short A example.com`.
 - Ports 80 and 443 reachable from the internet. The HTTP-01 challenge is served
   on port 80, and the certificate is used on 443.
@@ -38,7 +39,7 @@ example.com {
 }
 ```
 
-There is nothing else to configure. At startup the server authorises the
+There is nothing else to configure. At startup the server authorizes the
 hostname, starts the ACME flow, and serves the challenge:
 
 ```text
@@ -118,7 +119,7 @@ The configuration needs the provider block:
 }
 ```
 
-Two details are easy to miss. First, the `auto` line inside the block puts the
+Two details require attention. First, the `auto` line inside the block puts the
 name on the issuance list; without it the server logs `authorised for 0
 hostname(s)` and never requests a certificate, so every handshake fails with
 `NO_CERTIFICATE_SET`. Second, the token is a Cloudflare API token with

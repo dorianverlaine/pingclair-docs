@@ -168,9 +168,9 @@ http://:8080 {
 ```
 
 Measured: `/.hidden` answers `404`, while `/` and `/assets/big.txt` still
-answer `200`. The status is `404` rather than `403` on purpose: a `403` confirms
-that the file exists. `/.*` matches only dotfiles at the top of the site; the
-`file_server { hide … }` option hides paths wherever they are.
+answer `200`. The status is intentionally `404` rather than `403`: a `403`
+confirms that the file exists. `/.*` matches only dotfiles at the top of the
+site; the `file_server { hide … }` option hides paths wherever they are.
 
 ## ⚠️ When it does not work
 

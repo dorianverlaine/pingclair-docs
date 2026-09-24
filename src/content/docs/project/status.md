@@ -4,9 +4,9 @@ h1_emoji: '📌'
 description: What the current release supports, what it refuses by design, which limitations and defects are known, and what changes in the next release.
 ---
 
-This page answers one question before you deploy: does the current release do
-what you need, and where does it stop. It describes **v0.2.0-rc.3**, the latest
-published release.
+This page explains whether the current release meets a deployment's
+requirements and identifies its current limitations. It describes
+**v0.2.0-rc.3**, the latest published release.
 
 ## 📌 The current release is a release candidate
 
@@ -16,7 +16,7 @@ list what changed and the defects known when it was tagged.
 
 The `v0.1.x` line is unmaintained. It receives no fixes, no backports, and no
 security advisories. Upgrade from it: `v0.1.x` parsed the Admin API `api_key`
-field and never read it, so its Admin API authenticated nobody.
+field but did not enforce it, so the Admin API did not authenticate requests.
 
 ## ✅ What the release supports
 
@@ -36,7 +36,7 @@ field and never read it, so its Admin API authenticated nobody.
 The Caddyfile format defines more names than Pingclair implements. A name the
 server cannot honor is refused when the file is loaded, with a message that
 names the missing feature. A configuration that contains one does not start.
-The names readers ask about most often:
+The following unsupported names are among those most commonly requested:
 
 - the `map`, `invoke`, and `tracing` directives;
 - the `storage` option, because certificates and state live on local disk only;

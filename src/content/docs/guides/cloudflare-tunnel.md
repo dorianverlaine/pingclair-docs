@@ -9,8 +9,8 @@ description: Publish a site through a Cloudflare Tunnel so the origin needs no i
 A Cloudflare Tunnel connects the origin outward: `cloudflared` dials
 Cloudflare, and Cloudflare sends requests back over that connection. Nothing
 listens on a public port, the edge terminates TLS, and the origin receives plain
-HTTP on loopback. This page sets that up, then fixes the first problem everyone
-meets: every request is logged as coming from `127.0.0.1`.
+HTTP on loopback. This page configures the tunnel, then configures the origin to
+record the actual client address instead of `127.0.0.1`.
 
 📌 This page describes Pingclair **v0.2.0-rc.3**, the latest published release.
 
@@ -94,7 +94,7 @@ curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicati
   "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records"
 ```
 
-From anywhere:
+Verify the route from a host outside the origin network:
 
 ```bash
 curl -I https://tunnel-test.pingclair.com/
@@ -158,15 +158,15 @@ clients; in v0.2.0-rc.3 both matchers see the forwarded client.
   requests answer `200` again within seconds of the connector registering.
 - **A request reaches a different site, or `404`.** The ingress rules are
   matched in order and end with the catch-all; check the hostname spelling in the
-  rule before blaming DNS.
+  rule before investigating DNS.
 - **`502` from the edge.** The connector is up, but the origin service refused
   the connection: Pingclair is not listening on the port the rule names.
 - **The access log always says `127.0.0.1`.** `trusted_proxies` is missing, as
   above.
 - **The hostname does not resolve.** The record has to be a proxied CNAME to
-  `<tunnel-id>.cfargotunnel.com`; a grey-cloud record bypasses the tunnel
+  `<tunnel-id>.cfargotunnel.com`; a DNS-only record bypasses the tunnel
   entirely.
-- **The connector token leaked.** Rotate the tunnel's token and reinstall the
+- **The connector token was exposed.** Rotate the tunnel's token and reinstall the
   service with the new one.
 
 ## 🧭 Next steps

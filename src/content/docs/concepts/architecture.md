@@ -71,8 +71,8 @@ pooling, upstream TLS, and timeouts are shared as well.
 
 ## 🌐 Where the protocols differ
 
-A few behaviors differ by protocol. They are listed here so that nobody has to
-discover them in production.
+A few behaviors differ by protocol. They are listed here so that operators can
+account for them before deployment.
 
 | Area | Behavior in v0.2.0-rc.3 |
 | --- | --- |

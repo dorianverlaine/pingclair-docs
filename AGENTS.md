@@ -37,7 +37,7 @@ cached HTML keeps the stylesheet link it was rendered with. After changing
 `expressiveCode` in `astro.config.mjs`, that link can point at a hash the build
 no longer emits: the page then loads without any Expressive Code styles, which
 shows up as code blocks with no padding, a misplaced copy button, and wrong
-colours. Move both cache directories aside and build again:
+colors. Move both cache directories aside and build again:
 
 ```bash
 mv .astro /tmp/astro-cache && mv node_modules/.astro /tmp/astro-cache-nm
@@ -64,6 +64,21 @@ English fallbacks that carry an "untranslated" notice.
 
 - **Register:** American English, formal, third person for description and
   second person for instructions. No humor and no exclamation marks.
+- **Published prose:** use neutral, literal, professional language. State the
+  condition and the observable result directly. Avoid conversational rhetoric,
+  blame-oriented wording, and unsupported generalizations such as "everyone"
+  or "nobody."
+- **System behavior:** do not personify software when a precise result is
+  available. Write that the server accepted, rejected, applied, returned, or
+  logged something rather than describing what it thought, wanted, knew, or
+  said.
+- **Terminology:** use the current official product or UI term for a named
+  control, state, or feature. For example, use Cloudflare's "DNS-only record,"
+  not an informal color-based name. Verify terminology against current official
+  documentation when it may have changed.
+- **Spelling:** use American spelling in authored English prose. Preserve the
+  original spelling in exact command output, logs, API responses, error
+  messages, and quotations.
 - **Page titles carry one emoji** through the `h1_emoji` frontmatter field, which
   keeps the heading in step with the emoji-marked sections below it without
   putting emoji into the sidebar, the browser tab, the previous/next links, or
@@ -88,6 +103,22 @@ English fallbacks that carry an "untranslated" notice.
   the measurement conditions in the same page.
 - **Versioning:** pages describe the latest published release and say so. When
   a page documents something that arrived recently, name the version inline.
+
+### Copy-edit English before handoff
+
+For every change to published English prose:
+
+1. Read the prose once without the code blocks and verify that each sentence
+   names a concrete subject and result.
+2. Check American spelling and replace conversational generalizations,
+   anthropomorphic system behavior, blame-oriented language, and vague
+   pronouns.
+3. Confirm third-party product terminology against the current UI or official
+   documentation when the term is material to the instruction.
+4. Keep literal logs, command output, API responses, error messages, and
+   quotations unchanged, even when their spelling or tone differs from the
+   surrounding prose.
+5. Run `pnpm build`; a successful build does not replace this prose review.
 
 ## Locales
 
@@ -207,8 +238,8 @@ and the routine is short enough to repeat:
   page and in the commit rather than leaving it implied.
 - **When the run shows that a documented feature does not work, the page says
   what actually happens and the defect gets an issue.** A page that promises the
-  intended behaviour is worse than one that reports the observed behaviour, and
-  the issue is what keeps the observed behaviour from becoming permanent.
+  intended behavior is worse than one that reports the observed behavior, and
+  the issue is what keeps the observed behavior from becoming permanent.
 - **Keep the transcripts local.** The commit's `Verified:` line names the
   distribution, the version, and the commands that were run. No addresses,
   instance identifiers, or host inventories.

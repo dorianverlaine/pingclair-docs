@@ -36,7 +36,7 @@ the same program: `pc` is a symbolic link, not a second binary.
 | Command | What it does |
 | --- | --- |
 | `run` | Run the server in the foreground. |
-| `reload` | Apply an edited configuration through the Admin API, and report what the server thought of it. |
+| `reload` | Apply an edited configuration through the Admin API and report whether the server accepted it. |
 | `start` | Start a detached copy of the server. |
 | `stop` | Stop a running server through the Admin API. |
 | `completion` | Print a shell completion script. |

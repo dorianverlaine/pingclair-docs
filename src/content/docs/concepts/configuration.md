@@ -9,7 +9,7 @@ runs. Two consequences follow, and they explain most of Pingclair's behavior.
 Work that the configuration can decide, such as parsing addresses or compiling
 matchers, happens before the first request instead of on every request. And a
 configuration that cannot be honored stops the server at load time, instead of
-misbehaving later on some request nobody tested. This page describes
+causing unexpected behavior for a request after startup. This page describes
 **v0.2.0-rc.3**.
 
 ## 🗂️ A file is global options followed by site blocks
@@ -111,8 +111,9 @@ import site example.com {
 
 Snippets defined in an imported file are visible to the imports that follow
 it. A placeholder inside a directive's argument list is refused: Caddy
-re-reads the line after inserting the snippet, and Pingclair's parser cannot,
-so it says so instead of guessing what the line was meant to be.
+re-reads the line after inserting the snippet, and Pingclair's parser cannot.
+Pingclair therefore rejects the construct instead of inferring its intended
+meaning.
 
 ## 🛡️ Validation refuses what the server cannot do
 
@@ -142,7 +143,7 @@ The server runs the same checks when it loads a file, including on a reload.
 
 A reload reads the file again, compiles it, and swaps the result in while the
 process keeps running. If the new file fails to compile, the previous
-configuration keeps serving. There are three ways to ask for one:
+configuration keeps serving. There are three ways to initiate a reload:
 
 - `pc service reload` (or `systemctl reload pingclair`) sends `SIGUSR1` through
   the installed unit.

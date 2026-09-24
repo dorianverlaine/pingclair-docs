@@ -3,15 +3,15 @@ title: Upgrading and removing
 h1_emoji: '🧹'
 sidebar:
   order: 5
-description: Re-run the installer to upgrade, pin a container tag, roll back to an older release, and take everything out again without losing the parts worth keeping.
+description: Re-run the installer to upgrade, pin a container tag, roll back to an older release, and remove Pingclair while preserving its configuration and data.
 ---
 
-An upgrade replaces two things — the binary and the service unit — and leaves
-your configuration and your certificates alone. This page shows that, the
-container equivalent, the rollback path for a version that has to go backwards,
-and the teardown.
+An upgrade replaces two things — the binary and the service unit — and preserves
+the configuration and certificates. This page explains that behavior, the
+equivalent container procedure, how to roll back to an earlier release, and how
+to remove the installation.
 
-## 🧾 What survives what
+## 🧾 Files preserved during an upgrade
 
 | Path | An upgrade |
 | --- | --- |
@@ -95,7 +95,7 @@ docker logs pingclair 2>&1 | head -3
 ```
 
 The configuration and the certificate store live in the volumes, so the new
-container finds them where the old one left them. Two things to watch:
+container finds them where the old one left them. Account for two constraints:
 
 - **A container that maps port 80 cannot start while the systemd service is
   running.** Stop one of them: `sudo pc service stop`, or change the published
@@ -105,9 +105,9 @@ container finds them where the old one left them. Two things to watch:
 
 ## ⏪ Roll back to an older release
 
-When a new release has to go, fetch the previous one from the release host,
-verify it against the digest that release published, and put it in place of the
-binary:
+To replace a problematic release with an earlier version, fetch the previous
+release from the release host, verify it against its published digest, and
+replace the installed binary:
 
 ```bash
 mkdir -p /tmp/rollback && cd /tmp/rollback
@@ -155,8 +155,8 @@ sudo rm /usr/local/bin/pingclair /usr/local/bin/pc
 ```
 
 After that, `systemctl status pingclair` answers `Unit pingclair.service could
-not be found`, the command is gone, and nothing listens on port 80. What remains
-on disk is your data, on purpose:
+not be found`, the command is gone, and nothing listens on port 80. The removal
+procedure intentionally preserves the following data:
 
 ```text
 /etc/Pingclair/Pingclairfile      the configuration, still valid
@@ -185,7 +185,7 @@ sudo userdel pingclair
   new release refuses fails closed with its name and the alternative, so the
   journal names the line to change.
 - **A container exits immediately.** `docker logs <container>` shows why. The
-  usual causes are a missing `/etc/pingclair/Pingclairfile` in the mounted
+  common causes are a missing `/etc/pingclair/Pingclairfile` in the mounted
   configuration directory, or a port already in use on the host.
 - **Clients reject the certificate after a rebuild of the store.** If the
   internal authority was regenerated, the old root no longer signs anything.
