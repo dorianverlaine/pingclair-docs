@@ -84,7 +84,7 @@ personne n'ait à les découvrir en production.
 | --- | --- |
 | Trailers | Les trailers de requête ne sont transmis sur aucun protocole. Une requête qui en déclare reçoit `501` avant le début de la réponse ; un flux HTTP/3 dont la réponse a déjà commencé est réinitialisé à la place. Une réponse d'upstream qui annonce des trailers reçoit `502`. |
 | `CONNECT` | Pingclair n'ouvre aucun tunnel. HTTP/1.1 et HTTP/2 répondent `405`. HTTP/3 réinitialise une requête `CONNECT` standard comme malformée, et répond `501` à une requête qui porte aussi `:scheme` et `:path`. |
-| FastCGI | `php_fastcgi` fonctionne sur HTTP/1.1 et HTTP/2. Sur HTTP/3, une route qui nécessite FastCGI reçoit `501`. |
+| FastCGI | `php_fastcgi` fonctionne sur tous les protocoles, HTTP/3 compris. |
 
 📌 **Prochaine version.** Sur `main`, `CONNECT` reçoit `405` avec un en-tête
 `Allow` sur tous les protocoles, et `TRACE` reçoit la même réponse. Ces
