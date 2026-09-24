@@ -60,7 +60,6 @@ fall behind the code.
 - **HTTP/3 has no trailers and no tunnels.** Declared request trailers are
   refused on every protocol, and HTTP/3 resets `CONNECT`
   ([Architecture](/concepts/architecture/#-where-the-protocols-differ)).
-- **FastCGI on HTTP/3 answers `501`.**
 - **WebSocket upgrades fail intermittently under load**, roughly 10-15% on a
   busy machine. The cause is a race in the upstream `pingora-proxy` crate
   ([cloudflare/pingora#946](https://github.com/cloudflare/pingora/issues/946)),
