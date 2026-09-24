@@ -146,8 +146,8 @@ $ systemctl status pingclair --no-pager | grep Status
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-例外是运行中的进程无法吸收的变更。在启动时确定的选项，例如 `trusted_proxies`，
-只有重启后才会生效：`sudo pc service restart`。新增或移动监听的配置同样会被拒绝——
+例外是运行中的进程无法吸收的变更。对全局选项块的任何修改，例如 `trusted_proxies`，
+都会被重载拒绝，只有重启后才会生效：`sudo pc service restart`。新增或移动监听的配置同样会被拒绝——
 状态行会列出新增和移除的地址——因为重载应用的是策略，而不是新的监听套接字。
 
 ## 🛑 停止意味着什么

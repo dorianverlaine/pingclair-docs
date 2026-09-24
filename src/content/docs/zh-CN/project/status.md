@@ -23,7 +23,7 @@ Admin API 的 `api_key` 字段却从不读取它，所以它的 Admin API 实际
 | TLS | 通过 ACME 自动获取公网证书、持久化的内部证书颁发机构，以及你自己提供的证书文件。 |
 | 静态文件 | 文件服务，支持 `zstd` 和 `gzip` 压缩、范围请求和条件请求。 |
 | 反向代理 | 多个上游、多种负载均衡策略、主动健康检查和备用上游。 |
-| FastCGI | HTTP/1.1 和 HTTP/2 上的 `php_fastcgi`。 |
+| FastCGI | HTTP/1.1、HTTP/2 和 HTTP/3 上的 `php_fastcgi`。 |
 | 限流 | 按匹配器进行精确的本地限流。 |
 | 可观测性 | 带轮转的访问日志，以及 Prometheus 指标。 |
 | 管理 | 用于查看状态和重载配置的 Admin API。 |
@@ -49,7 +49,7 @@ Caddyfile 格式定义的名称比 Pingclair 实现的要多。服务器无法�
   `acme_dns` 都会被接受，其他任何提供商都会被点名拒绝。但在 v0.2.0-rc.3 中，每个 DNS-01 订单都以
   `Invalid` 告终，因为 TXT 记录中的值是错误的。修复在 `main` 上
   （[HTTPS](/zh-CN/start/https/#-dns-01-与通配符证书)）。
-- **HTTP/3 不支持 trailers，也不支持隧道。** 声明了 trailers 的请求在所有协议上都会被拒绝，
+- **没有任何协议转发 trailers，也没有任何协议建立隧道。** 声明了 trailers 的请求在所有协议上都会被拒绝，
   HTTP/3 会重置 `CONNECT`（[架构](/zh-CN/concepts/architecture/#-各协议的差异)）。
 - **高负载下 WebSocket 升级会间歇性失败**，在繁忙的机器上大约为 10-15%。原因是上游
   `pingora-proxy` crate 中的竞态条件（[cloudflare/pingora#946](https://github.com/cloudflare/pingora/issues/946)），

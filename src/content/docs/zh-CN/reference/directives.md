@@ -328,7 +328,7 @@ example.com {
 | `auto_https` | `auto_https on \| off \| disable_redirects` | 控制自动 HTTPS 和 80 端口的重定向。`disable_certs` 和 `ignore_loaded_certs` 会被点名拒绝。 |
 | `dns_refresh` | `dns_refresh <duration> \| off` | 重新解析以主机名指定的上游的间隔。默认是 `30s`。`off` 保留启动时解析到的地址。裸数字会被拒绝。 |
 | `email` | `email <address>` | ACME 账户邮箱。 |
-| `grace_period` | `grace_period <duration>` | 平滑停止时等待正在处理的请求的时长。 |
+| `grace_period` | `grace_period <duration>` | 平滑停止时等待正在处理的请求的时长。在 v0.2.0-rc.3 中，无论该值如何，停止都会在约 250 ms 后退出；**下一版本**：停止时最多等待这么长时间让请求完成。 |
 | `protocols` | `protocols h1 h2 h3` | 决定是否存在 HTTP/3 监听。参见 [TLS 能调什么](/zh-CN/guides/tls-tuning/#-提供哪些协议)。 |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | 允许在转发头部中声明客户端地址的对端。修改后需要重启。**下一版本**：也接受 Caddy 的写法 `trusted_proxies static <cidr \| private_ranges> ...`。 |
 
