@@ -27,15 +27,42 @@ description: 目前的發行版支援什麼、刻意拒絕什麼、有哪些已�
 
 ## 🛡️ 伺服器刻意拒絕的名稱
 
-Caddyfile 格式定義的名稱比 Pingclair 實作的多。伺服器無法兌現的名稱，會在載入檔案時被拒絕，錯誤訊息會指出缺少的是哪一項功能；含有這類名稱的設定無法啟動。讀者最常問到的幾個：
+Caddyfile 格式定義的名稱比 Pingclair 實作的多。伺服器無法兌現的名稱，
+會在載入檔案時被拒絕，錯誤訊息會指出缺少的是哪一項功能；
+含有這類名稱的設定無法啟動。
 
-- `map`、`invoke` 與 `tracing` 指令；
-- `storage` 選項，因為憑證與狀態只存放在本機磁碟；
-- `on_demand_tls` 與 `ocsp_stapling` 選項；
-- `handle_errors`；自訂錯誤頁面請改用 `error_page`；
-- `encode br`，因為沒有串流式的 Brotli 編碼器。
+以下完整清單來自 `main` 上的登錄表，列出 Pingclair 能辨識為 Caddy 語法、
+但尚未在該上下文中實作的名稱。
 
-完整清單在伺服器儲存庫的 README。那裡有一項測試：只要 parser 拒絕了一個 README 沒提到的名稱，測試就會失敗，所以這份清單不會落後於程式碼。
+**指令：**
+
+`copy_response`、`copy_response_headers`、`fs`、`invoke`、`log_append`、
+`log_name`、`map`、`push`、`skip_log`、`tracing`。
+
+`copy_response` 與 `copy_response_headers` 可以作為 `handle_response` 的子指令使用；
+只有把它們寫成獨立指令時才會被拒絕。
+
+**全域選項：**
+
+`acme_ca`、`acme_ca_root`、`acme_eab`、`cert_issuer`、`cert_lifetime`、`ech`、
+`events`、`fallback_sni`、`filesystem`、`frankenphp`、`key_type`、
+`ocsp_interval`、`on_demand_tls`、`preferred_chains`、`renew_interval`、
+`shutdown_delay`、`storage_clean_interval`。
+
+**`tls { … }` 裡的選項：**
+
+`protocols`、`ciphers`、`curves`、`alpn`、`load`、`ca`、`ca_root`、`key_type`、
+`eab`、`issuer`、`get_certificate`、`on_demand`、`reuse_private_keys`、
+`insecure_secrets_log`、`force_automate`。
+
+### 🧭 重要的相容性差異
+
+- 一個名稱受到支援，不代表它能用在 Caddy 的每一種上下文。例如，`copy_response`
+  必須寫在 `handle_response` 裡。
+- DNS-01 支援 Cloudflare。其他 provider 名稱會被拒絕，不會退回另一種驗證方式。
+- `encode br` 會被拒絕，因為代理回應沒有串流式 Brotli 實作。請使用 `zstd` 或 `gzip`。
+- `storage file_system <path>`、`ocsp_stapling off` 與 `handle_errors` 已在 `main`
+  上實作；仍把它們列為不支援的舊文件已經過時。
 
 ## ⚠️ 已知限制
 

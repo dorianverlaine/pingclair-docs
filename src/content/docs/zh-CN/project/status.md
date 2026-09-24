@@ -31,16 +31,40 @@ Admin API 的 `api_key` 字段却从不读取它，所以它的 Admin API 实际
 ## 🛡️ 服务器按设计拒绝的名称
 
 Caddyfile 格式定义的名称比 Pingclair 实现的要多。服务器无法兑现的名称会在文件加载时被拒绝，
-并给出缺失功能的名称。包含这类名称的配置无法启动。读者问得最多的有：
+并给出缺失功能的名称。包含这类名称的配置无法启动。
 
-- `map`、`invoke` 和 `tracing` 指令；
-- `storage` 选项，因为证书和状态只保存在本地磁盘上；
-- `on_demand_tls` 和 `ocsp_stapling` 选项；
-- `handle_errors`；自定义错误页面请改用 `error_page`；
-- `encode br`，因为没有流式的 Brotli 编码器。
+以下完整列表来自 `main` 上的注册表，列出 Pingclair 能识别为 Caddy 语法、
+但尚未在该上下文中实现的名称。
 
-完整列表在服务器代码仓库的 README 中。那里有一项测试：解析器拒绝了 README 未提及的名称时，测试就会失败，
-所以这份列表不会落后于代码。
+**指令：**
+
+`copy_response`、`copy_response_headers`、`fs`、`invoke`、`log_append`、
+`log_name`、`map`、`push`、`skip_log`、`tracing`。
+
+`copy_response` 和 `copy_response_headers` 可以作为 `handle_response` 的子指令使用；
+只有把它们写成独立指令时才会被拒绝。
+
+**全局选项：**
+
+`acme_ca`、`acme_ca_root`、`acme_eab`、`cert_issuer`、`cert_lifetime`、`ech`、
+`events`、`fallback_sni`、`filesystem`、`frankenphp`、`key_type`、
+`ocsp_interval`、`on_demand_tls`、`preferred_chains`、`renew_interval`、
+`shutdown_delay`、`storage_clean_interval`。
+
+**`tls { … }` 内的选项：**
+
+`protocols`、`ciphers`、`curves`、`alpn`、`load`、`ca`、`ca_root`、`key_type`、
+`eab`、`issuer`、`get_certificate`、`on_demand`、`reuse_private_keys`、
+`insecure_secrets_log`、`force_automate`。
+
+### 🧭 重要的兼容性差异
+
+- 一个名称受到支持，并不表示它在 Caddy 的所有上下文中都可用。例如，`copy_response`
+  必须写在 `handle_response` 内。
+- DNS-01 支持 Cloudflare。其他提供商名称会被拒绝，而不会回退到另一种验证方式。
+- `encode br` 会被拒绝，因为代理响应没有流式 Brotli 实现。请使用 `zstd` 或 `gzip`。
+- `storage file_system <path>`、`ocsp_stapling off` 和 `handle_errors` 已在 `main`
+  上实现；仍把它们列为不支持的旧文档已经过时。
 
 ## ⚠️ 已知限制
 

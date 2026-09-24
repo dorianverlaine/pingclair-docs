@@ -36,17 +36,43 @@ field but did not enforce it, so the Admin API did not authenticate requests.
 The Caddyfile format defines more names than Pingclair implements. A name the
 server cannot honor is refused when the file is loaded, with a message that
 names the missing feature. A configuration that contains one does not start.
-The following unsupported names are among those most commonly requested:
 
-- the `map`, `invoke`, and `tracing` directives;
-- the `storage` option, because certificates and state live on local disk only;
-- the `on_demand_tls` and `ocsp_stapling` options;
-- `handle_errors`; custom error pages come from `error_page` instead;
-- `encode br`, because there is no streaming Brotli encoder.
+The following complete lists are derived from the registries on `main`. They
+describe names Pingclair recognizes as Caddy syntax but does not implement in
+that context.
 
-The complete lists are in the server repository's README. A test there fails
-when the parser refuses a name the README does not mention, so the list cannot
-fall behind the code.
+**Directives:**
+
+`copy_response`, `copy_response_headers`, `fs`, `invoke`, `log_append`,
+`log_name`, `map`, `push`, `skip_log`, `tracing`.
+
+`copy_response` and `copy_response_headers` work as `handle_response`
+subdirectives; they are refused only when written as standalone directives.
+
+**Global options:**
+
+`acme_ca`, `acme_ca_root`, `acme_eab`, `cert_issuer`, `cert_lifetime`, `ech`,
+`events`, `fallback_sni`, `filesystem`, `frankenphp`, `key_type`,
+`ocsp_interval`, `on_demand_tls`, `preferred_chains`, `renew_interval`,
+`shutdown_delay`, `storage_clean_interval`.
+
+**Options inside `tls { … }`:**
+
+`protocols`, `ciphers`, `curves`, `alpn`, `load`, `ca`, `ca_root`, `key_type`,
+`eab`, `issuer`, `get_certificate`, `on_demand`, `reuse_private_keys`,
+`insecure_secrets_log`, `force_automate`.
+
+### 🧭 Important compatibility differences
+
+- A supported name is not necessarily accepted in every Caddy context. For
+  example, `copy_response` belongs inside `handle_response`.
+- DNS-01 supports Cloudflare. Other provider names are refused instead of
+  falling back to a different challenge.
+- `encode br` is refused because proxied responses do not have a streaming
+  Brotli implementation. Use `zstd` or `gzip`.
+- `storage file_system <path>`, `ocsp_stapling off`, and `handle_errors` are
+  implemented on `main`; older documentation that lists them as unsupported is
+  obsolete.
 
 ## ⚠️ Known limitations
 
