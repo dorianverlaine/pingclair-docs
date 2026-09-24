@@ -17,9 +17,6 @@
  * already has.
  */
 @import '@fontsource-variable/literata';
-@import '@fontsource-variable/noto-serif-kr';
-@import '@fontsource/pt-serif/400.css';
-@import '@fontsource/pt-serif/700.css';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
 
@@ -45,16 +42,6 @@
 		'Literata Variable', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Iowan Old Style',
 		'Songti TC', 'Songti SC', 'LiSong Pro', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN',
 		'Yu Mincho', 'Noto Serif JP', Georgia, 'Times New Roman', Times, serif;
-
-	/*
-	 * Korean headings need a webfont: PT Serif has no Hangul, so a Korean page
-	 * fell through to the platform's Korean *sans* (Apple SD Gothic Neo) and the
-	 * serif disappeared. Playfair still sets any Latin in the heading, and the
-	 * browser resolves Hangul per glyph from Noto Serif KR.
-	 */
-	--pc-font-serif-ko:
-		'Literata Variable', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji',
-		'Noto Serif KR Variable', 'PT Serif', 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
 
 	/* Type scale: 16px body, 30-36px page title. */
 	--sl-text-xs: 0.8125rem; /* 13px */
@@ -487,11 +474,6 @@ h2 {
 	display: none;
 }
 
-/* Korean titles use PT Serif: Playfair Display has no Hangul. */
-:root[lang='ko'] {
-	--pc-font-serif: var(--pc-font-serif-ko);
-}
-
 /*
  * Header row. The search field is the tallest control, so the icon and language
  * controls match its 40px height and its corners, and the row is centred on one
@@ -714,8 +696,4 @@ header.header .site-title::after {
 	font-weight: 400;
 	line-height: 1.5;
 	margin-block: 1.8rem 0.675rem; /* 28.8 / 10.8 */
-}
-
-:root[lang='ko'] .sl-markdown-content :is(h2, h3, h4):not(:where(.not-content *)) {
-	font-family: var(--pc-font-serif-ko);
 }

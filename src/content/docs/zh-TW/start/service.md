@@ -6,7 +6,7 @@ sidebar:
 description: 已安裝的 systemd unit 做了什麼、如何啟動、停止與重載它、日誌寫到哪裡，以及設定出錯時從外部看起來是什麼樣子。
 ---
 
-安裝程式會留下一個已啟用且正在執行的 `systemd` unit。本頁逐行解讀這個 unit、說明如何操作它，並描述兩種失敗從外部看起來的樣子：一種是伺服器無法啟動，另一種是執行中的伺服器拒絕了新設定。
+安裝程式會留下一個已啟用且正在執行的 `systemd` unit。本頁逐行解讀這個 unit、說明如何操作它，並描述兩種失敗的外觀：伺服器起不來，以及執行中的伺服器拒絕了新設定。
 
 ## 🧾 unit 做了什麼
 
@@ -40,10 +40,10 @@ NoNewPrivileges=true
 
 依序來看：
 
-- `Type=notify` 與 `NotifyAccess=main`：伺服器會在監聽器綁定完成時通知 `systemd`，所以 `systemctl start` 會等到代理真的能回應才返回，而不是行程一出現就返回。
+- `Type=notify` 與 `NotifyAccess=main`：伺服器在監聽器綁定完成時主動通知 `systemd`，所以 `systemctl start` 會等到代理真的能回應才返回，而不是行程一出現就算。
 - `User=pingclair` 搭配 `AmbientCapabilities=CAP_NET_BIND_SERVICE`：伺服器以非特權身分執行，仍然可以綁定 80 與 443 連接埠。
-- 這裡刻意沒有 `PINGCLAIR_TLS_STORE`。服務帳號的家目錄是 `/var/lib/pingclair`，所以憑證放在 `/var/lib/pingclair/.local/share/pingclair`：這是二進位檔自己的預設值、安裝程式建立並遷移進去的目錄，也是 `pingclair
-  environ` 印出的路徑。在這裡再指定一個儲存區，等於替一個已經有答案的問題再給第二個答案。
+- 這裡刻意沒有 `PINGCLAIR_TLS_STORE`。服務帳號的家目錄是 `/var/lib/pingclair`，憑證自然落在 `/var/lib/pingclair/.local/share/pingclair`：這是二進位檔的預設值、安裝程式建立並遷移進去的目錄，也是 `pingclair
+  environ` 印出的路徑。再多指定一個儲存區，等於替一個已有答案的問題硬塞第二個答案。
 - 這裡刻意沒有執行 `validate` 的 `ExecStartPre`。它看起來是做這項檢查最安全的位置，但正是陷阱所在：`systemd` 只把 `RestartPreventExitStatus=` 套用在主行程上，不套用在失敗的前置命令上，所以編譯器拒絕的設定曾經每五秒就被重試一次，而不是讓 unit 停在失敗狀態。伺服器會在綁定任何東西之前自行編譯檔案，拒絕時以 1 結束，而上面的重啟策略正是為這個結束碼寫的——`pingclair run` 就是為了當這個行程而存在。
 - `ExecReload` 送出 `SIGUSR1`，伺服器把這個訊號視為「重新讀取檔案」。`SIGHUP` 會被刻意忽略；曾有 unit 送出它，回報成功，舊設定卻繼續在提供服務（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。由於 `systemd` 只能看到 `kill` 結束了，伺服器會把它對檔案的處理結果發布在這個 unit 的狀態列上——`Serving (reloaded 1
   listener(s) in 323.341µs)` 或 `Reload rejected: …`——`systemctl status` 會顯示出來。完整說明見下方的[重載一節](#-重載意味著什麼)。
@@ -109,23 +109,23 @@ $ systemctl status pingclair --no-pager | grep Status
      Status: "Serving (reloaded 1 listener(s) in 323.341µs)"
 ```
 
-當執行中的伺服器無法套用檔案要求的內容時，舊設定會繼續提供服務，狀態列則會指出是哪一項變更被拒絕。最常見的情況是把網站從 `:80` 搬到 `:8080`，因為監聽器拓撲是在啟動時連同 socket 一起建立的：
+執行中的伺服器無法套用新檔案的要求時，舊設定會繼續提供服務，狀態列會指出哪一項變更被拒絕。最常見的情況是把網站從 `:80` 搬到 `:8080`，因為監聽器拓撲在啟動時就連同 socket 一起定型了：
 
 ```text
      Status: "Reload rejected: listener topology changed (added: ["[::]:8080"], removed: ["[::]:80"]); restart Pingclair to rebuild H1, H2, H3, and TLS together"
 ```
 
-不論走哪一條路，無法編譯的設定都會讓先前的設定繼續執行，網站也會繼續回應。請先驗證：
+不論走哪條路，無法編譯的設定都只會讓舊設定繼續跑，網站照常回應。請先驗證：
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-執行中的行程無法吸收的變更是例外。對全域選項區塊的任何變更（例如 `trusted_proxies`）都會被重載拒絕，只有在重啟後才會生效：`sudo pc service restart`。新增或搬移監聽器的設定也會以同樣方式被拒絕——狀態列會列出新增與移除的位址——因為重載套用的是政策，而不是新的監聽 socket。
+執行中的行程無法吸收的變更屬於例外。全域選項區塊的任何變更（例如 `trusted_proxies`）都會被重載拒絕，必須重啟才會生效：`sudo pc service restart`。新增或搬移監聽器的設定也一樣——狀態列會列出新增與移除的位址——因為重載只更新政策，不換監聽 socket。
 
 ## 🛑 停止意味著什麼
 
-`systemctl stop` 會送出 `SIGTERM`。在 v0.2.0-rc.3 中，不論 `grace_period` 怎麼設定，行程都會在大約四分之一秒後結束，所以那一刻仍在進行的請求會被切斷，拿不到回應。請在可以接受短暫中斷時才停止或重啟；如果只改了網站設定，請優先使用重載。
+`systemctl stop` 送出 `SIGTERM`。在 v0.2.0-rc.3 中，不論 `grace_period` 設了什麼，行程都會在大約四分之一秒後結束，那一刻仍在進行的請求會被直接切斷。只有在能接受短暫中斷時才停止或重啟；單純改網站設定，優先用重載。
 
 📌 **下一版**。在 `main` 上，停止會先排空：`/ready` 回應 `503`、監聽器關閉、進行中的請求完成，最後一個請求結束或 `grace_period`（預設 30 秒）到期時，行程才結束。
 

@@ -8,7 +8,7 @@ export const prerender = true;
  * 🤖 The English index: a map of the documentation for a model that wants to
  * fetch only the pages it needs. Each entry points at the page's Markdown twin
  * rather than the rendered page, which is the whole point of publishing both,
- * and the five localized indexes are named in the header.
+ * and the two localized indexes are named in the header.
  */
 export const GET: APIRoute = async ({ site }) => {
 	const docs = await getCollection('docs');

@@ -4,7 +4,7 @@ import { LOCALES, isRootLocale, pagePath, slugOf, toMarkdown, twinPath, type Loc
 /**
  * 🤖 The llms.txt surfaces.
  *
- * Two shapes, each in six languages: `llms.txt` is the index a model reads to
+ * Two shapes, each in three languages: `llms.txt` is the index a model reads to
  * decide which pages to fetch, and `llms-full.txt` is the whole documentation
  * in one file. Entries use `- [Title](url) — description`; the em dash keeps a
  * description from running into the URL after a closing parenthesis, which is
@@ -15,9 +15,6 @@ import { LOCALES, isRootLocale, pagePath, slugOf, toMarkdown, twinPath, type Loc
 export type DocEntry = CollectionEntry<'docs'>;
 
 const localeNames: Record<Locale, string> = {
-	fr: 'French',
-	ja: 'Japanese',
-	ko: 'Korean',
 	'zh-CN': 'Simplified Chinese',
 	'zh-TW': 'Traditional Chinese',
 };
@@ -47,7 +44,7 @@ export function llmsIndex(origin: URL, docs: DocEntry[], locale: Locale | null):
 			new URL(locale === null ? '/llms-full.txt' : `/${locale}/llms-full.txt`, origin).toString() +
 			'.',
 		'',
-		'> All six languages are published side by side: the English index is /llms.txt, and the others are /fr/llms.txt, /ja/llms.txt, /ko/llms.txt, /zh-CN/llms.txt, and /zh-TW/llms.txt.',
+		'> English, Simplified Chinese, and Traditional Chinese are published side by side: the English index is /llms.txt, and the others are /zh-CN/llms.txt and /zh-TW/llms.txt.',
 		'',
 	];
 
@@ -69,7 +66,7 @@ export function llmsFull(origin: URL, docs: DocEntry[], locale: Locale | null): 
 			(locale === null ? 'in English' : `in ${scope}`) +
 			'. Each section names its source URL.',
 		'',
-		'All six languages are published side by side: /llms-full.txt for English, and /fr/llms-full.txt, /ja/llms-full.txt, /ko/llms-full.txt, /zh-CN/llms-full.txt, and /zh-TW/llms-full.txt.',
+		'English, Simplified Chinese, and Traditional Chinese are published side by side: /llms-full.txt for English, and /zh-CN/llms-full.txt and /zh-TW/llms-full.txt.',
 		'',
 	];
 
@@ -95,5 +92,5 @@ export const llmsHeaders = {
 	'Cache-Control': 'public, max-age=600',
 } as const;
 
-/** The five prefixed locales, for `getStaticPaths`. */
+/** The two prefixed locales, for `getStaticPaths`. */
 export const localePaths = () => LOCALES.map((locale) => ({ params: { locale } }));

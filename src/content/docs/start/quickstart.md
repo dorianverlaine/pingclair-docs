@@ -6,10 +6,9 @@ sidebar:
 description: Write a first Pingclairfile, validate it, run it in the foreground or the background, and serve a real directory.
 ---
 
-This page goes from an installed host to a running server you control: a
-configuration on disk, a validated compile, a server you can start, stop, and
-watch, and a verification step that proves the file server answered. It assumes
-the [installation](/start/install/) is done.
+This page walks from an installed host to a running server: write a
+configuration, validate it, start the server, and verify that it answers. It
+assumes the [installation](/start/install/) is done.
 
 ## 🧾 Before you start
 
@@ -64,8 +63,8 @@ pingclair validate
 
 `validate` reads `./Pingclairfile` by default and also detects `./Caddyfile`. It
 compiles the configuration and applies semantic checks, such as whether
-certificate paths exist. Validation is not advisory: a configuration that fails
-does not run, and a failing one prints the reason on the last line.
+certificate paths exist. A configuration that fails validation does not run,
+and the output prints the reason on the last line.
 
 ## 3. 🧭 Read what the configuration becomes
 
@@ -87,9 +86,9 @@ pingclair adapt --pretty
       ],
 ```
 
-The compiled JSON is the form the server actually runs. When a directive does
-not behave as the documentation says, this is the first place to look. To see
-what `pingclair fmt` would change in the file instead:
+The compiled JSON is the form the server runs. When a directive does not
+behave as expected, this is the first place to look. To see what
+`pingclair fmt` would change in the file instead:
 
 ```bash
 pingclair fmt --diff
@@ -174,8 +173,8 @@ pingclair stop
 
 ## ⚡ Servers in one command
 
-Three subcommands serve without a configuration file, which is useful for
-trying something out or for a throwaway host:
+Three subcommands serve without a configuration file, useful for quick tests
+or throwaway hosts:
 
 ```bash
 pingclair file-server --listen :8081 --root ./public
@@ -206,19 +205,17 @@ sudo pc service reload
 curl -i http://localhost/
 ```
 
-`pc service reload` asks the running server to read the file again, which the
-unit does by sending `SIGUSR1`. `pingclair reload` reaches the same code through
-the Admin API and also reports what the server thought of the file, which needs
-the `admin` option from the global options block; and
-`sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` does it with
-neither.
+`pc service reload` asks the running server to read the file again by sending
+`SIGUSR1`. `pingclair reload` reaches the same code through the Admin API and
+reports the server's verdict, but it requires the `admin` global option.
+`sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` sends the
+signal directly, with no Admin API needed.
 
-Validate first either way, and read the answer afterwards: `systemctl reload`
-reports only that the signal was delivered, so the server's verdict — applied,
-or refused with a reason — is on the unit's status line and in the journal. A
-refused reload leaves the previous configuration serving, which is the point of
-refusing. [Run it as a service](/start/service/#-what-a-reload-means) is the long
-version.
+Validate first either way, and check the result afterwards. `systemctl reload`
+reports only that the signal was delivered; the server's verdict — applied, or
+refused with a reason — appears on the unit's status line and in the journal. A
+refused reload leaves the previous configuration serving.
+[Run it as a service](/start/service/#-what-a-reload-means) covers the details.
 
 ## ⚠️ When it does not work
 

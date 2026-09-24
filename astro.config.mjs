@@ -57,14 +57,11 @@ export default defineConfig({
 			// the `root` key. Listing it as `en` instead would make Starlight look
 			// for English pages in an `en/` directory and leave the sidebar empty.
 			defaultLocale: 'root',
-			// Menu order follows this order: English, French, Japanese, Korean,
-			// Simplified Chinese, Traditional Chinese. `LanguageSelect.astro`
+			// Menu order follows this order: English, Simplified Chinese,
+			// Traditional Chinese. `LanguageSelect.astro`
 			// renders the entries in the order they appear here.
 			locales: {
 				root: { label: 'English', lang: 'en' },
-				fr: { label: 'Français', lang: 'fr' },
-				ja: { label: '日本語', lang: 'ja' },
-				ko: { label: '한국어', lang: 'ko' },
 				'zh-CN': { label: '简体中文', lang: 'zh-CN' },
 				// Both Chinese locales ship UI translations with Starlight, so
 				// the locale keys are the standard ones rather than a bare `zh`.
@@ -97,8 +94,6 @@ export default defineConfig({
 					translations: {
 						'zh-TW': '開始',
 						'zh-CN': '开始',
-						ja: 'はじめに',
-						ko: '시작하기',
 					},
 					items: [{ autogenerate: { directory: 'start' } }],
 				},
@@ -107,8 +102,6 @@ export default defineConfig({
 					translations: {
 						'zh-TW': '核心概念',
 						'zh-CN': '核心概念',
-						ja: 'コンセプト',
-						ko: '개념',
 					},
 					items: [{ autogenerate: { directory: 'concepts' } }],
 				},
@@ -117,9 +110,6 @@ export default defineConfig({
 					translations: {
 						'zh-TW': '操作指南',
 						'zh-CN': '操作指南',
-						ja: 'ガイド',
-						ko: '가이드',
-						fr: 'Guides',
 					},
 					items: [{ autogenerate: { directory: 'guides' } }],
 				},
@@ -128,8 +118,6 @@ export default defineConfig({
 					translations: {
 						'zh-TW': '參考手冊',
 						'zh-CN': '参考手册',
-						ja: 'リファレンス',
-						ko: '레퍼런스',
 					},
 					items: [{ autogenerate: { directory: 'reference' } }],
 				},
@@ -138,8 +126,6 @@ export default defineConfig({
 					translations: {
 						'zh-TW': '專案資訊',
 						'zh-CN': '项目信息',
-						ja: 'プロジェクト',
-						ko: '프로젝트',
 					},
 					items: [{ autogenerate: { directory: 'project' } }],
 				},

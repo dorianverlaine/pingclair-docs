@@ -49,27 +49,24 @@ Read them in order:
 - `User=pingclair` with `AmbientCapabilities=CAP_NET_BIND_SERVICE`: the server
   runs unprivileged and can still bind ports 80 and 443.
 - There is deliberately no `PINGCLAIR_TLS_STORE` here. The service account's home
-  is `/var/lib/pingclair`, so certificates live at
-  `/var/lib/pingclair/.local/share/pingclair`: the binary's own default, the
-  directory the installer creates and migrates into, and the path `pingclair
-  environ` prints. Naming a store here would be a second answer to a question
-  that already has one.
-- There is deliberately no `ExecStartPre` running `validate`. It looks like the
-  safe place for that check, and it is the trap: `systemd` applies
-  `RestartPreventExitStatus=` to the main process, not to a failing pre-command,
-  so a configuration the compiler refuses was retried every five seconds
-  instead of leaving the unit failed. The server compiles the file itself before
-  it binds anything and exits 1 when it refuses it, which is the exit code the
-  restart policy above was written for — `pingclair run` exists to be that
-  process.
-- `ExecReload` sends `SIGUSR1`, which is the signal the server treats as "read
-  the file again". `SIGHUP` is deliberately ignored, and a unit that sent it
-  reported success while the old configuration kept serving
+  is `/var/lib/pingclair`, so certificates resolve to
+  `/var/lib/pingclair/.local/share/pingclair` — the binary's default, created by
+  the installer and printed by `pingclair environ`. Setting the variable here
+  would duplicate what the home directory already determines.
+- There is deliberately no `ExecStartPre` running `validate`. `systemd` applies
+  `RestartPreventExitStatus=` to the main process, not to a pre-command, so a
+  failing pre-command would be retried every five seconds instead of leaving the
+  unit failed. The server compiles the file itself before binding anything and
+  exits 1 on a refused configuration — the exit code the restart policy
+  prevents.
+- `ExecReload` sends `SIGUSR1`, the signal the server treats as "read the file
+  again". `SIGHUP` is deliberately ignored; a unit that sent it reported success
+  while the old configuration kept serving
   ([issue #66](https://github.com/dorianverlaine/pingclair/issues/66)). Because
-  `systemd` can only observe that `kill` exited, the server publishes what it
-  made of the file on this unit's status line — `Serving (reloaded 1
-  listener(s) in 323.341µs)`, or `Reload rejected: …` — which `systemctl status`
-  shows. The [reload section](#-what-a-reload-means) below is the long version.
+  `systemd` can only observe that `kill` exited, the server publishes its
+  verdict on the unit's status line — `Serving (reloaded 1 listener(s) in
+  323.341µs)`, or `Reload rejected: …` — visible in `systemctl status`. The
+  [reload section](#-what-a-reload-means) below covers this in detail.
 - `Restart=on-failure` with `RestartPreventExitStatus=1` and `RestartSec=5s`:
   exit code 1 means the configuration or the certificate store could not be
   used at all, so the unit is left `failed` for an operator to look at rather
@@ -79,10 +76,9 @@ Read them in order:
   needs, and nothing beyond them.
 
 Both install paths write this same file. The one-liner embeds a byte-for-byte
-copy of `scripts/pingclair.service` — `just repo-lint` fails when the two drift —
-so a fresh `curl | bash` install and a checkout install produce the same unit,
-and `systemd-analyze verify /etc/systemd/system/pingclair.service` says
-nothing about this unit on either path.
+copy of `scripts/pingclair.service`, and `just repo-lint` fails when the two
+drift. A fresh `curl | bash` install and a checkout install produce the same
+unit, and `systemd-analyze verify` reports no warnings for it on either path.
 
 ## 🎛️ Driving the service
 
@@ -114,7 +110,7 @@ server sent:
 An edited `/etc/Pingclair/Pingclairfile` reaches the running server through one
 signal, and two commands send it.
 
-`SIGUSR1` is the reload signal, and it needs no configuration of its own:
+`SIGUSR1` is the reload signal and requires no configuration:
 
 ```bash
 sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"

@@ -3,15 +3,14 @@ title: HTTPS
 h1_emoji: '🔐'
 sidebar:
   order: 3
-description: Get a certificate for a public name, publish an internal certificate, or bring your own, and verify what the server actually serves.
+description: Get a certificate for a public name, issue one from the internal authority, or supply your own files, and verify what the server serves.
 ---
 
 A site block whose address is a public name gets HTTPS without a `tls`
-directive: Pingclair asks Let's Encrypt for a certificate over ACME, answers the
-HTTP-01 challenge on port 80, stores the result, and renews it in the
-background. The other three ways to get a certificate — DNS-01, a local
-authority, and files you supply — are covered below with what each one
-requires.
+directive: Pingclair obtains a certificate from Let's Encrypt over ACME, answers
+the HTTP-01 challenge on port 80, stores the result, and renews it in the
+background. The other three paths — DNS-01, the internal authority, and
+files you supply — are covered below.
 
 ## 🧾 Before you start
 
@@ -83,10 +82,10 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-The certificate material is kept in the service user's data directory,
-`/var/lib/pingclair/.local/share/pingclair` — the path the binary resolves from
-that account's home, which is also what `PINGCLAIR_TLS_STORE` names when a
-command runs as somebody else.
+Certificates are stored in the service user's data directory,
+`/var/lib/pingclair/.local/share/pingclair`. The binary resolves this path from
+the account's home directory. When a command runs as a different user, set
+`PINGCLAIR_TLS_STORE` to point at this path.
 
 ## 📡 DNS-01 and wildcards
 
@@ -119,10 +118,10 @@ The configuration needs the provider block:
 }
 ```
 
-Two details are easy to miss. First, the `auto` line inside the block is what puts the
+Two details are easy to miss. First, the `auto` line inside the block puts the
 name on the issuance list; without it the server logs `authorised for 0
-hostname(s)` and never asks for a certificate, leaving every handshake to fail
-with `NO_CERTIFICATE_SET`. Second, the token is a Cloudflare API token with
+hostname(s)` and never requests a certificate, so every handshake fails with
+`NO_CERTIFICATE_SET`. Second, the token is a Cloudflare API token with
 `Zone:DNS:Edit` for the zone that holds the name.
 
 🃏 **One leaf covers the site.** A `*.example.com` site orders `*.example.com`
@@ -191,10 +190,11 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair tru
 ✅ Internal CA root installed into the system trust store
 ```
 
-The `PINGCLAIR_TLS_STORE` prefix matters: `pingclair trust` looks in the store of
-the user who runs it, which for root is `/root/.local/share/pingclair`, while the
-service uses `/var/lib/pingclair/.local/share/pingclair`. Without the prefix it answers `No
-internal CA root at /root/.local/share/pingclair/internal/root.crt`.
+The `PINGCLAIR_TLS_STORE` prefix is required because `pingclair trust` looks in
+the store of the user who runs it. For root, that is
+`/root/.local/share/pingclair`, not the service account's store at
+`/var/lib/pingclair/.local/share/pingclair`. Without the prefix, the command
+answers `No internal CA root at /root/.local/share/pingclair/internal/root.crt`.
 
 After trusting the root, the same request succeeds without `-k`:
 

@@ -1,9 +1,9 @@
 ---
 title: Pingclair
-description: 用 Rust 编写的反向代理与静态文件服务器，支持 HTTP/1.1、HTTP/2、HTTP/3、自动 HTTPS，以及兼容 Caddyfile 的配置语言。
+description: Rust 编写的反向代理和静态文件服务器，支持 HTTP/1.1、HTTP/2、HTTP/3 和自动 HTTPS，配置语言兼容 Caddyfile。
 template: splash
 hero:
-  tagline: 用 Rust 编写的反向代理与静态文件服务器，支持 HTTP/1.1、HTTP/2、HTTP/3、自动 HTTPS，以及兼容 Caddyfile 的配置语言。
+  tagline: Rust 编写的反向代理和静态文件服务器，支持 HTTP/1.1、HTTP/2、HTTP/3 和自动 HTTPS，配置语言兼容 Caddyfile。
   actions:
     - text: 安装 Pingclair
       link: /zh-CN/start/install/
@@ -15,8 +15,8 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-Pingclair 用一份配置同时提供 HTTP/1.1、HTTP/2 和 HTTP/3，通过 ACME 获取并续期公网证书，
-并以压缩和范围请求的方式提供静态文件。它的配置语言 Pingclairfile 遵循 Caddyfile 的约定。
+一份配置文件，同时提供 HTTP/1.1、HTTP/2 和 HTTP/3 服务。Pingclair 通过 ACME 自动获取和续期证书，
+静态文件支持压缩和范围请求。配置语言 Pingclairfile 沿用 Caddyfile 的写法。
 
 ```caddyfile
 example.com {
@@ -29,29 +29,29 @@ example.com {
 
 <CardGrid>
 	<Card title="🚀 安装">
-		通过发布版二进制文件、从源码构建，或使用 Docker。
+		下载二进制文件、从源码构建，或用 Docker 安装。
 		[安装指南](/zh-CN/start/install/)
 	</Card>
 	<Card title="🏃 快速开始">
-		编写第一个 Pingclairfile，校验它，然后开始提供服务。
+		写一个 Pingclairfile，验证配置，启动服务。
 		[快速开始](/zh-CN/start/quickstart/)
 	</Card>
 	<Card title="🧠 核心概念">
-		配置文件如何变成运行时状态，以及请求如何被处理。
+		配置文件怎样变成运行时状态，请求怎样被处理。
 		[配置模型](/zh-CN/concepts/configuration/)
 	</Card>
 	<Card title="📖 参考">
-		配置语言本身，以及它接受的指令。
+		配置语言及其支持的全部指令。
 		[指令参考](/zh-CN/reference/directives/)
 	</Card>
 </CardGrid>
 
 ## 📌 发布状态
 
-当前版本是 **v0.2.0-rc.3**，属于候选版本。本站各页描述的就是这个版本。`v0.1.x` 系列已停止维护，
-不再接收安全修复。[项目状态](/zh-CN/project/status/)列出了支持什么、拒绝什么，以及打标签时已知的缺陷。
+当前版本为 **v0.2.0-rc.3**（候选版本），本站所有页面均基于此版本编写。`v0.1.x` 已停止维护，不再提供安全修复。
+[项目状态](/zh-CN/project/status/)页列出了已支持的功能、明确拒绝的功能，以及发版时已知的缺陷。
 
 ## 📊 性能
 
-Pingclair 与 nginx、Caddy 在同一台主机上进行测量，每个参与者都限制为两个 CPU，并使用完全相同的负载。
-实测数字、测量条件，以及 Pingclair 落后的那几行，都发布在[性能测量](/zh-CN/project/benchmarks/)中。
+Pingclair 和 nginx、Caddy 在同一台主机上测量，每个被测对象限制为两个 CPU、使用完全相同的负载。
+实测数据、测量条件以及 Pingclair 表现较差的项目，均发布在[性能测量](/zh-CN/project/benchmarks/)页面。

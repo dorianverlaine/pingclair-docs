@@ -58,8 +58,7 @@ done
 Astro's default slugifies entry ids, which lowercases the locale directory, and
 Starlight matches locales by that directory name. Without it, `zh-TW/` and
 `zh-CN/` stop matching their locale keys: the Chinese pages are replaced by
-English fallbacks that carry an "untranslated" notice, while `ja` and `ko` keep
-working because their keys are already lowercase.
+English fallbacks that carry an "untranslated" notice.
 
 ## Content rules
 
@@ -95,25 +94,21 @@ working because their keys are already lowercase.
 - The default locale is the `root` key, not `en`. Naming it `en` makes Starlight
   look for English pages under `en/`; the English sidebar then renders empty
   while the localized sidebars keep working.
-- English is the root locale. The other five live in their own directories:
-  `fr/` (French), `ja/` (Japanese), `ko/` (Korean), `zh-CN/` (Simplified
-  Chinese) and `zh-TW/` (Traditional Chinese). Three of them are Starlight
-  locale codes, so their UI strings are built in; French and Korean are too,
-  which is why the directory names are exactly the codes.
+- English is the root locale. The other two live in `zh-CN/` (Simplified
+  Chinese) and `zh-TW/` (Traditional Chinese). Their directory names use the
+  standard Starlight locale codes so the built-in UI translations, `<html
+  lang>`, and CJK typography rules all match.
 - The language menu is built from the `locales` object in `astro.config.mjs` in
   insertion order, so that object *is* the menu order. The agreed order is
-  English, French, Japanese, Korean, Simplified Chinese, Traditional Chinese.
+  English, Simplified Chinese, Traditional Chinese.
   A new locale means: add it to that object, add its label map to
   `src/components/PageTitle.astro`, `ThemeSelect.astro`, and `Footer.astro`,
   add it to `otherLocales` in `src/pages/llms.txt.ts` and
   `llms-full.txt.ts`, and translate every page.
-- Keep the six trees structurally identical: same page paths, same headings,
+- Keep the three trees structurally identical: same page paths, same headings,
   same anchors. Directive entry headings stay in English in every locale
   (`## reverse_proxy`) because other pages link to those anchors, and so do the
   `Syntax:` / `Default:` / `Context:` labels inside their code fences.
-- French uses the register of `README.fr.md`: formal, second person for
-  instructions, French typography, and English technical terms where the
-  server's own documentation uses them (`reverse proxy`, `upstream`, `crate`).
 - Code-block comments stay in English in every locale. The snippets are shared
   with the server repository and are read as configuration, not as prose.
 - Chinese pages use mainland terminology in `zh-CN` (文件, 配置, 服务器, 端口,
@@ -146,8 +141,8 @@ A page is not finished when it renders. Six locale trees, four generated
 surfaces, and three agent endpoints read from the same content, so the work ends
 when all of them agree. In order:
 
-1. **Write the English page first**, then port it into `fr/`, `ja/`, `ko/`,
-   `zh-CN/`, and `zh-TW/` at the same path. Never add a page to one tree only:
+1. **Write the English page first**, then port it into `zh-CN/` and `zh-TW/` at
+   the same path. Never add a page to one tree only:
    a missing translation falls back to English with an "untranslated" notice,
    and a partial tree is what makes readers distrust the localized site.
 2. **Fill the frontmatter.** `title` names the page in the sidebar and the
@@ -168,7 +163,7 @@ when all of them agree. In order:
    pnpm build
    pnpm preview --port 4321 &          # serves dist/ on a fresh port
    PAGE=/start/quickstart               # the page path without a trailing slash
-   for l in "" fr/ ja/ ko/ zh-CN/ zh-TW/; do
+   for l in "" zh-CN/ zh-TW/; do
      [ -f "dist/$l$PAGE.md" ] || echo "MISSING dist/$l$PAGE.md"
    done
    curl -s -o /dev/null -w '%{http_code} %{content_type}\n' \
@@ -177,7 +172,7 @@ when all of them agree. In order:
    ```
 
    The Markdown twinned path is `<path>.md` for ordinary pages and
-   `<path>/index.md` for a directory page (`/zh-TW/`, `/fr/`). `llms.txt`
+   `<path>/index.md` for a directory page (`/zh-TW/`, `/zh-CN/`). `llms.txt`
    indexes English pages only, which is deliberate; the localized pages are
    reachable under their own prefix.
 
@@ -191,7 +186,7 @@ when all of them agree. In order:
 Everything under `start/` is a procedure, not an essay: the reader runs the
 commands on a machine that matters to them. So every command on those pages was
 run on a real host before the page shipped, and the outputs quoted on the page
-are the ones that host printed. The five existing pages were written this way,
+are the ones that host printed. The existing start pages were written this way,
 and the routine is short enough to repeat:
 
 - **Use throwaway hosts, never the maintainer's machines.** Two cheap instances

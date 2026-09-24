@@ -6,7 +6,7 @@ sidebar:
 description: 寫出第一份 Pingclairfile、驗證它、在前景或背景執行，並提供一個真實的目錄。
 ---
 
-本頁從一台裝好 Pingclair 的主機出發，帶你得到一個由你掌控、正在執行的伺服器：磁碟上的一份設定、一次通過驗證的編譯、一個能啟動、停止與觀察的伺服器，以及一個證明檔案伺服器確實有回應的驗證步驟。前提是你已經完成[安裝](/zh-TW/start/install/)。
+本頁帶你在一台已裝好 Pingclair 的主機上，從零開始建立一個你能掌控的伺服器：寫一份設定、通過驗證、啟動並觀察它，最後確認檔案伺服器確實有回應。前提是你已經完成[安裝](/zh-TW/start/install/)。
 
 ## 🧾 開始之前
 
@@ -155,7 +155,7 @@ pingclair stop
 
 ## ⚡ 一行命令就能起的伺服器
 
-有三個子命令不需要設定檔就能提供服務，適合用來快速試東西，或用在用完即丟的主機上：
+有三個子命令不需要設定檔就能起服務，適合隨手試東西，或用在用完即丟的主機上：
 
 ```bash
 pingclair file-server --listen :8081 --root ./public
@@ -175,7 +175,7 @@ Server address: [::]:8083
 
 ## 🔁 移進服務裡
 
-服務執行的是 `/etc/Pingclair/Pingclairfile`，所以把你的設定放到那裡，它才能在重新開機後繼續存在：
+服務執行的是 `/etc/Pingclair/Pingclairfile`，設定放到那裡才能在重開機後繼續生效：
 
 ```bash
 sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
@@ -186,7 +186,7 @@ curl -i http://localhost/
 
 `pc service reload` 會請執行中的伺服器重新讀取檔案，unit 的做法是送出 `SIGUSR1`。`pingclair reload` 透過 Admin API 走到同一段程式碼，還會回報伺服器對這個檔案的判定，因此需要全域選項區塊裡的 `admin`；`sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` 則兩者都不需要。
 
-不論用哪一種，都請先驗證，事後再讀結果：`systemctl reload` 只會回報訊號已送達，伺服器的判定——已套用，或附理由拒絕——會出現在 unit 的狀態列與 journal 中。被拒絕的重載會讓先前的設定繼續提供服務，這正是拒絕的用意。完整說明請見[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)。
+不論走哪條路，都請先驗證、事後再讀結果：`systemctl reload` 只回報訊號已送達，伺服器的判定——套用了，或附理由拒絕——會寫進 unit 的狀態列與 journal。被拒絕的重載會讓舊設定繼續提供服務，這正是拒絕的用意。完整說明請見[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)。
 
 ## ⚠️ 無法運作時
 

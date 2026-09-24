@@ -7,7 +7,7 @@ export const prerender = true;
 /**
  * 🤖 Every English page in one file, for an agent that would rather read one
  * document than follow forty links. Each section names its source URL, and the
- * five localized editions are named in the header.
+ * two localized editions are named in the header.
  */
 export const GET: APIRoute = async ({ site }) => {
 	const docs = await getCollection('docs');

@@ -5,11 +5,11 @@
  * two twins at `<path>.md` and `<path>.txt` with identical bytes. Astro
  * lowercases entry ids, so `filePath` is the only case-accurate source of a
  * page's path, and a locale home page keeps its `index` because that is where
- * the twins are published (`/fr/index.md`, not `/fr.md`).
+ * the twins are published (`/zh-TW/index.md`, not `/zh-TW.md`).
  */
 
 /** The locales that live under a path prefix; the root locale has none. */
-export const LOCALES = ['fr', 'ja', 'ko', 'zh-CN', 'zh-TW'] as const;
+export const LOCALES = ['zh-CN', 'zh-TW'] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
@@ -30,7 +30,7 @@ export function localeOf(slug: string): Locale | null {
 }
 
 /**
- * `/start/install.md`, `/fr/index.md`. The empty slug is the site root, whose
+ * `/start/install.md`, `/zh-TW/index.md`. The empty slug is the site root, whose
  * twin is published as `/index.md`.
  */
 export function twinPath(slug: string, extension: 'md' | 'txt'): string {

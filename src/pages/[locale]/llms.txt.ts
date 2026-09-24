@@ -6,7 +6,7 @@ import { llmsHeaders, llmsIndex, localePaths } from '../../lib/llms';
 export const prerender = true;
 
 /**
- * 🤖 The same index for each of the five prefixed locales. An agent that reads
+ * 🤖 The same index for each of the two prefixed locales. An agent that reads
  * the localized pages should not have to guess these URLs, so the English
  * `llms.txt` names them and each one is published here.
  */
