@@ -94,7 +94,7 @@ les consigne sous Unreleased.
 
 ## ⚠️ Les upgrades WebSocket échouent par intermittence sous charge
 
-Pingclair relaie WebSocket, mais environ 10 à 15 % des upgrades échouent quand
+Pingclair relaie WebSocket, mais environ 10 à 15 % des upgrades échouent quand
 la machine est chargée. Vu de l'extérieur, un upgrade raté est une connexion
 fermée juste après la réponse `101 Switching Protocols`. La cause est une
 situation de concurrence dans la crate amont `pingora-proxy`, et non dans la
