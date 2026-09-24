@@ -6,11 +6,13 @@ sidebar:
 description: Publish a site through a Cloudflare Tunnel so the origin needs no inbound port, and make Pingclair's logs show the real client instead of the connector.
 ---
 
-A Cloudflare Tunnel connects the origin outward: `cloudflared` dials Cloudflare,
-and Cloudflare sends requests back down that connection. Nothing listens on a
-public port, the edge terminates TLS, and the origin sees plain HTTP on loopback.
-This page sets that up and fixes the one thing that always goes wrong first —
-every request logging `127.0.0.1`.
+A Cloudflare Tunnel connects the origin outward: `cloudflared` dials
+Cloudflare, and Cloudflare sends requests back over that connection. Nothing
+listens on a public port, the edge terminates TLS, and the origin receives plain
+HTTP on loopback. This page sets that up, then fixes the first problem everyone
+meets: every request is logged as coming from `127.0.0.1`.
+
+📌 This page describes Pingclair **v0.2.0-rc.3**, the latest published release.
 
 ## 🧾 Before you start
 
@@ -45,8 +47,8 @@ curl -s -H "Authorization: Bearer $CF_TOKEN" \
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/token"
 ```
 
-That token is a secret — it is what lets a host join the tunnel. Treat it like a
-password and rotate it if it leaks.
+That token is a secret: it lets any host join the tunnel. Treat it like a
+password, and rotate it if it leaks.
 
 ## 🔌 Connect the host
 
@@ -61,8 +63,8 @@ sudo cloudflared service install "$TUNNEL_TOKEN"
 INF Linux service for cloudflared installed successfully
 ```
 
-The connector registers four connections to the nearest Cloudflare locations and
-uses QUIC by default:
+The connector opens four connections to nearby Cloudflare locations, over QUIC
+by default:
 
 ```text
 INF Registered tunnel connection connIndex=2 … location=pdx02 protocol=quic
@@ -82,7 +84,7 @@ curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicatio
 ```
 
 The last rule is the catch-all: a request for any other hostname gets `404`
-rather than the default site.
+instead of reaching the origin.
 
 Then point the name at the tunnel, with the proxy on:
 
@@ -105,20 +107,21 @@ accept-ranges: bytes
 server: cloudflare
 ```
 
-`server: cloudflare` is the edge answering; the origin was reached over the
-tunnel, and no port had to be opened for it.
+`server: cloudflare` shows the edge answering. The origin was reached through the
+tunnel, and no inbound port was opened for it.
 
 ## 🎯 Let the origin see the client
 
-By default every request arrives from the connector on loopback, so the access
-log is useless for anything that cares who the client was:
+Every request arrives from the connector on loopback, so by default the access
+log records the connector, not the client:
 
 ```text
 📝 Access … host="tunnel-test.pingclair.com" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
 ```
 
-`trusted_proxies` tells Pingclair which peers may assert the client address. The
-connector runs on the same host, so the loopback range is the whole list:
+`trusted_proxies` lists the peers allowed to state the client address in
+forwarding headers. The connector runs on the same host, so loopback is the
+whole list:
 
 ```caddyfile
 {
@@ -139,10 +142,14 @@ remote_ip=127.0.0.1          # before
 remote_ip=16.162.199.171     # after: the client that started the request
 ```
 
-This is also the setting that makes per-IP rate limiting and IP-based rules mean
-anything behind a tunnel. It is established at startup, so changing it needs a
-restart rather than a reload
+The same setting is what makes per-client rate limits and the `client_ip`
+matcher see the real client behind a tunnel. It is read at startup, so a change
+needs a restart rather than a reload
 ([what a reload means](/start/service/#-what-a-reload-means)).
+
+**Next release:** the `remote_ip` matcher matches the connection's own peer,
+which behind a tunnel is always the connector. Use `client_ip` to match
+clients; in v0.2.0-rc.3 both matchers see the forwarded client.
 
 ## ⚠️ When it does not work
 
@@ -159,9 +166,8 @@ restart rather than a reload
 - **The hostname does not resolve.** The record has to be a proxied CNAME to
   `<tunnel-id>.cfargotunnel.com`; a grey-cloud record bypasses the tunnel
   entirely.
-- **The connector token leaked.** Delete the tunnel's tokens and reinstall the
-  service with the new one; the old credential cannot be recovered from the API
-  anyway.
+- **The connector token leaked.** Rotate the tunnel's token and reinstall the
+  service with the new one.
 
 ## 🧭 Next steps
 
