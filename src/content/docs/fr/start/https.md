@@ -7,26 +7,26 @@ description: Obtenir un certificat pour un nom public, publier un certificat int
 ---
 
 Un bloc de site dont l'adresse est un nom public obtient HTTPS sans directive
-`tls` : Pingclair demande un certificat à Let's Encrypt via ACME, répond au défi
+`tls` : Pingclair demande un certificat à Let's Encrypt via ACME, répond au défi
 HTTP-01 sur le port 80, conserve le résultat et le renouvelle en arrière-plan.
-Les trois autres façons d'obtenir un certificat — DNS-01, une autorité locale et
-des fichiers que vous fournissez — sont décrites ci-dessous avec ce que chacune
+Les trois autres façons d'obtenir un certificat (DNS-01, une autorité locale et
+des fichiers que vous fournissez) sont décrites plus bas, avec ce que chacune
 exige.
 
 ## 🧾 Avant de commencer
 
-- Un nom qui résout vers cet hôte. Vérifiez-le avant d'accuser le serveur :
+- Un nom qui pointe vers cet hôte. Vérifiez-le avant d'incriminer le serveur :
   `dig +short A example.com`.
 - Les ports 80 et 443 joignables depuis Internet. Le défi HTTP-01 est servi sur
-  le port 80 et le certificat sert sur le 443.
-- Une adresse e-mail pour le compte ACME. Ce doit être une vraie boîte : Let's
-  Encrypt refuse les domaines d'exemple réservés, et l'émission échoue avec
-  `contact email has forbidden domain "example.com"`.
+  le port 80, et le certificat est utilisé sur le 443.
+- Une adresse e-mail pour le compte ACME. Ce doit être une vraie boîte aux
+  lettres : Let's Encrypt refuse les domaines d'exemple réservés, et l'émission
+  échoue avec `contact email has forbidden domain "example.com"`.
 
 La configuration ci-dessous remplace `/etc/Pingclair/Pingclairfile`, que le
-service exécute. Validez avant de recharger ; [Démarrage rapide](/fr/start/quickstart/)
-montre cette boucle et [Exécution comme service](/fr/start/service/) explique le
-rechargement.
+service exécute. Validez avant de recharger ; le
+[Démarrage rapide](/fr/start/quickstart/) montre cette boucle et
+[Exécution comme service](/fr/start/service/) explique le rechargement.
 
 ## 🌐 Certificats Let's Encrypt
 
@@ -40,8 +40,8 @@ example.com {
 }
 ```
 
-Il n'y a rien d'autre à configurer. Au démarrage, le serveur autorise le nom,
-lance le flux ACME et sert le défi :
+Il n'y a rien d'autre à configurer. Au démarrage, le serveur autorise le nom
+d'hôte, lance le flux ACME et sert le défi :
 
 ```text
 🌐 Automatic public certificates authorised for 1 hostname(s)
@@ -52,14 +52,14 @@ lance le flux ACME et sert le défi :
 🎉 Certificate issuance complete for example.com
 ```
 
-La requête de défi dans le journal d'accès vient de l'autorité de certification,
-pas d'un navigateur :
+Dans le journal d'accès, la requête du défi vient de l'autorité de
+certification, pas d'un navigateur :
 
 ```text
 📝 Access ... path="/.well-known/acme-challenge/Ix9X74-..." status=200 user_agent="Mozilla/5.0 (compatible; Let's Encrypt validation server; +https://www.letsencrypt.org)"
 ```
 
-Vérifiez ce qui est réellement servi, depuis une autre machine :
+Vérifiez depuis une autre machine ce qui est réellement servi :
 
 ```bash
 curl -I https://example.com/
@@ -84,17 +84,27 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-Le matériel du certificat est conservé dans le répertoire de données du
-compte de service, `/var/lib/pingclair/.local/share/pingclair` — le chemin que le binaire
-résout depuis le répertoire personnel de ce compte, et celui que
-`PINGCLAIR_TLS_STORE` nomme quand une commande tourne sous un autre
-utilisateur.
+Le matériel de certificat est conservé dans le répertoire de données de
+l'utilisateur du service, `/var/lib/pingclair/.local/share/pingclair` : c'est le
+chemin que le binaire déduit du répertoire personnel de ce compte, et aussi
+celui que désigne `PINGCLAIR_TLS_STORE` quand une commande s'exécute sous un
+autre utilisateur.
 
 ## 📡 DNS-01 et noms génériques
 
-DNS-01 prouve la maîtrise d'un nom en publiant un enregistrement TXT au lieu de
-répondre sur le port 80, ce qu'exige un certificat générique. La configuration a
-besoin du bloc de fournisseur :
+DNS-01 prouve le contrôle d'un nom en publiant un enregistrement TXT au lieu de
+répondre sur le port 80. Un certificat générique l'exige, tout comme un hôte
+dont le port 80 est fermé.
+
+⚠️ **DNS-01 n'aboutit pas dans v0.2.0-rc.3.** Cette version publie une valeur
+erronée dans l'enregistrement TXT, si bien que chaque commande se termine
+`Invalid`. Le correctif, ainsi que le certificat générique unique décrit
+ci-dessous, se trouvent sur `main` et ne sont pas encore publiés. Pour utiliser
+DNS-01 aujourd'hui, installez `main` avec l'option `--main` de l'installateur
+([Installation](/fr/start/install/#-installer-depuis-un-binaire-publié)). Les
+sorties de cette section montrent le comportement de ce build.
+
+La configuration a besoin du bloc du fournisseur :
 
 ```caddyfile
 {
@@ -112,22 +122,24 @@ besoin du bloc de fournisseur :
 }
 ```
 
-Deux détails sont faciles à manquer. La ligne `auto` dans le bloc est ce qui
-inscrit le nom sur la liste d'émission ; sans elle, le serveur journalise
-`authorised for 0 hostname(s)` et ne demande jamais de certificat, laissant
-chaque poignée de main échouer avec `NO_CERTIFICATE_SET`. Et le jeton est un
-jeton d'API Cloudflare avec `Zone:DNS:Edit` sur la zone qui contient le nom.
+Deux détails passent facilement inaperçus. D'abord, c'est la ligne `auto` du
+bloc qui inscrit le nom sur la liste d'émission ; sans elle, le serveur
+journalise `authorised for 0 hostname(s)` et ne demande jamais de certificat, si
+bien que chaque négociation échoue avec `NO_CERTIFICATE_SET`. Ensuite, le jeton
+est un jeton d'API Cloudflare doté de `Zone:DNS:Edit` sur la zone qui contient
+le nom.
 
-🃏 **Une seule feuille couvre le site.** Un site `*.example.com` demande
-`*.example.com` lui-même : un certificat, obtenu au démarrage, servi à chaque nom
-en dessous. Un certificat générique couvre exactement un label, donc l'apex a
-besoin de sa propre entrée — écrivez `*.example.com, example.com` si le site
-répond aussi à `example.com`, et chaque sujet est demandé tel qu'écrit. Les
-sous-domaines ainsi servis restent hors des journaux Certificate Transparency,
-ce qui est justement l'argument de confidentialité en faveur d'un générique.
+🃏 **Un seul certificat couvre le site.** Un site `*.example.com` commande
+`*.example.com` lui-même : un certificat, obtenu au démarrage, servi à tous les
+noms situés en dessous. Un nom générique couvre exactement un niveau, donc
+l'apex a besoin de sa propre entrée : écrivez `*.example.com, example.com` si le
+site répond aussi sur `example.com`, et chaque sujet est commandé tel qu'il est
+écrit. Les sous-domaines servis ainsi n'apparaissent pas dans les journaux
+Certificate Transparency, ce qui est précisément l'argument de confidentialité
+en faveur d'un certificat générique.
 
-Tout nom sous le site est servi par cette unique feuille. Depuis une autre
-machine :
+Tout nom sous le site est servi par ce certificat unique. Depuis une autre
+machine :
 
 ```bash
 curl -I https://anything.example.com/
@@ -153,8 +165,8 @@ X509v3 Subject Alternative Name:
 
 ## 🏛️ Certificats de l'autorité interne
 
-Pour des origines privées — un tunnel, un nom interne, une machine de
-laboratoire — Pingclair peut être sa propre autorité :
+Pour les origines privées (un tunnel, un nom d'hôte interne, une machine de
+laboratoire), Pingclair peut être sa propre autorité :
 
 ```caddyfile
 https://internal.test {
@@ -164,7 +176,7 @@ https://internal.test {
 ```
 
 Le site répond avec un certificat émis par `CN=Pingclair Local Authority` pour
-dix ans, et la racine est publiée dans le magasin :
+dix ans, et la racine est publiée dans le magasin :
 
 ```bash
 sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
@@ -174,8 +186,8 @@ sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
 -rw------- 1 pingclair pingclair 652 Sep 22 03:40 root.crt
 ```
 
-Les clients ne lui font pas encore confiance : une requête sans `-k` échoue.
-Installez la racine dans le magasin de confiance du système :
+Les clients ne lui font pas encore confiance, donc une requête sans `-k` échoue.
+Installez la racine dans le magasin de confiance du système :
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
@@ -185,12 +197,13 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair tru
 ✅ Internal CA root installed into the system trust store
 ```
 
-Le préfixe `PINGCLAIR_TLS_STORE` compte : `pingclair trust` regarde le magasin de
-l'utilisateur qui l'exécute, soit `/root/.local/share/pingclair` pour root, alors
-que le service utilise `/var/lib/pingclair/.local/share/pingclair`. Sans le préfixe, la commande
-répond `No internal CA root at /root/.local/share/pingclair/internal/root.crt`.
+Le préfixe `PINGCLAIR_TLS_STORE` compte : `pingclair trust` cherche dans le
+magasin de l'utilisateur qui l'exécute, soit `/root/.local/share/pingclair` pour
+root, alors que le service utilise `/var/lib/pingclair/.local/share/pingclair`.
+Sans le préfixe, la commande répond `No internal CA root at
+/root/.local/share/pingclair/internal/root.crt`.
 
-Après avoir fait confiance à la racine, la même requête réussit sans `-k` :
+Une fois la racine approuvée, la même requête réussit sans `-k` :
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
@@ -200,11 +213,17 @@ curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
 200
 ```
 
-`pingclair untrust` la retire de nouveau, avec le même préfixe de magasin.
+`pingclair untrust` la retire, avec le même préfixe de magasin.
+
+📌 **Prochaine version.** La prochaine version range l'autorité interne comme le
+fait Caddy, sous `pki/authorities/local/` dans le magasin, avec un certificat
+intermédiaire qui signe les certificats finaux. L'ancien répertoire `internal/`
+n'est pas migré : après la mise à jour, le serveur crée une nouvelle racine, et
+chaque client doit de nouveau lui faire confiance avec `pingclair trust`.
 
 ## 📜 Certificats que vous fournissez
 
-Quand un autre système émet vos certificats, pointez `tls` vers les fichiers :
+Quand un autre système émet vos certificats, pointez `tls` vers les fichiers :
 
 ```caddyfile
 https://byo.test {
@@ -217,8 +236,8 @@ https://byo.test {
 ```
 
 Les fichiers doivent être lisibles par l'utilisateur `pingclair`, puisque le
-service tourne sous ce compte. `validate` refuse un chemin inexistant plutôt que
-d'échouer à la première poignée de main :
+service s'exécute sous cet utilisateur. `validate` refuse un chemin inexistant
+plutôt que d'échouer à la première négociation :
 
 ```text
 ❌ TLS certificate file does not exist: /etc/pingclair/certs/missing.crt
@@ -227,27 +246,27 @@ d'échouer à la première poignée de main :
 ## ⚠️ Quand HTTPS ne se met pas en place
 
 - **`contact email has forbidden domain "example.com"`.** Let's Encrypt refuse
-  les domaines d'exemple réservés comme contacts de compte. Mettez une vraie
-  boîte dans l'option `email`.
-- **`NO_CERTIFICATE_SET` dans le journal.** La poignée de main a présenté un nom
-  pour lequel le serveur n'a pas de certificat. Lisez le journal juste au-dessus :
-  un bloc `tls` sans `auto` ne lance jamais d'émission, et DNS-01 ne va pas au
-  bout dans cette version.
+  les domaines d'exemple réservés comme contacts de compte. Indiquez une vraie
+  boîte aux lettres dans l'option `email`.
+- **`NO_CERTIFICATE_SET` dans le journal.** La négociation a présenté un nom
+  pour lequel le serveur n'a aucun certificat. Lisez le journal qui précède : un
+  bloc `tls` sans `auto` ne lance jamais l'émission, et DNS-01 n'aboutit pas
+  dans cette version.
 - **Le défi n'est jamais servi.** Le port 80 est bloqué par un pare-feu, ou un
-  autre programme le tient. L'autorité doit pouvoir atteindre
+  autre processus l'occupe. L'autorité doit pouvoir joindre
   `http://your-name/.well-known/acme-challenge/` depuis Internet.
-- **Le nom ne résout pas vers cet hôte.** `dig +short A your-name` montre ce à
-  quoi l'autorité se connectera, ce qui n'est pas toujours ce que l'on croit
-  après un changement récent.
+- **Le nom ne pointe pas vers cet hôte.** `dig +short A your-name` montre à quoi
+  l'autorité va se connecter, ce qui n'est pas toujours ce que vous attendez
+  après une modification récente.
 - **Échecs répétés.** Let's Encrypt limite le nombre de validations échouées par
-  nom. Corrigez la cause avant de réessayer, sinon les tentatives deviennent
-  elles-mêmes l'erreur.
+  nom d'hôte. Corrigez la cause avant de réessayer, sinon ce sont les tentatives
+  elles-mêmes qui deviennent l'erreur.
 
 ## 🧭 Étapes suivantes
 
-- [Exécution comme service](/fr/start/service/) : l'unité, sa sémantique de
-  rechargement et ses journaux.
-- [`tls`](/fr/reference/directives/#tls) : tous les modes et options de la
+- [Exécution comme service](/fr/start/service/) : l'unité, la sémantique de ses
+  rechargements et ses journaux.
+- [`tls`](/fr/reference/directives/#tls) : tous les modes et options de la
   directive.
-- [Pingclairfile](/fr/reference/pingclairfile/) : adresses, matchers et ce que le
-  compilateur accepte.
+- [Pingclairfile](/fr/reference/pingclairfile/) : les adresses, les matchers et
+  ce que le compilateur accepte.

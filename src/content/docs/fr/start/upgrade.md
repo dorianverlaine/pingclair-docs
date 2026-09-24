@@ -3,24 +3,24 @@ title: Mise à jour et désinstallation
 h1_emoji: '🧹'
 sidebar:
   order: 5
-description: Relancer l'installateur pour mettre à jour, épingler un tag de conteneur, revenir à une version antérieure, et tout retirer sans perdre ce qui mérite de rester.
+description: Relancer l'installateur pour mettre à jour, épingler un tag de conteneur, revenir à une version antérieure et tout retirer sans perdre ce qui mérite d'être conservé.
 ---
 
-Une mise à jour remplace deux choses — le binaire et l'unité de service — et
-laisse votre configuration et vos certificats tranquilles. Cette page le montre,
-donne l'équivalent pour un conteneur, le chemin de retour arrière quand une
-version doit reculer, et le démontage.
+Une mise à jour remplace deux choses, le binaire et l'unité de service, et
+laisse intactes votre configuration et vos certificats. Cette page le montre,
+puis donne l'équivalent pour un conteneur, la marche à suivre pour revenir à une
+version antérieure, et le démontage.
 
 ## 🧾 Ce qui survit à quoi
 
-| Chemin | Une mise à jour |
+| Chemin | Lors d'une mise à jour |
 | --- | --- |
 | `/etc/Pingclair/Pingclairfile` | Conservé. L'installateur ne l'écrit que s'il manque. |
-| `/etc/Pingclair/Pingclairfile.example` | Remplacé par l'exemple courant. |
-| `/var/lib/pingclair/.local/share/pingclair` | Conservé. Certificats émis et état ACME restent en place. |
+| `/etc/Pingclair/Pingclairfile.example` | Remplacé par l'exemple actuel. |
+| `/var/lib/pingclair/.local/share/pingclair` | Conservé. Les certificats émis et l'état ACME restent en place. |
 | `/var/lib/pingclair/html` | Conservé. |
 | `/usr/local/bin/pingclair` et `pc` | Remplacés par la nouvelle version. |
-| `/etc/systemd/system/pingclair.service` | Réécrit, puis le service est redémarré. |
+| `/etc/systemd/system/pingclair.service` | Réécrite, puis le service est redémarré. |
 
 ## ⬆️ Mettre à jour avec l'installateur
 
@@ -28,10 +28,13 @@ version doit reculer, et le démontage.
 curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-Le script demande à GitHub le tag de la dernière version, l'affiche, vérifie la
-somme SHA-256 de l'archive, remplace le binaire et l'unité, puis redémarre le
-service. Un fichier de configuration existant n'est pas touché, ce qui fait de
-cette opération une mise à jour et non une remise à zéro :
+Le script trouve la version la plus récente sur le canal de publication,
+affiche son tag, vérifie le SHA-256 de l'archive, remplace le binaire et
+l'unité, puis redémarre le service. Quand l'hôte du canal est injoignable, il
+interroge à la place l'API des releases GitHub ; l'exécution ci-dessous a suivi
+ce chemin, d'où la ligne `Fetching latest release`. Un fichier de configuration
+existant n'est pas touché, et c'est ce qui en fait une mise à jour plutôt
+qu'une remise à zéro :
 
 ```text
 Detected architecture: x86_64
@@ -42,7 +45,8 @@ pingclair-linux-x86_64.tar.gz: OK
 Config: /etc/Pingclair/Pingclairfile
 ```
 
-Confirmez la nouvelle version et que l'ancienne configuration sert toujours :
+Vérifiez la nouvelle version, et que l'ancienne configuration est toujours
+servie :
 
 ```bash
 pingclair version
@@ -54,13 +58,26 @@ curl -i http://localhost/
 v0.2.0-rc.3
 ```
 
-L'installateur installe toujours la dernière version. Il n'existe pas d'option
-pour une version précise ; c'est le retour arrière ci-dessous qui s'en charge.
+L'installateur installe toujours la version la plus récente. Aucune option ne
+permet d'installer une version précise ; c'est à cela que sert le retour
+arrière décrit plus bas.
+
+## ⚠️ Lire les notes de mise à jour avant 0.2.0
+
+La prochaine version change des comportements qu'une configuration inchangée
+peut remarquer : quelle route répond à une requête, si un site sans `encode`
+compresse, la limite par défaut du corps de requête, ce que `remote_ip` compare,
+et l'endroit où l'autorité interne conserve sa racine.
+[État du projet](/fr/project/status/#-ce-qui-change-dans-la-prochaine-version)
+les résume, et le
+[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
+consacre à chacun une note de mise à jour. Validez votre configuration avec le
+nouveau binaire avant de redémarrer le service dessus.
 
 ## 🐳 Mettre à jour un conteneur
 
-Rien n'est installé sur l'hôte : une mise à jour est un changement de tag et un
-pull. Épinglez la nouvelle version dans le fichier compose :
+Rien n'est installé sur l'hôte : une mise à jour se résume à changer de tag et
+à tirer l'image. Épinglez la nouvelle version dans le fichier compose :
 
 ```yaml
 services:
@@ -80,21 +97,22 @@ docker logs pingclair 2>&1 | head -3
 📄 Loaded configuration from: /etc/pingclair/Pingclairfile
 ```
 
-La configuration et le magasin de certificats vivent dans les volumes, donc le
-nouveau conteneur les retrouve là où l'ancien les a laissés. Deux points à
-surveiller :
+La configuration et le magasin de certificats vivent dans les volumes ; le
+nouveau conteneur les retrouve donc là où l'ancien les a laissés. Deux points de
+vigilance :
 
 - **Un conteneur qui publie le port 80 ne peut pas démarrer tant que le service
-  systemd tourne.** Arrêtez l'un des deux : `sudo pc service stop`, ou changez le
-  port publié côté conteneur.
+  systemd tourne.** Arrêtez l'un des deux : `sudo pc service stop`, ou changez
+  le port publié côté conteneur.
 - **`latest` suit la version la plus récente.** Épinglez une version en
-  production, pour qu'une mise à jour soit une décision et non un effet de bord
-  d'un pull.
+  production, pour qu'une mise à jour soit une décision et non l'effet de bord
+  d'un `pull`.
 
 ## ⏪ Revenir à une version antérieure
 
-Quand une version doit reculer, récupérez la précédente sur l'hôte de publication,
-vérifiez-la contre le condensé publié par cette version, et remplacez le binaire :
+Quand une nouvelle version doit être retirée, récupérez la précédente sur l'hôte
+de publication, vérifiez-la avec l'empreinte que cette version a publiée, et
+mettez-la à la place du binaire :
 
 ```bash
 mkdir -p /tmp/rollback && cd /tmp/rollback
@@ -123,8 +141,8 @@ pingclair version
 v0.2.0-rc.2
 ```
 
-Validez ensuite la configuration face à la version restaurée : une directive que
-cette version n'implémente pas est refusée par son nom plutôt qu'ignorée.
+Validez ensuite la configuration avec la version rétablie, car une directive que
+l'ancienne version n'implémente pas est refusée par son nom plutôt qu'ignorée :
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
@@ -140,21 +158,21 @@ sudo systemctl daemon-reload
 sudo rm /usr/local/bin/pingclair /usr/local/bin/pc
 ```
 
-Après cela, `systemctl status pingclair` répond `Unit pingclair.service could not
-be found`, la commande a disparu et rien n'écoute sur le port 80. Ce qui reste
-sur le disque est volontairement vos données :
+Ensuite, `systemctl status pingclair` répond `Unit pingclair.service could not
+be found`, la commande a disparu et plus rien n'écoute sur le port 80. Ce qui
+reste sur le disque, ce sont vos données, et c'est voulu :
 
 ```text
-/etc/Pingclair/Pingclairfile      la configuration, toujours valide
-/var/lib/pingclair/.local/share/pingclair          certificats émis et état ACME
-/var/lib/pingclair/html           le site d'attente
-/var/log/pingclair                le répertoire d'une destination de journal
+/etc/Pingclair/Pingclairfile      the configuration, still valid
+/var/lib/pingclair/.local/share/pingclair          issued certificates and ACME state
+/var/lib/pingclair/html           the placeholder site
+/var/log/pingclair                a log sink's directory
 ```
 
-Gardez `/var/lib/pingclair/.local/share/pingclair` si vous prévoyez de réinstaller : les
-certificats et la racine interne survivent, et les clients qui font confiance à
-cette racine continuent de fonctionner. Supprimez tout, y compris le compte de
-service, quand l'hôte a fini avec Pingclair :
+Conservez `/var/lib/pingclair/.local/share/pingclair` si vous prévoyez de
+réinstaller : les certificats et la racine interne sont préservés, et les
+clients qui font confiance à cette racine continuent de fonctionner. Supprimez
+tout, y compris le compte de service, quand l'hôte en a fini avec Pingclair :
 
 ```bash
 sudo rm -rf /etc/Pingclair /var/lib/pingclair /var/log/pingclair
@@ -163,14 +181,14 @@ sudo userdel pingclair
 
 ## ⚠️ Quand cela se passe mal
 
-- **L'installateur a installé une version inattendue.** Il prend toujours le
-  dernier tag de version. Vérifiez avec `pingclair version` et utilisez le retour
-  arrière ci-dessus s'il vous fallait une version précise.
+- **L'installateur a installé une version inattendue.** Il prend toujours le tag
+  de la version la plus récente. Vérifiez avec `pingclair version`, et revenez
+  en arrière comme ci-dessus s'il vous fallait une version précise.
 - **Le service ne démarre plus après une mise à jour.** Lisez
   `sudo pingclair validate /etc/Pingclair/Pingclairfile`. Une directive que la
-  nouvelle version refuse échoue de façon fermée, avec son nom et
-  l'alternative : le journal donne la ligne à changer.
-- **Un conteneur s'arrête immédiatement.** `docker logs <container>` en donne la
+  nouvelle version refuse échoue de manière fermée, avec son nom et
+  l'alternative ; le journal nomme donc la ligne à modifier.
+- **Un conteneur s'arrête aussitôt.** `docker logs <container>` en donne la
   raison. Les causes habituelles sont un `/etc/pingclair/Pingclairfile` absent du
   répertoire de configuration monté, ou un port déjà utilisé sur l'hôte.
 - **Les clients rejettent le certificat après une reconstruction du magasin.**
@@ -180,9 +198,9 @@ sudo userdel pingclair
 
 ## 🧭 Étapes suivantes
 
-- [Installation](/fr/start/install/) : l'arborescence que cette page conserve ou
+- [Installation](/fr/start/install/) : l'arborescence que cette page conserve ou
   supprime.
-- [Exécution comme service](/fr/start/service/) : l'unité qu'une mise à jour
+- [Exécution comme service](/fr/start/service/) : l'unité qu'une mise à jour
   réécrit.
-- [État du projet](/fr/project/status/) : ce que la version courante prend en
+- [État du projet](/fr/project/status/) : ce que la version courante prend en
   charge et ce qu'elle refuse.

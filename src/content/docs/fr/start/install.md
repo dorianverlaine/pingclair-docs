@@ -3,43 +3,44 @@ title: Installation
 h1_emoji: '📦'
 sidebar:
   order: 1
-description: Installer Pingclair sur un hôte Linux depuis un binaire de version, avec Docker, ou depuis les sources, et vérifier que le service répond.
+description: Installer Pingclair sur un hôte Linux à partir d'un binaire publié, avec Docker ou depuis les sources, puis vérifier que le service répond.
 ---
 
-Pingclair est distribué comme un unique binaire Linux. Cette page l'installe,
-montre ce que l'installateur a laissé derrière lui et vérifie que le serveur
-répond. La version courante est **v0.2.0-rc.3**, une release candidate, et
+Pingclair est distribué sous la forme d'un unique binaire Linux. Cette page
+l'installe, montre ce que l'installateur laisse sur la machine et vérifie que le
+serveur répond. La version courante est **v0.2.0-rc.3**, une release candidate ;
 toutes les pages de ce site décrivent cette version.
 
-## 🧾 Ce qu'il faut
+## 🧾 Ce qu'il vous faut
 
-- Un hôte Linux en `x86_64` ou `aarch64` ; des binaires de version existent pour
-  les deux.
-- `sudo` ou root : l'installateur écrit dans `/usr/local/bin`, `/etc/Pingclair`,
+- Un hôte Linux `x86_64` ou `aarch64` ; des binaires sont publiés pour les deux.
+- `sudo` ou root : l'installateur écrit dans `/usr/local/bin`, `/etc/Pingclair`,
   `/var/lib/pingclair` et `/etc/systemd/system`.
-- `systemd` pour le chemin du service. Sur un hôte qui n'en a pas, utilisez
-  Docker ou lancez le serveur au premier plan ; les deux sont traités plus bas.
+- `systemd` pour l'installation en service. Sur un hôte qui n'en dispose pas,
+  utilisez Docker ou lancez le serveur au premier plan ; les deux cas sont
+  décrits plus bas.
 - Les ports 80 et 443 joignables depuis Internet si vous voulez des certificats
-  publics ([HTTPS](/fr/start/https/)). Sur une instance cloud, cela suppose
-  généralement de les ouvrir aussi dans le pare-feu du fournisseur.
+  publics ([HTTPS](/fr/start/https/)). Sur une instance cloud, il faut en
+  général aussi les ouvrir dans le pare-feu du fournisseur.
 
-La compilation depuis les sources sous macOS est prise en charge pour le
-développement. macOS n'est pas une plateforme de distribution.
+macOS se compile depuis les sources et reste pris en charge pour le
+développement, mais ce n'est pas une plateforme de production.
 
-## 📦 Installation depuis un binaire de version
+## 📦 Installer depuis un binaire publié
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-Le script lit le canal de publication sur `releases.pingclair.com`, affiche le tag
-qu'il s'apprête à installer et vérifie l'archive contre la somme SHA-256 que ce
-canal publie — une archive qui ne correspond pas est refusée, pas extraite. Si
-cet hôte est injoignable, il se rabat sur l'API des releases GitHub et le fichier
-de sommes publié à côté de l'archive, de sorte que l'installation ne dépende pas
-d'un seul fournisseur. Il crée ensuite l'utilisateur de service, lui accorde la
-capacité de se lier aux ports bas, écrit la configuration par défaut, installe
-l'unité et démarre le service. Une exécution complète se termine ainsi :
+Le script lit le canal de publication sur `releases.pingclair.com`, affiche le
+tag qu'il s'apprête à installer et contrôle l'archive avec le SHA-256 que ce
+canal publie pour elle : une archive qui ne correspond pas est refusée, jamais
+extraite. Si cet hôte est injoignable, il se replie sur l'API des releases
+GitHub et sur le fichier de sommes de contrôle publié à côté de l'archive ;
+l'installation ne dépend donc pas d'un seul fournisseur. Il crée ensuite
+l'utilisateur du service, lui accorde la capacité d'écouter sur les ports bas,
+écrit la configuration par défaut, installe l'unité et démarre le service. Une
+exécution complète se termine ainsi :
 
 ```text
 Detected architecture: x86_64
@@ -58,34 +59,34 @@ Use pc service status to check the service.
 Config: /etc/Pingclair/Pingclairfile
 ```
 
-Installez `main` plutôt que le binaire de version lorsqu'il vous faut un
-correctif non publié :
+Pour utiliser un correctif pas encore publié, compilez plutôt `main` sur
+l'hôte :
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
-`--main` clone et compile le serveur sur l'hôte. Il exige Rust 1.98 ou plus
-récent ainsi que la chaîne d'outils C dont BoringSSL et jemalloc ont besoin :
+`--main` clone et compile le serveur sur l'hôte. Il faut Rust 1.98 ou plus
+récent, ainsi que la chaîne d'outils C dont BoringSSL et jemalloc ont besoin :
 `cmake`, `clang`, `libclang-dev`, `g++` et `git`. Le script installe lui-même
 ces paquets sur les systèmes `apt` comme `dnf`. La première compilation prend
 plusieurs minutes, car BoringSSL est compilé depuis les sources.
 
-## 🗂️ Ce que l'installateur a laissé derrière lui
+## 🗂️ Ce que l'installateur laisse derrière lui
 
 | Chemin | Contenu |
 | --- | --- |
 | `/usr/local/bin/pingclair` | Le binaire du serveur. |
 | `/usr/local/bin/pc` | Un lien symbolique vers le même binaire, pour la forme courte. |
-| `/etc/Pingclair/Pingclairfile` | La configuration que le service exécute. |
+| `/etc/Pingclair/Pingclairfile` | La configuration exécutée par le service. |
 | `/etc/Pingclair/Pingclairfile.example` | Un exemple commenté, jamais écrasé par une mise à jour. |
-| `/var/lib/pingclair/.local/share/pingclair` | Le magasin de certificats : le répertoire de données du compte de service, que le binaire utilise par défaut. |
+| `/var/lib/pingclair/.local/share/pingclair` | Le magasin de certificats : le répertoire de données de l'utilisateur du service, là où le binaire cherche par défaut. |
 | `/var/lib/pingclair/html` | Le site d'attente servi sur le port 80. |
-| `/var/log/pingclair` | Là où une destination `log` écrit dès que vous en configurez une. |
-| `/etc/systemd/system/pingclair.service` | L'unité, activée et démarrée. |
+| `/var/log/pingclair` | L'emplacement où écrit une sortie `log`, une fois configurée. |
+| `/etc/systemd/system/pingclair.service` | L'unité, activée et en cours d'exécution. |
 
-Le service sert déjà quand le script se termine. La configuration qu'il exécute
-est celle d'attente, et elle tient sur un écran :
+Le service répond déjà quand le script se termine. Il exécute la configuration
+d'attente, assez courte pour tenir sur un écran :
 
 ```caddyfile
 # 🦀 Pingclair default configuration file
@@ -97,14 +98,14 @@ est celle d'attente, et elle tient sur un écran :
 }
 ```
 
-L'utilisateur de service et le magasin de certificats ne sont créés que
-s'ils manquent, et un `/etc/Pingclair/Pingclairfile` existant n'est jamais
-remplacé. C'est ce qui fait d'une réexécution de l'installateur une mise à jour
-plutôt qu'une remise à zéro ([Mise à jour et désinstallation](/fr/start/upgrade/)).
+L'utilisateur du service et le magasin de certificats ne sont créés que s'ils
+manquent, et un `/etc/Pingclair/Pingclairfile` existant n'est jamais remplacé.
+C'est ce qui fait d'une nouvelle exécution de l'installateur une mise à jour, et
+non une remise à zéro ([Mise à jour et désinstallation](/fr/start/upgrade/)).
 
 ## ✅ Vérifier l'installation
 
-Demandez sa version au binaire :
+Demandez sa version au binaire :
 
 ```bash
 pingclair version
@@ -114,8 +115,8 @@ pingclair version
 v0.2.0-rc.3
 ```
 
-`pc` est le même binaire : `pc version` affiche la même chaîne. Demandez ensuite
-à `systemd` ce qu'il en pense :
+`pc` est le même binaire, donc `pc version` affiche la même chaîne. Demandez
+ensuite l'avis de `systemd` :
 
 ```bash
 pc service status
@@ -126,17 +127,17 @@ pc service status
      Loaded: loaded (/etc/systemd/system/pingclair.service; enabled; preset: enabled)
      Active: active (running) since Tue 2026-09-22 03:21:55 UTC; 42s ago
        Docs: https://pingclair.com/start/service/
-   Main PID: 1808 (pingclair)
+   Main PID: 27630 (pingclair)
      Status: "Serving"
       Tasks: 12 (limit: 627)
      Memory: 8.2M (peak: 8.5M)
 ```
 
-`Status: "Serving"` vient du serveur lui-même, et non de `systemd` qui
-constaterait qu'un processus est encore vivant : l'unité est de type `notify`,
-et le serveur signale qu'il est prêt seulement une fois tous ses écouteurs liés.
+`Status: "Serving"` provient du serveur lui-même, et non de `systemd` qui
+constaterait simplement qu'un processus est vivant : l'unité est de type
+`notify`, et le serveur ne se déclare prêt qu'une fois tous ses écouteurs liés.
 
-Demandez enfin au serveur :
+Enfin, interrogez le serveur :
 
 ```bash
 curl -i http://localhost/
@@ -153,15 +154,15 @@ Accept-Ranges: bytes
 server: Pingclair
 ```
 
-Un `200` avec `ETag` et `Last-Modified` signifie que le serveur de fichiers a
-répondu, et le corps est la page d'attente de `/var/lib/pingclair/html`.
+Un `200` accompagné de `ETag` et `Last-Modified` signifie que le serveur de
+fichiers a répondu ; le corps est la page d'attente de `/var/lib/pingclair/html`.
 
 ## 🐳 Docker
 
-L'image publiée s'exécute en mode fichier de configuration : son entrypoint est
-`pingclair` et sa commande par défaut est `run /etc/pingclair/Pingclairfile`.
-L'image déclare `/etc/pingclair` et `/var/lib/pingclair` comme volumes et expose
-les ports 80 et 443.
+L'image publiée fonctionne en mode fichier de configuration : son point d'entrée
+est `pingclair` et sa commande par défaut `run /etc/pingclair/Pingclairfile`.
+L'image déclare `/etc/pingclair` et `/var/lib/pingclair` comme volumes, et
+expose les ports 80 et 443.
 
 ```yaml
 services:
@@ -189,24 +190,24 @@ docker compose up -d
 curl -i http://localhost/
 ```
 
-Trois points sont faciles à manquer :
+Trois points sont faciles à manquer :
 
 - **N'ajoutez pas de `command:`.** La commande par défaut de l'image est déjà
-  `run /etc/pingclair/Pingclairfile`, et la redéfinir remplace cette commande.
-- **Ne montez pas `/var/lib/pingclair/.local/share/pingclair` seul.** Le magasin conserve de
-  l'état à côté du répertoire des certificats, et un conteneur recréé avec
-  seulement `certs` monté le perd. Montez `/var/lib/pingclair`.
-- **Épinglez un tag publié.** `latest` suit la version la plus récente ; la
-  production doit nommer la version, comme dans l'exemple. Les tags publiés sont
+  `run /etc/pingclair/Pingclairfile`, et la redéfinir la remplace.
+- **Montez tout `/var/lib/pingclair`, pas seulement le répertoire des
+  certificats.** Le magasin conserve un état à côté des certificats, et un
+  conteneur recréé avec un montage partiel perd cet état.
+- **Épinglez un tag publié.** `latest` suit la version la plus récente ; en
+  production, nommez la version, comme le fait l'exemple. Les tags publiés sont
   listés sur la
   [page du paquet](https://github.com/dorianverlaine/pingclair/pkgs/container/pingclair).
 
-Sur un hôte où votre utilisateur n'est pas dans le groupe `docker`, préfixez les
-commandes par `sudo`, ou rejoignez le groupe une fois avec
-`sudo usermod -aG docker "$USER"` puis ouvrez une nouvelle session. Sur Ubuntu,
-le plugin `docker compose` vient du paquet `docker-compose-v2`.
+Sur un hôte où votre utilisateur n'appartient pas au groupe `docker`, préfixez
+les commandes par `sudo`, ou rejoignez le groupe une fois pour toutes avec
+`sudo usermod -aG docker "$USER"` puis ouvrez une nouvelle session. Sous Ubuntu,
+le plugin `docker compose` est fourni par le paquet `docker-compose-v2`.
 
-## 🛠️ Compilation depuis les sources
+## 🛠️ Compiler depuis les sources
 
 ```bash
 git clone https://github.com/dorianverlaine/pingclair
@@ -214,37 +215,38 @@ cd pingclair
 cargo build --release
 ```
 
-Prérequis : Rust 1.98.1 (la version épinglée par la CI), `cmake`, `clang`,
+Prérequis : Rust 1.98.1 (la version épinglée par la CI), `cmake`, `clang`,
 `libclang-dev`, `g++` et `git`. BoringSSL est compilé depuis les sources pendant
-la compilation, la première compilation prend donc plusieurs minutes.
+la compilation, si bien que la première prend plusieurs minutes.
 
 ## ⚠️ Quand l'installation échoue
 
-- **`This script must be run as root`.** Le script écrit en dehors de votre
+- **`This script must be run as root`.** Le script écrit hors de votre
   répertoire personnel et installe une unité. Relancez-le avec `sudo`.
-- **`setcap: command not found` sous Fedora.** C'est le paquet `libcap`.
-  L'installateur l'ajoute, mais un hôte monté à la main peut en manquer, et sans
-  cette capacité le service ne peut pas se lier aux ports 80 et 443.
+- **`setcap: command not found` sous Fedora.** La commande vient du paquet
+  `libcap`. L'installateur l'ajoute, mais un hôte préparé à la main peut en être
+  dépourvu, et sans cette capacité le service ne peut pas écouter sur les
+  ports 80 et 443.
 - **`Job for pingclair.service failed` juste après l'installation.** Lisez
   `journalctl -u pingclair -n 20`. Les causes habituelles sont une configuration
-  qui ne passe pas la validation, ou un autre programme déjà à l'écoute sur le
+  qui ne passe pas la validation, ou un autre processus déjà à l'écoute sur le
   port 80.
-- **Le service tourne mais rien ne répond de l'extérieur.** Les écouteurs sont
-  liés et les paquets n'arrivent pas. Vérifiez d'abord le pare-feu ou le groupe
-  de sécurité du fournisseur, puis les règles de l'hôte.
+- **Le service tourne mais rien ne répond depuis l'extérieur.** Les écouteurs
+  sont liés et les paquets n'arrivent jamais. Vérifiez d'abord le pare-feu ou le
+  groupe de sécurité du fournisseur, puis les règles de l'hôte lui-même.
 - **L'hôte n'a pas `systemd`.** Le binaire est installé et utilisable, mais
   l'étape de service de l'installateur ne peut pas s'exécuter. Utilisez Docker,
   ou `pingclair run`.
 
 ## 🧹 Le désinstaller
 
-[Mise à jour et désinstallation](/fr/start/upgrade/) détaille le démontage et
+[Mise à jour et désinstallation](/fr/start/upgrade/) décrit le démontage et
 nomme les répertoires qui contiennent des données à conserver.
 
 ## 🧭 Étapes suivantes
 
-- [Démarrage rapide](/fr/start/quickstart/) : remplacer la page d'attente par
+- [Démarrage rapide](/fr/start/quickstart/) : remplacer la page d'attente par
   votre propre configuration et servir un vrai site.
-- [HTTPS](/fr/start/https/) : des certificats pour un nom public.
-- [Exécution comme service](/fr/start/service/) : ce que fait l'unité et
-  comment la recharger sans risque.
+- [HTTPS](/fr/start/https/) : des certificats pour un nom public.
+- [Exécution comme service](/fr/start/service/) : ce que fait l'unité et comment la
+  recharger sans risque.
