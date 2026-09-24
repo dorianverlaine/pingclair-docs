@@ -1,13 +1,17 @@
 ---
 title: Pingclairfile
 h1_emoji: '📖'
-description: The configuration language, including file structure, addresses, matchers, snippets, and tooling.
+description: How a Pingclairfile is structured, including lexical rules, site addresses, matchers, route order, snippets, and the tools that check it.
 ---
 
-The Pingclairfile is the configuration language. It follows Caddyfile
-conventions: an optional global options block, then site blocks containing
-directives. This page describes the language itself; the directives it accepts
-are described in the [directive reference](/reference/directives/).
+A Pingclairfile is Pingclair's configuration file, written in the Caddyfile
+language: an optional global options block, then one block per site, each
+holding directives. A Caddyfile that uses only supported directives loads
+unchanged. This page describes the language; the
+[directive reference](/reference/directives/) describes what each directive
+does.
+
+📌 This page describes **v0.2.0-rc.3**, the latest published release.
 
 ## 🔤 Lexical rules
 
@@ -21,23 +25,25 @@ are described in the [directive reference](/reference/directives/).
 
 ## 🌐 Addresses
 
-A site block is named by an address. The address determines the listener and,
-for public names, whether automatic HTTPS applies.
+A site block is named by its address. The address decides which port the site
+listens on and whether it is served over HTTPS.
 
-```caddyfile
-example.com {              # host: ports 443 and 80, automatic HTTPS
-localhost:8080 {           # host and port
-:8080 {                    # any host on this port
-http://example.com {       # force plaintext
+```text
+example.com {          # HTTPS on 443 with a public certificate; 80 redirects
+example.com:8443 {     # HTTPS on 8443: a host with a port is still HTTPS
+localhost:8080 {       # HTTPS on 8080, from the internal authority
+:8080 {                # plaintext HTTP on 8080, for any host
+http://example.com {   # plaintext HTTP on 80
 ```
 
-The port belongs to the address rather than to a separate `listen` directive,
-so the address and the listener cannot disagree.
+A host with a port and no scheme is served over HTTPS, as in Caddy. Write
+`http://` in front of the address to ask for plaintext on any port. Two sites
+that share a port must agree about TLS, or the configuration is refused.
 
 ## 🧭 Matchers
 
-A directive that accepts a matcher applies only to matching requests. Matchers
-are written inline or declared with `@name` and referenced by name.
+A matcher limits a directive to some requests. It is written inline, such as a
+path like `/api/*`, or declared once as `@name` and referred to by that name.
 
 ```caddyfile
 example.com {
@@ -50,8 +56,33 @@ example.com {
 }
 ```
 
-`handle` blocks group directives per route; a `handle` with no matcher is the
-fallback for its site.
+A `handle` block groups directives into one route. Only the first matching
+`handle` runs, and a `handle` with no matcher is the site's fallback.
+
+`client_ip` matches the client address after `trusted_proxies` is applied.
+**Next release:** `remote_ip` matches the connection's own peer instead, as in
+Caddy; in v0.2.0-rc.3 both match the forwarded client.
+
+## 🧭 Which route answers
+
+In v0.2.0-rc.3, when several routes match a request, the one with the most
+specific path answers, wherever it is written.
+
+**Next release:** routes are tried in Caddy's directive order, and the first
+match answers. For example, `respond` ranks ahead of `file_server`, so in the
+site below `/assets/a.txt` gets `hello` instead of the file:
+
+```caddyfile
+example.com {
+    root * /srv
+    file_server /assets/*
+    respond "hello" 200
+}
+```
+
+To keep a narrower route in front, wrap the routes in `handle` blocks, move a
+directive with the global `order` option, or list them in a `route` block,
+which keeps the written order.
 
 ## 🧩 Snippets and imports
 
@@ -71,21 +102,24 @@ import proxied example.com {
 }
 ```
 
-A placeholder that receives nothing splices nothing, so a snippet written with
-`{block}` still compiles when its caller supplies no block.
+`{args[0]}` is the first argument after the snippet name, and `{block}` is the
+block the caller supplies. When the caller supplies no block, `{block}` expands
+to nothing and the snippet still compiles.
 
 ## 🧰 Command-line tooling
 
-The command line has a reference of its own: [Command line](/reference/command-line/)
-lists every subcommand with its flags and defaults. Three of them belong to
-writing a configuration: `pingclair validate`, which compiles a file and names
-the first problem, `pingclair adapt --pretty`, which prints the JSON that file
-compiles to, and `pingclair fmt`, which formats it.
+Three commands help while writing a configuration:
+
+- `pingclair validate` compiles the file and names the first problem.
+- `pingclair adapt --pretty` prints the JSON the file compiles to.
+- `pingclair fmt` formats the file.
+
+[Command line](/reference/command-line/) lists every subcommand and flag.
 
 ## 🚫 What is not part of the language
 
-The format defines more names than the server implements. A recognized name
-that has no implementation is refused by name at load time, with a message
-saying the feature is missing. The authoritative list of refused names lives in
-the server repository's README, and the
-[project status](/project/status/) page summarizes the categories.
+The Caddyfile language defines more directives and options than Pingclair
+implements. A name Pingclair recognizes but does not implement is refused when
+the file loads, with a message naming the missing feature, so a configuration
+never runs with a setting silently dropped. The server repository's README keeps
+the full list, and [Project status](/project/status/) summarizes it.
