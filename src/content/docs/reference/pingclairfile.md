@@ -56,8 +56,12 @@ example.com {
 }
 ```
 
-A `handle` block groups directives into one route. Only the first matching
-`handle` runs, and a `handle` with no matcher is the site's fallback.
+A `handle` block groups directives into one route. Sibling `handle` blocks
+exclude each other: exactly one of them runs, and a `handle` with no matcher
+is the site's fallback. In v0.2.0-rc.3 the one with the most specific
+matching path runs. **Next release:** the one that sorts first runs, longer
+paths before shorter and otherwise in file order (see
+[Which route answers](#-which-route-answers)).
 
 `client_ip` matches the client address after `trusted_proxies` is applied.
 **Next release:** `remote_ip` matches the connection's own peer instead, as in

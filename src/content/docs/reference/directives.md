@@ -376,7 +376,7 @@ are accepted there too.
 | `auto_https` | `auto_https on \| off \| disable_redirects` | Controls automatic HTTPS and the port 80 redirect. `disable_certs` and `ignore_loaded_certs` are refused by name. |
 | `dns_refresh` | `dns_refresh <duration> \| off` | Interval for resolving hostname upstreams again. The default is `30s`. `off` keeps the addresses resolved at startup. A bare number is refused. |
 | `email` | `email <address>` | ACME account email. |
-| `grace_period` | `grace_period <duration>` | How long a graceful stop waits for running requests. |
+| `grace_period` | `grace_period <duration>` | How long a graceful stop waits for running requests. In v0.2.0-rc.3 a stop exits after about 250 ms regardless; **Next release:** the stop drains for up to this long. |
 | `protocols` | `protocols h1 h2 h3` | Whether the HTTP/3 listener exists. See [TLS: what you can tune](/guides/tls-tuning/#-which-protocols-are-served). |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | Peers allowed to state the client address in forwarding headers. Changing it requires a restart. **Next release:** also accepts Caddy's spelling, `trusted_proxies static <cidr \| private_ranges> ...`. |
 
