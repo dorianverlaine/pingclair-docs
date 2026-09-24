@@ -42,7 +42,6 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。伺服器無法兌�
 - **憑證儲存只在本機。**多個執行個體無法共用同一個憑證儲存區，因為它就是磁碟上的一個目錄。
 - **DNS-01 在這個發行版裡無法完成。**`tls { dns cloudflare <token> }` 與全域的 `acme_dns` 選項接受 Cloudflare，其他 provider 則會被指名拒絕。但在 v0.2.0-rc.3 中，每一張 DNS-01 訂單最後都是 `Invalid`，因為 TXT 記錄放的值是錯的。修正已在 `main` 上（[HTTPS](/zh-TW/start/https/#-dns-01-與萬用字元憑證)）。
 - **HTTP/3 沒有 trailers，也沒有 tunnel。**宣告了 request trailers 的請求在每種協定上都會被拒絕，HTTP/3 則會重設 `CONNECT`（[架構](/zh-TW/concepts/architecture/#-各協定的差異)）。
-- **HTTP/3 上的 FastCGI 會回應 `501`。**
 - **負載下 WebSocket 升級會間歇性失敗**，在忙碌的機器上大約 10–15%。原因是上游 `pingora-proxy` crate 中的一個競態條件（[cloudflare/pingora#946](https://github.com/cloudflare/pingora/issues/946)），閒置的機器上很少重現。
 
 ## 🔁 下一版有哪些變動

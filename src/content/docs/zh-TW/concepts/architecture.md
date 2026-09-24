@@ -59,7 +59,7 @@ upstream or disk
 | --- | --- |
 | Trailers | 任何協定都不轉送 request trailers。宣告了 trailers 的請求，會在回應開始前得到 `501`；若 HTTP/3 stream 的回應已經開始，則改為重設該 stream。上游回應若宣告了 trailers，會得到 `502`。 |
 | `CONNECT` | Pingclair 不建立 tunnel。HTTP/1.1 與 HTTP/2 回應 `405`。HTTP/3 會把標準的 `CONNECT` 請求視為格式錯誤而重設，對同時帶有 `:scheme` 與 `:path` 的則回應 `501`。 |
-| FastCGI | `php_fastcgi` 可在 HTTP/1.1 與 HTTP/2 上運作。在 HTTP/3 上，需要 FastCGI 的路由會得到 `501`。 |
+| FastCGI | `php_fastcgi` 在每種協定上都能運作，包括 HTTP/3。 |
 
 📌 **下一版**。在 `main` 上，`CONNECT` 在每種協定上都會得到附帶 `Allow` 標頭的 `405`，`TRACE` 也一樣。這些變動不在 v0.2.0-rc.3 裡；[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md) 將它們記錄在 Unreleased 底下。
 
