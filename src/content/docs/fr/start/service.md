@@ -178,8 +178,9 @@ sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
 Les modifications qu'un processus en cours d'exécution ne peut pas absorber
-font exception. Les options fixées au démarrage, comme `trusted_proxies`, ne
-prennent effet qu'après un redémarrage : `sudo pc service restart`. Une
+font exception. Toute modification du bloc d'options globales, comme
+`trusted_proxies`, est refusée par un rechargement et ne prend effet qu'après
+un redémarrage : `sudo pc service restart`. Une
 configuration qui ajoute ou déplace un écouteur est refusée de la même manière
 (la ligne d'état nomme les adresses ajoutées et retirées), car un rechargement
 applique une politique, pas un nouveau socket d'écoute.

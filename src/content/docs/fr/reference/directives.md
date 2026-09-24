@@ -396,7 +396,7 @@ options que Caddy imbrique sous `servers { … }`, comme `protocols` et
 | `auto_https` | `auto_https on \| off \| disable_redirects` | Commande le HTTPS automatique et la redirection du port 80. `disable_certs` et `ignore_loaded_certs` sont refusés par leur nom. |
 | `dns_refresh` | `dns_refresh <duration> \| off` | Intervalle de nouvelle résolution des upstreams désignés par nom d'hôte. La valeur par défaut est `30s`. `off` conserve les adresses résolues au démarrage. Un nombre nu est refusé. |
 | `email` | `email <address>` | E-mail du compte ACME. |
-| `grace_period` | `grace_period <duration>` | Durée pendant laquelle un arrêt en douceur attend les requêtes en cours. |
+| `grace_period` | `grace_period <duration>` | Durée pendant laquelle un arrêt en douceur attend les requêtes en cours. Dans v0.2.0-rc.3, un arrêt se termine après environ 250 ms quoi qu'il arrive ; **Prochaine version :** l'arrêt draine les requêtes pendant au plus cette durée. |
 | `protocols` | `protocols h1 h2 h3` | Détermine si l'écouteur HTTP/3 existe. Voir [TLS : ce qui se règle](/fr/guides/tls-tuning/#-quels-protocoles-sont-servis). |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | Pairs autorisés à indiquer l'adresse du client dans les en-têtes de transfert. Une modification exige un redémarrage. **Prochaine version :** accepte aussi l'écriture de Caddy, `trusted_proxies static <cidr \| private_ranges> ...`. |
 

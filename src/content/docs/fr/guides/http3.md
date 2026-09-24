@@ -135,9 +135,9 @@ pas transporter quelque chose :
 
 | Domaine | Sur HTTP/3 |
 | --- | --- |
-| Trailers de requête déclarés | Non transmis : `501` avant l'engagement de la réponse, réinitialisation du flux après. |
-| Trailers de réponse de l'upstream | `502`. |
-| `CONNECT` | Pingclair n'ouvre aucun tunnel. **Prochaine version :** `405` avec `Allow`, la même réponse que sur HTTP/1.1 et HTTP/2. |
+| Trailers de requête déclarés | Non transmis, comme sur tous les protocoles : `501` avant l'engagement de la réponse ; sur HTTP/3, le flux est ensuite réinitialisé. |
+| Trailers de réponse de l'upstream | `502`, comme sur tous les protocoles. |
+| `CONNECT` | Pingclair n'ouvre aucun tunnel. Un `CONNECT` standard est réinitialisé comme malformé, et celui qui porte aussi `:scheme` et `:path` reçoit `501`. **Prochaine version :** `405` avec `Allow`, la même réponse que sur HTTP/1.1 et HTTP/2. |
 
 Un CDN placé devant l'origine termine lui-même HTTP/3 et parle HTTP/1.1 ou
 HTTP/2 à l'origine. L'écouteur de cette page ne dit alors rien de ce qu'a

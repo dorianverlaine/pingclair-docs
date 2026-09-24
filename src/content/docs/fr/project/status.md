@@ -63,7 +63,7 @@ ne peut donc pas prendre de retard sur le code.
   commande DNS-01 se termine `Invalid`, car l'enregistrement TXT porte une
   valeur erronée. Le correctif est sur `main`
   ([HTTPS](/fr/start/https/#-dns-01-et-noms-génériques)).
-- **HTTP/3 n'a ni trailers ni tunnels.** Les trailers de requête déclarés sont
+- **Aucun protocole ne transmet les trailers, et aucun n'ouvre de tunnel.** Les trailers de requête déclarés sont
   refusés sur tous les protocoles, et HTTP/3 réinitialise `CONNECT`
   ([Architecture](/fr/concepts/architecture/#-où-les-protocoles-diffèrent)).
 - **Les upgrades WebSocket échouent par intermittence sous charge**, environ

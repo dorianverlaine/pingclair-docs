@@ -58,8 +58,13 @@ example.com {
 }
 ```
 
-Un bloc `handle` regroupe des directives en une route. Seul le premier `handle`
-correspondant s'exécute, et un `handle` sans matcher sert de repli au site.
+Un bloc `handle` regroupe des directives en une route. Les blocs `handle` frères
+s'excluent mutuellement : exactement un d'entre eux s'exécute, et un `handle`
+sans matcher sert de repli au site. Dans v0.2.0-rc.3, c'est celui dont le
+chemin correspondant est le plus spécifique qui s'exécute. **Prochaine
+version :** c'est celui qui est trié en premier, les chemins longs avant les
+courts et sinon dans l'ordre du fichier (voir
+[Quelle route répond](#-quelle-route-répond)).
 
 `client_ip` compare l'adresse du client après application de
 `trusted_proxies`. **Prochaine version :** `remote_ip` compare à la place le
