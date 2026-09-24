@@ -1,45 +1,51 @@
 ---
 title: Pingclairfile
 h1_emoji: '📖'
-description: Le langage de configuration, sa structure de fichier, ses adresses, ses matchers, ses fragments et son outillage.
+description: La structure d'un Pingclairfile, avec les règles lexicales, les adresses de site, les matchers, l'ordre des routes, les fragments et les outils qui le contrôlent.
 ---
 
-Le Pingclairfile est le langage de configuration. Il suit les conventions de
-Caddyfile : un bloc d'options globales facultatif, puis des blocs de site
-contenant des directives. Cette page décrit le langage lui-même ; les directives
-qu'il accepte sont décrites dans la
-[référence des directives](/fr/reference/directives/).
+Un Pingclairfile est le fichier de configuration de Pingclair, écrit dans le
+langage Caddyfile : un bloc d'options globales facultatif, puis un bloc par
+site, chacun contenant des directives. Un Caddyfile qui n'utilise que des
+directives prises en charge se charge sans modification. Cette page décrit le
+langage ; la [référence des directives](/fr/reference/directives/) décrit ce que
+fait chaque directive.
+
+📌 Cette page décrit **v0.2.0-rc.3**, la dernière version publiée.
 
 ## 🔤 Règles lexicales
 
 | Règle | Détail |
 | --- | --- |
-| Commentaires | `#` jusqu'à la fin de la ligne. |
-| Guillemets | Une valeur contenant des espaces est mise entre `"`. Les guillemets sont retirés avant l'analyse de la valeur. |
-| Durées | Écrites avec une unité : `30s`, `5m`, `1h`. Un nombre nu est refusé là où une durée est attendue. |
+| Commentaires | De `#` jusqu'à la fin de la ligne. |
+| Guillemets | Une valeur contenant des espaces se met entre `"`. Les guillemets sont retirés avant l'analyse de la valeur. |
+| Durées | Écrites avec une unité : `30s`, `5m`, `1h`. Un nombre nu est refusé là où une durée est attendue. |
 | Casse | Les noms de directives et d'options sont en minuscules. |
 | Placeholders | `{host}`, `{path}`, `{args[0]}`, `{block}` et le reste de l'ensemble des placeholders sont développés là où la directive le documente. |
 
 ## 🌐 Adresses
 
-Un bloc de site est nommé par une adresse. L'adresse détermine l'écouteur et,
-pour les noms publics, si HTTPS automatique s'applique.
+Un bloc de site est nommé par son adresse. L'adresse décide du port sur lequel
+le site écoute et s'il est servi en HTTPS.
 
-```caddyfile
-example.com {              # host: ports 443 and 80, automatic HTTPS
-localhost:8080 {           # host and port
-:8080 {                    # any host on this port
-http://example.com {       # force plaintext
+```text
+example.com {          # HTTPS on 443 with a public certificate; 80 redirects
+example.com:8443 {     # HTTPS on 8443: a host with a port is still HTTPS
+localhost:8080 {       # HTTPS on 8080, from the internal authority
+:8080 {                # plaintext HTTP on 8080, for any host
+http://example.com {   # plaintext HTTP on 80
 ```
 
-Le port appartient à l'adresse plutôt qu'à une directive `listen` séparée :
-l'adresse et l'écouteur ne peuvent donc pas diverger.
+Un hôte accompagné d'un port et sans schéma est servi en HTTPS, comme dans
+Caddy. Écrivez `http://` devant l'adresse pour demander du texte clair sur
+n'importe quel port. Deux sites qui partagent un port doivent s'accorder sur
+TLS, faute de quoi la configuration est refusée.
 
 ## 🧭 Matchers
 
-Une directive qui accepte un matcher ne s'applique qu'aux requêtes
-correspondantes. Les matchers s'écrivent en ligne ou sont déclarés avec `@nom`
-puis référencés par ce nom.
+Un matcher restreint une directive à certaines requêtes. Il s'écrit en ligne,
+par exemple un chemin comme `/api/*`, ou se déclare une fois sous la forme
+`@nom` pour être désigné ensuite par ce nom.
 
 ```caddyfile
 example.com {
@@ -52,14 +58,42 @@ example.com {
 }
 ```
 
-Les blocs `handle` regroupent les directives par route ; un `handle` sans
-matcher est le repli de son site.
+Un bloc `handle` regroupe des directives en une route. Seul le premier `handle`
+correspondant s'exécute, et un `handle` sans matcher sert de repli au site.
+
+`client_ip` compare l'adresse du client après application de
+`trusted_proxies`. **Prochaine version :** `remote_ip` compare à la place le
+pair de la connexion elle-même, comme dans Caddy ; dans v0.2.0-rc.3, les deux
+comparent le client transmis.
+
+## 🧭 Quelle route répond
+
+Dans v0.2.0-rc.3, quand plusieurs routes correspondent à une requête, celle
+dont le chemin est le plus spécifique répond, quelle que soit sa place dans le
+fichier.
+
+**Prochaine version :** les routes sont essayées dans l'ordre des directives de
+Caddy, et la première correspondance répond. Par exemple, `respond` passe avant
+`file_server` ; dans le site ci-dessous, `/assets/a.txt` reçoit donc `hello` au
+lieu du fichier :
+
+```caddyfile
+example.com {
+    root * /srv
+    file_server /assets/*
+    respond "hello" 200
+}
+```
+
+Pour garder une route plus étroite en tête, enveloppez les routes dans des blocs
+`handle`, déplacez une directive avec l'option globale `order`, ou listez-les
+dans un bloc `route`, qui conserve l'ordre d'écriture.
 
 ## 🧩 Fragments et imports
 
-Les fragments sont des morceaux réutilisables. Un fragment déclaré sous la
-forme `(nom) { ... }` est inclus avec `import nom` et peut recevoir un bloc de
-son appelant :
+Les fragments (snippets) sont des morceaux réutilisables. Un fragment déclaré
+sous la forme `(nom) { ... }` est inséré avec `import nom`, et peut recevoir un
+bloc de l'appelant :
 
 ```caddyfile
 (proxied) {
@@ -74,22 +108,26 @@ import proxied example.com {
 }
 ```
 
-Un placeholder qui ne reçoit rien n'insère rien : un fragment écrit avec
-`{block}` compile donc encore lorsque son appelant ne fournit aucun bloc.
+`{args[0]}` est le premier argument après le nom du fragment, et `{block}` est
+le bloc fourni par l'appelant. Quand l'appelant ne fournit aucun bloc, `{block}`
+se développe en rien et le fragment compile tout de même.
 
 ## 🧰 Outillage en ligne de commande
 
-La ligne de commande a sa propre référence :
-[Ligne de commande](/fr/reference/command-line/) liste chaque sous-commande avec
-ses options et ses valeurs par défaut. Trois d'entre elles relèvent de l'écriture
-d'une configuration : `pingclair validate`, qui compile un fichier et nomme le
-premier problème, `pingclair adapt --pretty`, qui affiche le JSON dans lequel ce
-fichier se compile, et `pingclair fmt`, qui le formate.
+Trois commandes aident à écrire une configuration :
+
+- `pingclair validate` compile le fichier et nomme le premier problème.
+- `pingclair adapt --pretty` affiche le JSON issu de la compilation du fichier.
+- `pingclair fmt` met le fichier en forme.
+
+[Ligne de commande](/fr/reference/command-line/) liste chaque sous-commande et
+chaque option.
 
 ## 🚫 Ce qui ne fait pas partie du langage
 
-Le format définit plus de noms que le serveur n'en implémente. Un nom reconnu
-mais non implémenté est refusé par son nom au chargement, avec un message
-indiquant que la fonctionnalité manque. La liste de référence des noms refusés
-se trouve dans le README du dépôt du serveur, et la page
-[état du projet](/fr/project/status/) en résume les catégories.
+Le langage Caddyfile définit plus de directives et d'options que Pingclair n'en
+implémente. Un nom que Pingclair reconnaît sans l'implémenter est refusé au
+chargement du fichier, avec un message qui nomme la fonctionnalité manquante ;
+une configuration ne s'exécute donc jamais avec un réglage abandonné en
+silence. Le README du dépôt du serveur tient la liste complète, et
+[État du projet](/fr/project/status/) la résume.
