@@ -3,23 +3,18 @@ title: Cloudflare Tunnel の背後で動かす
 h1_emoji: '☁️'
 sidebar:
   order: 5
-description: Cloudflare Tunnel でサイトを公開し、オリジンに受信ポートを不要にし、Pingclair のログに接続子ではなく本当のクライアントを出すようにします。
+description: Cloudflare Tunnel でサイトを公開してオリジンの受信ポートを不要にし、Pingclair のログにコネクターではなく実際のクライアントが記録されるようにします。
 ---
 
-Cloudflare Tunnel はオリジンを外側へ接続します。`cloudflared` が Cloudflare へ
-ダイヤルし、Cloudflare はその接続を通して要求を返します。公開ポートで待ち受ける
-ものはなく、エッジが TLS を終端し、オリジンはループバックで平文 HTTP を見ます。
-このページはそれを設定し、最初に必ずつまずく一点――すべての要求が
-`127.0.0.1` として記録される――を直します。
+Cloudflare Tunnel は、オリジンから外側へ接続します。`cloudflared` が Cloudflare に接続し、Cloudflare はその接続を通してリクエストを送り返します。公開ポートで待ち受けるものは無く、TLS はエッジで終端され、オリジンはループバック上で平文の HTTP を受け取ります。このページではこの構成を設定し、誰もが最初にぶつかる問題、つまりすべてのリクエストが `127.0.0.1` からのものとして記録される問題を解決します。
+
+📌 このページは最新の公開リリースである Pingclair **v0.2.0-rc.3** を対象にしています。
 
 ## 🧾 はじめる前に
 
-- そのドメインが Cloudflare アカウントにあり、Zero Trust が使えること。
-- Pingclair と同じホストに `cloudflared`、そしてサイトを配信する Pingclair
-  （[静的サイトを配信する](/ja/guides/static-site/)）。
-- ダッシュボード（Zero Trust → Networks → Tunnels）か、**Cloudflare Tunnel:
-  Write** とゾーンの **DNS: Edit** を持つ API トークン。例では API を使い、
-  `$CF_TOKEN`、`$ACCOUNT`、`$ZONE` を設定します。
+- Cloudflare アカウントにドメインがあり、Zero Trust が使えること。
+- Pingclair と同じホスト上の `cloudflared`、そしてサイトを配信している Pingclair（[静的サイトを配信する](/ja/guides/static-site/)）。
+- ダッシュボード（Zero Trust → Networks → Tunnels）、またはそのゾーンに対する **Cloudflare Tunnel: Write** と **DNS: Edit** の権限を持つ API トークン。ここでの例は API を使い、`$CF_TOKEN`、`$ACCOUNT`、`$ZONE` にそれぞれトークン、アカウント ID、ゾーン ID を設定しています。
 
 ## 🌐 トンネルを作る
 
@@ -33,18 +28,16 @@ curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicati
 {"success":true,"result":{"id":"bc6869fa-19cf-4780-b95b-f11be77eb329","name":"docs-origin", …}}
 ```
 
-`config_src: cloudflare` はトンネルを**リモート管理**にします。ingress ルールは
-Cloudflare 側にあり API で投入されるので、接続子の隣に何かを書く必要はありません。
+`config_src: cloudflare` は、トンネルが**リモート管理**であることを意味します。イングレスルールは Cloudflare 側にあって API を通じて配信されるため、コネクターの隣に何かを書く必要はありません。
 
-接続子の資格情報は別の呼び出しです。
+コネクターの認証情報は別の呼び出しで取得します。
 
 ```bash
 curl -s -H "Authorization: Bearer $CF_TOKEN" \
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/token"
 ```
 
-このトークンは秘密情報で、ホストをトンネルに参加させる鍵です。パスワードと同様に
-扱い、漏れたら交換してください。
+このトークンは秘密情報です。どのホストでもこれを使ってトンネルに参加できます。パスワードと同じように扱い、漏れた場合はローテーションしてください。
 
 ## 🔌 ホストを接続する
 
@@ -59,16 +52,16 @@ sudo cloudflared service install "$TUNNEL_TOKEN"
 INF Linux service for cloudflared installed successfully
 ```
 
-接続子は最寄りの Cloudflare 拠点へ 4 本の接続を登録し、既定で QUIC を使います。
+コネクターは近くの Cloudflare の拠点に向けて 4 本の接続を開きます。既定では QUIC を使います。
 
 ```text
 INF Registered tunnel connection connIndex=2 … location=pdx02 protocol=quic
 INF Registered tunnel connection connIndex=3 … location=sea10 protocol=quic
 ```
 
-## 🌍 ホスト名を経路にする
+## 🌍 ホスト名をルーティングする
 
-ingress ルールが、どのホスト名をどのオリジンサービスへ送るかを決めます。
+どのホスト名をどのオリジンサービスに届けるかは、イングレスルールで決まります。
 
 ```bash
 curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
@@ -78,9 +71,9 @@ curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicatio
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/configurations"
 ```
 
-最後のルールは受け皿です。他のホスト名は既定のサイトではなく `404` になります。
+最後のルールはキャッチオールです。それ以外のホスト名へのリクエストは、オリジンに届かずに `404` を受け取ります。
 
-次に、その名前をトンネルへ向けます。プロキシは有効にします。
+次に、プロキシを有効にした状態で、名前をトンネルに向けます。
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
@@ -88,7 +81,7 @@ curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicati
   "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records"
 ```
 
-どこからでも:
+どこからでも確認できます。
 
 ```bash
 curl -I https://tunnel-test.pingclair.com/
@@ -101,20 +94,17 @@ accept-ranges: bytes
 server: cloudflare
 ```
 
-`server: cloudflare` はエッジが応答している印です。オリジンへはトンネル経由で
-到達しており、どのポートも開いていません。
+`server: cloudflare` は、エッジが応答していることを示しています。オリジンにはトンネルを通じて到達しており、そのための受信ポートは開いていません。
 
-## 🎯 オリジンにクライアントを見せる
+## 🎯 オリジンからクライアントを見えるようにする
 
-既定では、すべての要求が接続子からループバック経由で届きます。アクセスログは
-クライアントが誰かを何も語りません。
+すべてのリクエストはループバック上のコネクターから届くため、既定ではアクセスログにクライアントではなくコネクターが記録されます。
 
 ```text
 📝 Access … host="tunnel-test.pingclair.com" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
 ```
 
-`trusted_proxies` は、どの相手がクライアントアドレスを主張してよいかを Pingclair に
-伝えます。接続子は同じホストで動くので、ループバックだけで足ります。
+`trusted_proxies` には、転送ヘッダーでクライアントのアドレスを伝えることを許すピアを並べます。コネクターは同じホスト上で動いているので、一覧はループバックだけで足ります。
 
 ```caddyfile
 {
@@ -128,38 +118,28 @@ http://:80 {
 }
 ```
 
-オプションの前後で同じ要求を測った結果:
+同じリクエストを、オプションの追加前と追加後に測定した結果です。
 
 ```text
-remote_ip=127.0.0.1          # 前
-remote_ip=16.162.199.171     # 後: 要求を始めたクライアント
+remote_ip=127.0.0.1          # before
+remote_ip=16.162.199.171     # after: the client that started the request
 ```
 
-この設定は、トンネルの背後で IP 単位の制限やルールを意味のあるものにするものでも
-あります。起動時に確立されるため、変更には再読み込みではなく再起動が要ります
-（[再読み込みの意味](/ja/start/service/#-再読み込みの意味)）。
+トンネルの背後でも、クライアント単位のレート制限や `client_ip` マッチャーが実際のクライアントを認識できるのは、この設定のおかげです。この設定は起動時に読まれるため、変更には再読み込みではなく再起動が必要です（[再読み込みの意味](/ja/start/service/#-再読み込みの意味)）。
+
+**次のリリース：** `remote_ip` マッチャーは接続そのもののピアにマッチするようになり、トンネルの背後では常にコネクターになります。クライアントにマッチさせるには `client_ip` を使ってください。v0.2.0-rc.3 では、どちらのマッチャーも転送されたクライアントを参照します。
 
 ## ⚠️ うまくいかないとき
 
-- **`HTTP/2 530` と `error code: 1033`。** トンネルに接続子がありません。
-  オリジン側の `systemctl is-active cloudflared` が状態を示し、接続子が登録され
-  れば数秒で `200` に戻ります。
-- **別のサイトに届く、または `404`。** ingress ルールは順に評価され、最後は受け皿
-  です。DNS を疑う前にルール内のホスト名の綴りを確認します。
-- **エッジからの `502`。** 接続子は生きていますが、オリジンサービスが接続を拒否
-  しました。ルールが指すポートで Pingclair が待ち受けていません。
-- **アクセスログが常に `127.0.0.1`。** 上記のとおり `trusted_proxies` が
-  ありません。
-- **ホスト名が解決しない。** レコードは `<tunnel-id>.cfargotunnel.com` への
-  プロキシされた CNAME である必要があります。グレー雲のレコードはトンネルを
-  迂回します。
-- **接続子トークンが漏れた。** トンネルのトークンを削除し、新しいものでサービスを
-  入れ直します。古い資格情報は API から取り戻せません。
+- **`HTTP/2 530` と `error code: 1033`。** トンネルにコネクターがありません。オリジンで `systemctl is-active cloudflared` を実行すると、動いているかどうかが分かります。コネクターが登録されると、数秒のうちにリクエストは再び `200` を返します。
+- **リクエストが別のサイトに届く、または `404` になる。** イングレスルールは順番に照合され、最後はキャッチオールです。DNS を疑う前に、ルールのホスト名の綴りを確認してください。
+- **エッジから `502` が返る。** コネクターは動いていますが、オリジンサービスが接続を拒否しました。ルールに書いたポートで Pingclair が待ち受けていません。
+- **アクセスログが常に `127.0.0.1` を示す。** 上で説明したとおり、`trusted_proxies` がありません。
+- **ホスト名が解決されない。** レコードは `<tunnel-id>.cfargotunnel.com` へのプロキシ有効な CNAME である必要があります。グレークラウドのレコードは、トンネルを完全に迂回します。
+- **コネクターのトークンが漏れた。** トンネルのトークンをローテーションし、新しいトークンでサービスをインストールし直してください。
 
 ## 🧭 次の手順
 
-- [静的サイトを配信する](/ja/guides/static-site/): この例が指すオリジン。
-- [TLS で調整できること](/ja/guides/tls-tuning/): エッジが終端しないとき、
-  オリジンが証明書でできること。
-- [サービスとして動かす](/ja/start/service/): オリジン側のユニットと、
-  `trusted_proxies` の注意が参照する再読み込みの意味。
+- [静的サイトを配信する](/ja/guides/static-site/)：これらの例が指しているオリジン。
+- [TLS で調整できること](/ja/guides/tls-tuning/)：エッジが TLS を終端しない場合に、オリジンが証明書でできること。
+- [サービスとして動かす](/ja/start/service/)：オリジン上のユニットと、`trusted_proxies` の注記が参照している再読み込みの意味。
