@@ -168,8 +168,9 @@ one running, so the site keeps answering. Validate first:
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-Changes that a running process cannot absorb are the exception. Options that are established at startup,
-such as `trusted_proxies`, only take effect after a restart:
+Changes that a running process cannot absorb are the exception. Any change to
+the global options block, such as `trusted_proxies`, is refused by a reload and
+only takes effect after a restart:
 `sudo pc service restart`. A configuration that adds or moves a listener is
 refused the same way — the status line names the addresses that were added and
 removed — because reload applies policy, not a new listening socket.

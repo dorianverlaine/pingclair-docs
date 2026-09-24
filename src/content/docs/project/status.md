@@ -57,8 +57,8 @@ fall behind the code.
   provider is refused by name. In v0.2.0-rc.3, however, every DNS-01 order ends
   `Invalid`, because the TXT record carries the wrong value. The fix is on
   `main` ([HTTPS](/start/https/#-dns-01-and-wildcards)).
-- **HTTP/3 has no trailers and no tunnels.** Declared request trailers are
-  refused on every protocol, and HTTP/3 resets `CONNECT`
+- **No protocol forwards trailers, and none opens tunnels.** Declared request
+  trailers are refused on every protocol, and HTTP/3 resets `CONNECT`
   ([Architecture](/concepts/architecture/#-where-the-protocols-differ)).
 - **WebSocket upgrades fail intermittently under load**, roughly 10-15% on a
   busy machine. The cause is a race in the upstream `pingora-proxy` crate
