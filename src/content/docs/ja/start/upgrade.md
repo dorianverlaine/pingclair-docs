@@ -182,7 +182,7 @@ sudo userdel pingclair
 
 ## 🧭 次の手順
 
-- [インストール](/ja/start/install/): このページが残す、または消す配置。
-- [サービスとして動かす](/ja/start/service/): アップグレードが書き直すユニット。
-- [プロジェクトの状態](/ja/project/status/): 現在のリリースが何を支え、何を
+- [インストール](/ja/start/install/)：このページが残す、または消す配置。
+- [サービスとして動かす](/ja/start/service/)：アップグレードが書き直すユニット。
+- [プロジェクトの状態](/ja/project/status/)：現在のリリースが何を支え、何を
   拒否するか。

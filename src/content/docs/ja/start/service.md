@@ -246,9 +246,9 @@ ERROR pingclair::run:    💡 Previous configuration remains active, unchanged
 
 ## 🧭 次の手順
 
-- [アップグレードと削除](/ja/start/upgrade/): 再実行が何を保つか、そして全部
+- [アップグレードと削除](/ja/start/upgrade/)：再実行が何を保つか、そして全部
   取り除く方法。
-- [HTTPS](/ja/start/https/): 証明書、ストアの場所、そして `pingclair trust` に
+- [HTTPS](/ja/start/https/)：証明書、ストアの場所、そして `pingclair trust` に
   `PINGCLAIR_TLS_STORE` が必要な理由。
-- [`log`](/ja/reference/directives/#log): このページが journal から読んでいる
+- [`log`](/ja/reference/directives/#log)：このページが journal から読んでいる
   アクセスログの出力先。

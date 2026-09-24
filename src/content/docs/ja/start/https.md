@@ -243,8 +243,8 @@ https://byo.test {
 
 ## 🧭 次の手順
 
-- [サービスとして動かす](/ja/start/service/): ユニット、再読み込みの意味、ログ。
-- [`tls`](/ja/reference/directives/#tls): ディレクティブのすべてのモードと
+- [サービスとして動かす](/ja/start/service/)：ユニット、再読み込みの意味、ログ。
+- [`tls`](/ja/reference/directives/#tls)：ディレクティブのすべてのモードと
   オプション。
-- [Pingclairfile](/ja/reference/pingclairfile/): アドレス、マッチャー、そして
+- [Pingclairfile](/ja/reference/pingclairfile/)：アドレス、マッチャー、そして
   コンパイラが受け入れるもの。

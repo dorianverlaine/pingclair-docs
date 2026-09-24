@@ -237,9 +237,9 @@ pingclair)"` はどちらも使わずに同じことをします。
 
 ## 🧭 次の手順
 
-- [HTTPS](/ja/start/https/): 公開名に対する証明書を Let's Encrypt か内部認証局
+- [HTTPS](/ja/start/https/)：公開名に対する証明書を Let's Encrypt か内部認証局
   から。
-- [サービスとして動かす](/ja/start/service/): ユニット、再読み込みの意味、
+- [サービスとして動かす](/ja/start/service/)：ユニット、再読み込みの意味、
   ログ。
-- [Pingclairfile](/ja/reference/pingclairfile/): 言語そのもの。マッチャー、
+- [Pingclairfile](/ja/reference/pingclairfile/)：言語そのもの。マッチャー、
   スニペット、インポート。

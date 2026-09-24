@@ -240,7 +240,7 @@ cargo build --release
 
 ## 🧭 次の手順
 
-- [クイックスタート](/ja/start/quickstart/): 案内ページを自分の設定に置き換え、
+- [クイックスタート](/ja/start/quickstart/)：案内ページを自分の設定に置き換え、
   実際のサイトを配信します。
-- [HTTPS](/ja/start/https/): 公開名に対する証明書。
-- [サービスとして動かす](/ja/start/service/): ユニットの役割と安全な再読み込み。
+- [HTTPS](/ja/start/https/)：公開名に対する証明書。
+- [サービスとして動かす](/ja/start/service/)：ユニットの役割と安全な再読み込み。
