@@ -6,10 +6,13 @@ sidebar:
 description: Serve a directory with compression, caching headers, byte ranges, a single-page fallback, and a rule that keeps dotfiles private.
 ---
 
-Serving files is the other half of what Pingclair does. This page builds a static
-site up from `root` and `file_server` to compression, cache headers, range
-requests, and the fallback a single-page application needs, and it shows what the
-server actually answers at each step.
+This page serves a directory of files, starting with `root` and `file_server`
+and adding compression, cache headers, range requests, and the fallback a
+single-page application needs. Each step shows what the server answered on a
+real host.
+
+📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
+that exist only on the server's `main` branch are marked **Next release**.
 
 ## 🧾 Before you start
 
@@ -41,8 +44,8 @@ ETag: "5e-6ab20622"
 Accept-Ranges: bytes
 ```
 
-`root *` sets the site root for every request, and `file_server` serves from it.
-A path that does not exist answers `404`.
+`root *` sets the site root for every request, and `file_server` serves files
+from it. A path that does not exist answers `404`.
 
 ## 🗜️ Compression
 
@@ -54,8 +57,8 @@ http://:8080 {
 }
 ```
 
-Arguments are in preference order. The same 36 KB text file, requested with three
-different `Accept-Encoding` headers, measured on this configuration:
+`encode` lists formats in preference order. The same 36 KB text file, requested
+with three different `Accept-Encoding` headers:
 
 ```text
 zstd      200   65 bytes   content-encoding: zstd
@@ -70,15 +73,23 @@ error rather than a silent downgrade:
 Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip`
 ```
 
-The message names the alternative, which is the point: a configuration that asks
-for something the server cannot honor does not run at all.
+The message names the alternative. A configuration that asks for something the
+server cannot do does not run at all.
+
+In v0.2.0-rc.3, a site with no `encode` line still compresses with gzip; write
+`encode off` to serve the bytes on disk. **Next release:** a site compresses
+only where `encode` asks, as in Caddy, so keep the `encode` line when
+upgrading.
 
 ## ⏳ Caching headers
 
-`file_server` already answers conditional requests — the `ETag` and
-`Last-Modified` above are what a client sends back in `If-None-Match` or
-`If-Modified-Since`. How long a client may keep the file is yours to decide, and
-it belongs on the paths where it is true:
+`file_server` sends `ETag` and `Last-Modified`, but in v0.2.0-rc.3 it does not
+evaluate `If-None-Match` or `If-Modified-Since`: a revalidating client downloads
+the whole file again. **Next release:** conditional requests are answered with
+`304 Not Modified` or `412 Precondition Failed`.
+
+How long a client may keep a file is a decision for the site, and it belongs
+on the paths where it is true:
 
 ```caddyfile
 http://:8080 {
@@ -93,10 +104,10 @@ http://:8080 {
 }
 ```
 
-Measured: `Cache-Control: public, max-age=60` on the page,
-`public, max-age=31536000, immutable` on `/assets/*`. The immutable value is only
-honest when the filenames change with the content, which is why build tools add a
-hash to them.
+Measured: `Cache-Control: public, max-age=60` on the page, and
+`public, max-age=31536000, immutable` on `/assets/*`. `immutable` is safe only
+when a file's name changes whenever its content does, which is why build tools
+add a content hash to asset names.
 
 Range requests need no configuration; a client that asks for the first ten bytes
 gets them:
@@ -109,8 +120,8 @@ Content-Range: bytes 0-9/36000
 
 ## 🧭 Single-page applications
 
-An application that routes in the browser needs every unknown path to return its
-entry document, while real files keep being served:
+An application that routes in the browser needs every unknown path to return
+its entry document, while real files are still served as themselves:
 
 ```caddyfile
 http://:8080 {
@@ -126,7 +137,7 @@ the second request is a `404`.
 
 ## 🗂️ Directory listings
 
-`file_server browse` renders a listing for a directory that has no index file:
+`file_server browse` shows a listing for a directory that has no index file:
 
 ```caddyfile
 http://:8080 {
@@ -135,15 +146,15 @@ http://:8080 {
 }
 ```
 
-The listing names the entries, so `/assets/` shows `big.txt` alongside an
-`Index of` heading. Leave `browse` off unless the directory is meant to be read
-that way.
+The listing names the entries: `/assets/` shows `big.txt` under an `Index of`
+heading. Leave `browse` off unless the directory is meant to be read that way.
 
 ## 🔒 Hiding files
 
 ⚠️ Dotfiles are served like any other file: `.hidden` answered `200` in the
-configuration above, which is how `.git`, `.env`, and editor backups end up on
-the internet. To keep them out, answer before the file server runs:
+configuration above. That is how `.git`, `.env`, and editor backups end up on
+the internet. To keep them out, answer those paths before the file server
+does:
 
 ```caddyfile
 http://:8080 {
@@ -156,8 +167,10 @@ http://:8080 {
 }
 ```
 
-Measured: `/.hidden` answers `404` while `/` and `/assets/big.txt` still answer
-`200`. `404` rather than `403` is deliberate — a `403` confirms the file exists.
+Measured: `/.hidden` answers `404`, while `/` and `/assets/big.txt` still
+answer `200`. The status is `404` rather than `403` on purpose: a `403` confirms
+that the file exists. `/.*` matches only dotfiles at the top of the site; the
+`file_server { hide … }` option hides paths wherever they are.
 
 ## ⚠️ When it does not work
 
@@ -169,14 +182,13 @@ Measured: `/.hidden` answers `404` while `/` and `/assets/big.txt` still answer
   which is either what you want or a missing file.
 - **`404` for a route the application handles.** The single-page fallback is
   missing: `try_files {path} /index.html`.
-- **A new page does not appear after a reload.** Reload applies policy, not a new
-  listener; files themselves are read per request, so adding a file is immediate
-  and moving the listener is not
-  ([Run it as a service](/start/service/#-what-a-reload-means)).
+- **A change does not appear after a reload.** Files are read per request, so
+  a new file appears at once without a reload. A new or moved listener needs a
+  restart ([Run it as a service](/start/service/#-what-a-reload-means)).
 
 ## 🧭 Next steps
 
 - [Reverse proxy an application](/guides/reverse-proxy/): the other half of the
   server.
 - [`file_server`](/reference/directives/#file_server): the directive reference.
-- [`try_files`](/reference/pingclairfile/): how the fallback is compiled.
+- [Pingclairfile](/reference/pingclairfile/): matchers and route order.
