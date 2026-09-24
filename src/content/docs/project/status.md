@@ -26,7 +26,7 @@ field and never read it, so its Admin API authenticated nobody.
 | TLS | Automatic public certificates over ACME, a persistent internal certificate authority, and certificate files you supply. |
 | Static files | File serving with `zstd` and `gzip` compression, range requests, and conditional requests. |
 | Reverse proxy | Multiple upstreams, several load-balancing policies, active health checks, and backup upstreams. |
-| FastCGI | `php_fastcgi` on HTTP/1.1 and HTTP/2. |
+| FastCGI | `php_fastcgi` on HTTP/1.1, HTTP/2 and HTTP/3. |
 | Rate limiting | Exact local rate limiting per matcher. |
 | Observability | Access logging with rotation, and Prometheus metrics. |
 | Administration | Admin API for inspecting state and reloading configuration. |
