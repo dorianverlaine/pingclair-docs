@@ -166,8 +166,8 @@ $ systemctl status pingclair --no-pager | grep Status
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-실행 중인 프로세스가 흡수할 수 없는 변경은 예외입니다. `trusted_proxies`처럼 시작할
-때 정해지는 옵션은 재시작해야 적용됩니다(`sudo pc service restart`). 리스너를
+실행 중인 프로세스가 흡수할 수 없는 변경은 예외입니다. `trusted_proxies`처럼 전역
+옵션 블록을 바꾸는 변경은 리로드가 거부하며 재시작해야 적용됩니다(`sudo pc service restart`). 리스너를
 추가하거나 옮기는 설정도 같은 방식으로 거부되며, 상태 줄에 추가되고 제거된 주소가
 표시됩니다. 리로드는 정책을 적용할 뿐 새 리스닝 소켓을 만들지 않기 때문입니다.
 
