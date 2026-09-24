@@ -3,36 +3,35 @@ title: 安装
 h1_emoji: '📦'
 sidebar:
   order: 1
-description: 在 Linux 主机上通过发布版二进制、Docker 或源码安装 Pingclair，并验证服务能响应。
+description: 通过发布版二进制文件、Docker 或源码在 Linux 主机上安装 Pingclair，并确认服务能够响应。
 ---
 
-Pingclair 以单个 Linux 二进制形式发布。本页完成安装，说明安装器留下了什么，
-并验证服务器能响应。当前版本是 **v0.2.0-rc.3**，属于 release candidate，
-本网站的每一页描述的都是这个版本。
+Pingclair 以单个 Linux 二进制文件发布。本页完成安装，说明安装脚本留下了哪些东西，
+并确认服务器确实在响应。当前版本是 **v0.2.0-rc.3**，属于候选版本（release
+candidate），本站所有页面描述的都是这个版本。
 
-## 🧾 需要什么
+## 🧾 需要准备什么
 
-- 一台 `x86_64` 或 `aarch64` 的 Linux 主机，两种架构都有发布版二进制。
-- `sudo` 或 root：安装器会写入 `/usr/local/bin`、`/etc/Pingclair`、
+- 一台 `x86_64` 或 `aarch64` 架构的 Linux 主机，两种架构都有发布版二进制文件。
+- `sudo` 或 root 权限：安装脚本会写入 `/usr/local/bin`、`/etc/Pingclair`、
   `/var/lib/pingclair` 和 `/etc/systemd/system`。
-- 走服务方式需要 `systemd`。没有 systemd 的主机请用 Docker 或前台运行，
-  两者下面都会讲到。
-- 如果要签发公共证书，80 和 443 端口要能从公网访问（[HTTPS](/zh-CN/start/https/)）。
-  在云主机上，通常还要在服务商的防火墙里一并放行。
+- 以服务方式运行需要 `systemd`。没有 `systemd` 的主机可以使用 Docker，或者在前台运行
+  服务器，下文都有介绍。
+- 如果需要公网证书（[HTTPS](/zh-CN/start/https/)），80 和 443 端口必须能从互联网访问。
+  在云主机上，这通常意味着还要在云服务商的防火墙中放行这两个端口。
 
-macOS 的源码构建只用于开发支持。macOS 不是发布平台。
+macOS 可以从源码构建，并作为开发环境受支持，但不是正式发布的平台。
 
-## 📦 从发布版二进制安装
+## 📦 通过发布版二进制文件安装
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-脚本先读 `releases.pingclair.com` 上的发版通道，打印将要安装的 tag，再用通道
-为该压缩包公布的 SHA-256 校验——对不上就拒绝，不解压。该主机不通时会退回
-GitHub 的 release API 与压缩包旁边发布的校验和文件，因此安装不依赖单一提供方。
-随后它创建服务用户、授予绑定低端口的能力、写入默认配置、安装 unit，并启动
-服务。完整的一轮会这样结束：
+脚本先读取 `releases.pingclair.com` 上的发布渠道，打印即将安装的版本标签，再用该渠道公布的
+SHA-256 校验压缩包——校验不通过的压缩包会被拒绝，不会解压。如果无法连接这台主机，脚本会退回到
+GitHub releases API 以及与压缩包一同发布的校验文件，因此安装不依赖单一提供方。随后它创建服务用户，
+授予该用户绑定低位端口的能力，写入默认配置，安装 unit 并启动服务。完整的一次运行以如下输出结束：
 
 ```text
 Detected architecture: x86_64
@@ -51,31 +50,31 @@ Use pc service status to check the service.
 Config: /etc/Pingclair/Pingclairfile
 ```
 
-需要尚未发布的修复时，可以安装 `main` 而不是发布版二进制：
+如果需要尚未发布的修复，可以改为在主机上构建 `main` 分支：
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
-`--main` 会在主机上克隆并编译。它需要 Rust 1.98 或更新版本，以及 BoringSSL 与
+`--main` 会在主机上克隆并编译服务器。它需要 Rust 1.98 或更高版本，以及 BoringSSL 和
 jemalloc 所需的 C 工具链：`cmake`、`clang`、`libclang-dev`、`g++` 和 `git`。
-在 `apt` 和 `dnf` 系统上，这些包都由脚本自行安装。因为 BoringSSL 要从源码
-编译，首次构建需要几分钟。
+在使用 `apt` 或 `dnf` 的系统上，脚本会自行安装这些软件包。由于 BoringSSL 要从源码编译，
+首次构建需要几分钟。
 
-## 🗂️ 安装器留下了什么
+## 🗂️ 安装脚本留下了什么
 
 | 路径 | 内容 |
 | --- | --- |
-| `/usr/local/bin/pingclair` | 服务器二进制。 |
-| `/usr/local/bin/pc` | 指向同一二进制的软链接，用于短命令。 |
-| `/etc/Pingclair/Pingclairfile` | 服务实际运行的配置。 |
-| `/etc/Pingclair/Pingclairfile.example` | 带注释的示例，升级时不会被覆盖。 |
-| `/var/lib/pingclair/.local/share/pingclair` | 证书存储：服务账号的数据目录，二进制的默认位置。 |
-| `/var/lib/pingclair/html` | 在 80 端口提供的占位站点。 |
-| `/var/log/pingclair` | 配置了 `log` 之后日志写入的位置。 |
-| `/etc/systemd/system/pingclair.service` | 已启用并正在运行的 unit。 |
+| `/usr/local/bin/pingclair` | 服务器二进制文件。 |
+| `/usr/local/bin/pc` | 指向同一个二进制文件的符号链接，用作简写。 |
+| `/etc/Pingclair/Pingclairfile` | 服务运行的配置。 |
+| `/etc/Pingclair/Pingclairfile.example` | 带注释的示例，升级时从不覆盖。 |
+| `/var/lib/pingclair/.local/share/pingclair` | 证书存储：即服务用户的数据目录，也是二进制文件默认查找的位置。 |
+| `/var/lib/pingclair/html` | 80 端口上提供的占位站点。 |
+| `/var/log/pingclair` | 配置 `log` 输出后，日志写入的位置。 |
+| `/etc/systemd/system/pingclair.service` | unit 文件，已启用并在运行。 |
 
-脚本结束时服务已经在提供服务。它运行的配置就是这份占位配置，一屏就能读完：
+脚本结束时，服务已经在提供服务。它运行的是占位配置，一屏就能读完：
 
 ```caddyfile
 # 🦀 Pingclair default configuration file
@@ -87,13 +86,13 @@ jemalloc 所需的 C 工具链：`cmake`、`clang`、`libclang-dev`、`g++` 和 
 }
 ```
 
-服务用户和证书存储只在缺失时创建，已存在的 `/etc/Pingclair/Pingclairfile`
-永远不会被替换。正因如此，重复运行安装器是升级而不是重置
+服务用户和证书存储只在不存在时才会创建，已有的 `/etc/Pingclair/Pingclairfile`
+也从不被替换。正因如此，重新运行安装脚本是一次升级，而不是重置
 （[升级与卸载](/zh-CN/start/upgrade/)）。
 
 ## ✅ 验证安装
 
-先问二进制自己的版本：
+先向二进制文件查询版本：
 
 ```bash
 pingclair version
@@ -103,7 +102,7 @@ pingclair version
 v0.2.0-rc.3
 ```
 
-`pc` 是同一个二进制，所以 `pc version` 输出同样的字符串。再问 `systemd`：
+`pc` 是同一个二进制文件，所以 `pc version` 输出相同的字符串。接着看看 `systemd` 的判断：
 
 ```bash
 pc service status
@@ -114,17 +113,16 @@ pc service status
      Loaded: loaded (/etc/systemd/system/pingclair.service; enabled; preset: enabled)
      Active: active (running) since Tue 2026-09-22 03:21:55 UTC; 42s ago
        Docs: https://pingclair.com/start/service/
-   Main PID: 1808 (pingclair)
+   Main PID: 27630 (pingclair)
      Status: "Serving"
       Tasks: 12 (limit: 627)
      Memory: 8.2M (peak: 8.5M)
 ```
 
-`Status: "Serving"` 不是 `systemd` 看到进程还活着而猜出来的，而是服务器自己
-上报的：unit 的类型是 `notify`，只有所有监听器都绑定完成之后，服务器才宣告
-就绪。
+`Status: "Serving"` 由服务器自己报告，而不是 `systemd` 看到进程还活着就下的结论：
+unit 的类型是 `notify`，服务器只有在所有监听都绑定之后才报告就绪。
 
-最后问服务器本身：
+最后，直接请求服务器：
 
 ```bash
 curl -i http://localhost/
@@ -141,14 +139,14 @@ Accept-Ranges: bytes
 server: Pingclair
 ```
 
-带 `ETag` 和 `Last-Modified` 的 `200` 说明文件服务器应答了，正文就是
-`/var/lib/pingclair/html` 里的占位页面。
+`200` 加上 `ETag` 和 `Last-Modified`，说明是文件服务器在响应，响应体就是
+`/var/lib/pingclair/html` 中的占位页面。
 
 ## 🐳 Docker
 
-已发布的镜像以配置文件模式运行：entrypoint 是 `pingclair`，默认命令是
-`run /etc/pingclair/Pingclairfile`。镜像把 `/etc/pingclair` 和
-`/var/lib/pingclair` 声明为卷，并暴露 80 和 443 端口。
+发布的镜像以配置文件模式运行：入口点是 `pingclair`，默认命令是
+`run /etc/pingclair/Pingclairfile`。镜像把 `/etc/pingclair` 和 `/var/lib/pingclair`
+声明为卷，并暴露 80 和 443 端口。
 
 ```yaml
 services:
@@ -176,19 +174,18 @@ docker compose up -d
 curl -i http://localhost/
 ```
 
-有三个容易搞错的地方：
+有三点容易出错：
 
-- **不要加 `command:`。** 镜像默认值已经是
-  `run /etc/pingclair/Pingclairfile`，覆盖它会替换掉那条命令。
-- **不要只挂 `/var/lib/pingclair/.local/share/pingclair`。** 存储除了证书目录之外还保存其他状态，
-  容器只挂 `certs` 重建时会丢掉这些状态。请挂 `/var/lib/pingclair`。
-- **固定发布 tag。** `latest` 会跟随最新发布，生产环境应写明版本，如上面的例子。
-  已发布的 tag 列在
-  [软件包页面](https://github.com/dorianverlaine/pingclair/pkgs/container/pingclair)。
+- **不要添加 `command:`。** 镜像的默认命令已经是 `run /etc/pingclair/Pingclairfile`，
+  覆盖它就会替换掉这条命令。
+- **挂载整个 `/var/lib/pingclair`，而不只是证书目录。** 存储在证书旁边还保存了状态，
+  只挂载一部分的容器在重建后会丢失这些状态。
+- **固定到某个已发布的标签。** `latest` 会跟随最新版本；生产环境应当像示例那样写明版本。
+  已发布的标签列在[软件包页面](https://github.com/dorianverlaine/pingclair/pkgs/container/pingclair)上。
 
-在用户不属于 `docker` 组的主机上，给命令加上 `sudo`，或者用
-`sudo usermod -aG docker "$USER"` 加入一次并重新登录。在 Ubuntu 上，
-`docker compose` 插件来自 `docker-compose-v2` 包。
+如果当前用户不在 `docker` 组中，请在命令前加 `sudo`，或者执行一次
+`sudo usermod -aG docker "$USER"` 加入该组并重新登录。在 Ubuntu 上，`docker compose`
+插件由 `docker-compose-v2` 软件包提供。
 
 ## 🛠️ 从源码构建
 
@@ -198,30 +195,28 @@ cd pingclair
 cargo build --release
 ```
 
-要求：Rust 1.98.1（CI 固定的版本）、`cmake`、`clang`、`libclang-dev`、`g++`
-和 `git`。构建过程会从源码编译 BoringSSL，因此首次构建需要几分钟。
+依赖：Rust 1.98.1（CI 固定的版本）、`cmake`、`clang`、`libclang-dev`、`g++` 和 `git`。
+BoringSSL 会在构建过程中从源码编译，所以首次构建需要几分钟。
 
 ## ⚠️ 安装失败时
 
-- **`This script must be run as root`。** 脚本会写到主目录之外并安装 unit，
-  请加上 `sudo` 重新执行。
-- **Fedora 上 `setcap: command not found`。** 那是 `libcap` 包。安装器会装它，
-  但手工搭建的主机可能缺失，而没有这个能力服务就无法绑定 80 和 443。
-- **安装后立刻 `Job for pingclair.service failed`。** 读
-  `journalctl -u pingclair -n 20`。常见原因是配置未通过校验，或者已经有别的
-  进程占着 80 端口。
-- **服务在跑，但从外面没有任何响应。** 监听器已绑定，数据包没有到达。先检查
-  服务商的防火墙或安全组，再检查主机自身的规则。
-- **主机没有 `systemd`。** 二进制装好可以运行，但安装器的服务步骤无法执行。
-  请使用 Docker，或 `pingclair run`。
+- **`This script must be run as root`。** 脚本要写入主目录以外的位置并安装 unit，
+  请用 `sudo` 重新运行。
+- **Fedora 上出现 `setcap: command not found`。** 这个命令来自 `libcap` 软件包。
+  安装脚本会安装它，但手工搭建的主机可能缺少；没有这项能力，服务就无法绑定 80 和 443 端口。
+- **安装后立即出现 `Job for pingclair.service failed`。** 查看
+  `journalctl -u pingclair -n 20`。常见原因是配置未通过校验，或者 80 端口已被其他程序监听。
+- **服务在运行，但外部访问没有响应。** 监听已经绑定，但数据包始终没有到达。
+  先检查云服务商的防火墙或安全组，再检查主机自身的规则。
+- **主机没有 `systemd`。** 二进制文件已安装且可以使用，但安装脚本的服务步骤无法执行。
+  请改用 Docker 或 `pingclair run`。
 
-## 🧹 卸载
+## 🧹 再次卸载
 
-[升级与卸载](/zh-CN/start/upgrade/) 给出了拆除步骤，并指出哪些目录值得保留。
+[升级与卸载](/zh-CN/start/upgrade/)介绍了卸载步骤，并列出了保存着值得保留的数据的目录。
 
 ## 🧭 下一步
 
-- [快速开始](/zh-CN/start/quickstart/)：把占位页面换成你自己的配置，提供真实
-  站点。
-- [HTTPS](/zh-CN/start/https/)：为公开域名签发证书。
+- [快速开始](/zh-CN/start/quickstart/)：用自己的配置替换占位配置，提供一个真实的站点。
+- [HTTPS](/zh-CN/start/https/)：为公网域名获取证书。
 - [以服务方式运行](/zh-CN/start/service/)：unit 做了什么，以及如何安全地重载。

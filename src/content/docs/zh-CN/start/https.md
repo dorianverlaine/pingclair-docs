@@ -3,24 +3,24 @@ title: HTTPS
 h1_emoji: '🔐'
 sidebar:
   order: 3
-description: 为公开域名取得证书、发布内部证书，或带自己的证书进来，并验证服务器实际在提供什么。
+description: 为公网域名获取证书、发布内部证书或使用自己的证书，并确认服务器实际提供的是哪一张证书。
 ---
 
-只要站点块的地址是公开域名，不需要 `tls` 指令就有了 HTTPS：Pingclair 通过 ACME
-向 Let's Encrypt 申请证书，在 80 端口应答 HTTP-01 挑战，保存结果，并在后台续期。
-其余三种取得证书的方式 —— DNS-01、本地证书颁发机构、自己提供的文件 —— 下面分别
-说明各自需要什么。
+站点块的地址是公网域名时，不需要写 `tls` 指令就能获得 HTTPS：Pingclair 通过 ACME 向
+Let's Encrypt 申请证书，在 80 端口上响应 HTTP-01 质询，保存结果，并在后台续期。
+获取证书的另外三种方式——DNS-01、本地证书颁发机构，以及你自己提供的文件——在下文逐一介绍，
+并说明各自的前提条件。
 
 ## 🧾 开始之前
 
-- 一个解析到这台主机的名字。先确认它，再怀疑服务器：`dig +short A example.com`。
-- 80 和 443 端口能从公网访问。HTTP-01 挑战在 80 端口应答，证书在 443 上使用。
-- 一个用于 ACME 账号的邮箱地址。必须是真实邮箱：Let's Encrypt 拒绝保留的
-  example 域名，签发会以 `contact email has forbidden domain "example.com"` 失败。
+- 一个解析到这台主机的域名。怀疑服务器之前先检查它：`dig +short A example.com`。
+- 80 和 443 端口能从互联网访问。HTTP-01 质询在 80 端口上提供，证书则用在 443 端口上。
+- 一个用于 ACME 账户的邮箱地址。它必须是真实的邮箱：Let's Encrypt 拒绝保留的示例域名，
+  签发会以 `contact email has forbidden domain "example.com"` 失败。
 
-下面的配置会替换服务运行的 `/etc/Pingclair/Pingclairfile`。重载前先校验，
-这个流程见[快速开始](/zh-CN/start/quickstart/)，重载语义见
-[以服务方式运行](/zh-CN/start/service/)。
+下面的配置会替换服务运行的 `/etc/Pingclair/Pingclairfile`。重载之前先校验；
+[快速开始](/zh-CN/start/quickstart/)演示了这个流程，[以服务方式运行](/zh-CN/start/service/)
+解释了重载。
 
 ## 🌐 来自 Let's Encrypt 的证书
 
@@ -34,7 +34,7 @@ example.com {
 }
 ```
 
-没有别的要配。启动时服务器登记该主机名、启动 ACME 流程并应答挑战：
+不需要其他配置。服务器启动时会授权该主机名，开始 ACME 流程，并提供质询响应：
 
 ```text
 🌐 Automatic public certificates authorised for 1 hostname(s)
@@ -45,13 +45,13 @@ example.com {
 🎉 Certificate issuance complete for example.com
 ```
 
-访问日志里那条挑战请求来自证书颁发机构，不是浏览器：
+访问日志中的质询请求来自证书颁发机构，而不是浏览器：
 
 ```text
 📝 Access ... path="/.well-known/acme-challenge/Ix9X74-..." status=200 user_agent="Mozilla/5.0 (compatible; Let's Encrypt validation server; +https://www.letsencrypt.org)"
 ```
 
-从另一台机器验证实际提供的内容：
+从另一台机器确认实际提供的内容：
 
 ```bash
 curl -I https://example.com/
@@ -76,14 +76,21 @@ notBefore=Sep 22 02:35:03 2026 GMT
 notAfter=Dec 21 02:35:02 2026 GMT
 ```
 
-证书实体保存在服务账号的数据目录，
-`/var/lib/pingclair/.local/share/pingclair`——二进制从该账号的 home 解析出来的
-路径，也是以别的用户运行命令时 `PINGCLAIR_TLS_STORE` 指定的那个。
+证书材料保存在服务用户的数据目录 `/var/lib/pingclair/.local/share/pingclair` 中——
+这是二进制文件根据该账户的主目录推导出的路径，也是以其他用户身份运行命令时
+`PINGCLAIR_TLS_STORE` 应当指向的位置。
 
-## 📡 DNS-01 与通配符
+## 📡 DNS-01 与通配符证书
 
-DNS-01 用发布 TXT 记录来证明对域名的控制，而不是在 80 端口应答，通配符证书必须
-走这条路。配置里需要服务商块：
+DNS-01 通过发布一条 TXT 记录来证明对域名的控制权，而不是在 80 端口上响应。
+通配符证书必须使用它，80 端口关闭的主机也一样。
+
+⚠️ **DNS-01 在 v0.2.0-rc.3 中无法完成。** 该版本在 TXT 记录中发布了错误的值，
+所以每个订单都以 `Invalid` 告终。修复以及下文介绍的单张通配符证书都在 `main` 上，尚未发布。
+如果现在就要使用 DNS-01，请用安装脚本的 `--main` 参数安装 `main`
+（[安装](/zh-CN/start/install/#-通过发布版二进制文件安装)）。本节的输出展示的就是该构建的行为。
+
+配置中需要提供商块：
 
 ```caddyfile
 {
@@ -101,18 +108,17 @@ DNS-01 用发布 TXT 记录来证明对域名的控制，而不是在 80 端口�
 }
 ```
 
-有两个容易漏掉的细节。块里的 `auto` 行才会把域名放进签发名单；不写它，服务器会
-记录 `authorised for 0 hostname(s)`，完全不申请证书，所有握手都以
-`NO_CERTIFICATE_SET` 失败。另外 token 是 Cloudflare API token，需要该域名所在
-区域的 `Zone:DNS:Edit` 权限。
+有两处细节容易忽略。第一，块中的 `auto` 这一行才会把域名放进签发列表；没有它，服务器会记录
+`authorised for 0 hostname(s)`，从不申请证书，每次握手都以 `NO_CERTIFICATE_SET` 失败。
+第二，令牌是 Cloudflare API 令牌，对该域名所在的区域拥有 `Zone:DNS:Edit` 权限。
 
-🃏 **一张证书覆盖整个站点。** `*.example.com` 站点下单的就是 `*.example.com`
-本身：启动时取得一张证书，服务它下面的每个名字。通配符只覆盖一层 label，所以
-apex 需要自己的条目 —— 如果站点也要回答 `example.com`，写成
-`*.example.com, example.com`，每个主体都按写下的样子下单。这样服务的子域名不会
-进入 Certificate Transparency 日志，而这正是使用通配符的隐私理由。
+🃏 **一张叶证书覆盖整个站点。** `*.example.com` 站点申请的就是 `*.example.com` 本身：
+一张证书，启动时获取，提供给其下的每一个名称。通配符只覆盖一级标签，所以顶级域名需要单独列出——
+如果站点也在 `example.com` 上响应，请写成 `*.example.com, example.com`，每个主体都按书写的样子申请。
+以这种方式提供服务的子域名不会出现在证书透明度（Certificate Transparency）日志中，
+这正是选择通配符证书的隐私理由。
 
-站点下的每个名字都由这一张证书服务。在另一台机器上：
+站点下的任何名称都由这一张叶证书提供。从另一台机器验证：
 
 ```bash
 curl -I https://anything.example.com/
@@ -138,7 +144,7 @@ X509v3 Subject Alternative Name:
 
 ## 🏛️ 来自内部证书颁发机构的证书
 
-对于私有源站 —— 隧道、内部主机名、实验机器 —— Pingclair 可以自己当颁发机构：
+对于私有源站——隧道、内部主机名、实验机——Pingclair 可以充当自己的证书颁发机构：
 
 ```caddyfile
 https://internal.test {
@@ -147,8 +153,7 @@ https://internal.test {
 }
 ```
 
-站点会提供由 `CN=Pingclair Local Authority` 签发、有效期十年的证书，根证书发布在
-存储里：
+站点使用由 `CN=Pingclair Local Authority` 签发、有效期十年的证书响应，根证书发布在存储中：
 
 ```bash
 sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
@@ -158,7 +163,7 @@ sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
 -rw------- 1 pingclair pingclair 652 Sep 22 03:40 root.crt
 ```
 
-客户端还不信任它，所以不带 `-k` 的请求会失败。把根证书装进系统信任存储：
+客户端此时还不信任它，所以不带 `-k` 的请求会失败。把根证书安装到系统信任库中：
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
@@ -168,12 +173,11 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair tru
 ✅ Internal CA root installed into the system trust store
 ```
 
-`PINGCLAIR_TLS_STORE` 前缀很重要：`pingclair trust` 看的是执行它的用户的存储
-（root 就是 `/root/.local/share/pingclair`），而服务用的是
-`/var/lib/pingclair/.local/share/pingclair`。不加前缀，命令会回答
-`No internal CA root at /root/.local/share/pingclair/internal/root.crt`。
+`PINGCLAIR_TLS_STORE` 前缀不可省略：`pingclair trust` 查找的是运行它的用户的存储，对 root 而言是
+`/root/.local/share/pingclair`，而服务使用的是 `/var/lib/pingclair/.local/share/pingclair`。
+没有这个前缀，它会回答 `No internal CA root at /root/.local/share/pingclair/internal/root.crt`。
 
-信任根证书之后，同样的请求不带 `-k` 也会成功：
+信任根证书之后，同样的请求不带 `-k` 也能成功：
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
@@ -183,11 +187,15 @@ curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
 200
 ```
 
-`pingclair untrust` 用同样的存储前缀把它移除。
+`pingclair untrust` 可以再次移除它，同样需要带上存储前缀。
+
+📌 **下一版本**：内部证书颁发机构将像 Caddy 那样组织：放在存储的 `pki/authorities/local/` 下，
+并由一张中间证书签发叶证书。旧的 `internal/` 目录不会迁移：升级后服务器会创建新的根证书，
+每个客户端都必须用 `pingclair trust` 重新信任它。
 
 ## 📜 自己提供的证书
 
-当另一个系统签发你的证书时，让 `tls` 指向那些文件：
+证书由其他系统签发时，把 `tls` 指向这些文件：
 
 ```caddyfile
 https://byo.test {
@@ -199,8 +207,8 @@ https://byo.test {
 }
 ```
 
-文件必须能被 `pingclair` 用户读取，因为服务以该用户运行。`validate` 会拒绝不存在
-的路径，而不是等到第一次握手才失败：
+这些文件必须能被 `pingclair` 用户读取，因为服务以该用户身份运行。对于不存在的路径，
+`validate` 会直接拒绝，而不是等到第一次握手时才失败：
 
 ```text
 ❌ TLS certificate file does not exist: /etc/pingclair/certs/missing.crt
@@ -208,20 +216,19 @@ https://byo.test {
 
 ## ⚠️ HTTPS 起不来时
 
-- **`contact email has forbidden domain "example.com"`。** Let's Encrypt 拒绝把
-  保留的 example 域名作为账号联系方式。请在 `email` 选项里填真实邮箱。
-- **日志里的 `NO_CERTIFICATE_SET`。** 握手带来了服务器没有证书的域名。往上读
-  日志：没有 `auto` 的 `tls` 块不会启动签发，而 DNS-01 在这个版本里无法完成。
-- **挑战从未被提供。** 80 端口被防火墙挡住，或者被别的东西占用。颁发机构必须能
-  从公网访问 `http://your-name/.well-known/acme-challenge/`。
-- **域名没有解析到这台主机。** `dig +short A your-name` 显示颁发机构会连到哪里，
-  最近改动过解析之后，结果常常和想的不一样。
-- **反复失败。** Let's Encrypt 会对每个域名的失败校验限流。先修好原因再重试，
-  否则重试本身就成了错误。
+- **`contact email has forbidden domain "example.com"`。** Let's Encrypt 不接受保留的示例域名作为
+  账户联系方式。请在 `email` 选项中填写真实的邮箱。
+- **日志中出现 `NO_CERTIFICATE_SET`。** 握手时出示的名称在服务器上没有对应的证书。
+  查看它上方的日志：没有 `auto` 的 `tls` 块从不启动签发，而 DNS-01 在本版本中无法完成。
+- **质询始终没有被提供。** 80 端口被防火墙拦截，或者被其他程序占用。证书颁发机构必须能从互联网访问
+  `http://your-name/.well-known/acme-challenge/`。
+- **域名没有解析到这台主机。** `dig +short A your-name` 会显示证书颁发机构将要连接的地址；
+  刚改过解析时，结果未必如你所料。
+- **反复失败。** Let's Encrypt 会按主机名限制失败的验证次数。先修复原因再重试，
+  否则重试本身就会成为错误。
 
 ## 🧭 下一步
 
-- [以服务方式运行](/zh-CN/start/service/)：unit、重载语义与日志。
+- [以服务方式运行](/zh-CN/start/service/)：unit、它的重载语义和日志。
 - [`tls`](/zh-CN/reference/directives/#tls)：该指令的全部模式与选项。
-- [Pingclairfile](/zh-CN/reference/pingclairfile/)：地址、matcher，以及编译器
-  接受什么。
+- [Pingclairfile](/zh-CN/reference/pingclairfile/)：地址、匹配器，以及编译器接受什么。

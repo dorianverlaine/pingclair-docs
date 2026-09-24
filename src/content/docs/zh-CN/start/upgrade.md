@@ -3,31 +3,32 @@ title: 升级与卸载
 h1_emoji: '🧹'
 sidebar:
   order: 5
-description: 重跑安装器完成升级、固定容器 tag、回滚到旧版本，并在不丢值得保留的东西的前提下全部拆掉。
+description: 重新运行安装脚本完成升级，固定容器标签，回滚到旧版本，以及在不丢失值得保留的数据的前提下彻底移除。
 ---
 
-一次升级只替换两样东西 —— 二进制和 service unit —— 你的配置和证书不动。本页
-演示这件事、容器里的对应做法、必须往回退时的回滚路径，以及拆除步骤。
+升级只替换两样东西——二进制文件和服务 unit——你的配置和证书都保持不动。本页演示这一点，
+以及容器中的对应做法、必须退回旧版本时的回滚路径，还有卸载。
 
 ## 🧾 什么能扛过什么
 
 | 路径 | 升级时 |
 | --- | --- |
-| `/etc/Pingclair/Pingclairfile` | 保留。安装器只在它缺失时才写入。 |
-| `/etc/Pingclair/Pingclairfile.example` | 被当前示例替换。 |
+| `/etc/Pingclair/Pingclairfile` | 保留。安装脚本只在它不存在时才写入。 |
+| `/etc/Pingclair/Pingclairfile.example` | 替换为当前版本的示例。 |
 | `/var/lib/pingclair/.local/share/pingclair` | 保留。已签发的证书和 ACME 状态原地不动。 |
 | `/var/lib/pingclair/html` | 保留。 |
-| `/usr/local/bin/pingclair` 与 `pc` | 被新版本替换。 |
-| `/etc/systemd/system/pingclair.service` | 被重写，然后服务重启。 |
+| `/usr/local/bin/pingclair` 和 `pc` | 替换为新版本。 |
+| `/etc/systemd/system/pingclair.service` | 重新写入，随后重启服务。 |
 
-## ⬆️ 用安装器升级
+## ⬆️ 用安装脚本升级
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
-脚本向 GitHub 查询最新 release tag，打印出来，校验压缩包的 SHA-256，替换二进制
-与 unit，然后重启服务。已经存在的配置文件不会被碰，这才使它成为升级而不是重置：
+脚本在发布渠道上找到最新版本，打印版本标签，校验压缩包的 SHA-256，替换二进制文件和 unit，
+然后重启服务。无法连接发布渠道的主机时，它会改为查询 GitHub releases API；下面这次运行走的就是这条路径，
+所以输出里有 `Fetching latest release`。已经存在的配置文件不会被改动，正因如此，这是一次升级而不是重置：
 
 ```text
 Detected architecture: x86_64
@@ -50,11 +51,19 @@ curl -i http://localhost/
 v0.2.0-rc.3
 ```
 
-安装器总是装最新 release。没有指定版本的开关；需要特定版本时，用下面的回滚。
+安装脚本总是安装最新版本，没有用来安装指定版本的参数；需要指定版本时，请使用下文的回滚方法。
+
+## ⚠️ 升级到 0.2.0 之前先读升级说明
+
+下一版本会改变一些即使配置不变也能察觉到的行为：由哪条路由响应请求、没有 `encode` 的站点是否压缩、
+请求体的默认大小上限、`remote_ip` 匹配的是什么，以及内部证书颁发机构把根证书放在哪里。
+[项目状态](/zh-CN/project/status/#-下一版本有哪些变化)对这些变化做了汇总，
+[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md) 为每一项都附有升级说明。
+在用新的二进制文件重启服务之前，先用它校验你的配置。
 
 ## 🐳 升级容器
 
-主机上什么都没装，所以升级就是改 tag 再 pull。在 compose 文件里固定新版本：
+主机上没有安装任何东西，所以升级就是改一个标签再拉取一次。在 compose 文件中固定新版本：
 
 ```yaml
 services:
@@ -74,17 +83,15 @@ docker logs pingclair 2>&1 | head -3
 📄 Loaded configuration from: /etc/pingclair/Pingclairfile
 ```
 
-配置和证书存储都在卷里，所以新容器会在旧容器留下的位置找到它们。两点要注意：
+配置和证书存储都在卷中，所以新容器会在旧容器留下它们的地方找到它们。有两点需要注意：
 
-- **映射了 80 端口的容器，在 systemd 服务运行时起不来。** 停掉其中一个：
-  `sudo pc service stop`，或者改容器一侧的发布端口。
-- **`latest` 会跟随最新 release。** 生产环境请固定版本，让升级是一个决定，而不是
-  一次 pull 的副作用。
+- **systemd 服务运行时，映射 80 端口的容器无法启动。** 停掉其中一个：`sudo pc service stop`，
+  或者修改容器发布的端口。
+- **`latest` 会跟随最新版本。** 生产环境请固定版本，让升级成为一个决定，而不是拉取镜像的副作用。
 
 ## ⏪ 回滚到旧版本
 
-新版本必须退回去时，从发版主机取上一个版本，用它公布的 digest 校验，然后替换
-二进制：
+当新版本必须撤下时，从发布主机获取上一个版本，用该版本公布的摘要校验它，再替换二进制文件：
 
 ```bash
 mkdir -p /tmp/rollback && cd /tmp/rollback
@@ -113,8 +120,7 @@ pingclair version
 v0.2.0-rc.2
 ```
 
-然后针对回滚后的版本校验配置，因为旧版本没有实现的指令会按名字被拒绝，而不是被
-忽略：
+然后用回滚后的版本校验配置，因为旧版本未实现的指令会被点名拒绝，而不是被忽略：
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
@@ -130,19 +136,18 @@ sudo systemctl daemon-reload
 sudo rm /usr/local/bin/pingclair /usr/local/bin/pc
 ```
 
-之后 `systemctl status pingclair` 会回答 `Unit pingclair.service could not be
-found`，命令消失，80 端口上没有任何监听。留在磁盘上的，是刻意保留的你的数据：
+完成之后，`systemctl status pingclair` 会回答 `Unit pingclair.service could not be found`，
+命令已经消失，80 端口上也没有任何监听。磁盘上剩下的是你的数据，这是有意为之：
 
 ```text
-/etc/Pingclair/Pingclairfile      配置，仍然有效
-/var/lib/pingclair/.local/share/pingclair          已签发证书与 ACME 状态
-/var/lib/pingclair/html           占位站点
-/var/log/pingclair                日志输出目录
+/etc/Pingclair/Pingclairfile      the configuration, still valid
+/var/lib/pingclair/.local/share/pingclair          issued certificates and ACME state
+/var/lib/pingclair/html           the placeholder site
+/var/log/pingclair                a log sink's directory
 ```
 
-如果打算重新安装，请保留 `/var/lib/pingclair/.local/share/pingclair`：证书和内部根都会存活，
-信任该根的客户端也继续可用。若这台主机不再使用 Pingclair，就全部删掉，包括服务
-账号：
+如果打算重新安装，请保留 `/var/lib/pingclair/.local/share/pingclair`：证书和内部根证书都会保留下来，
+信任该根证书的客户端也能继续正常工作。当这台主机不再使用 Pingclair 时，删除所有内容，包括服务账户：
 
 ```bash
 sudo rm -rf /etc/Pingclair /var/lib/pingclair /var/log/pingclair
@@ -151,19 +156,18 @@ sudo userdel pingclair
 
 ## ⚠️ 出问题时
 
-- **装上了意料之外的版本。** 安装器总是取最新的 release tag。用
-  `pingclair version` 确认；如果确实需要特定版本，用上面的回滚。
-- **升级后服务起不来。** 读
-  `sudo pingclair validate /etc/Pingclair/Pingclairfile`。新版本拒绝的指令会
-  带着名字和替代方案 fail closed，journal 会指出要改哪一行。
-- **容器立刻退出。** `docker logs <container>` 会说明原因。常见原因是挂载的配置
-  目录里没有 `/etc/pingclair/Pingclairfile`，或者主机上端口已被占用。
-- **重建存储后客户端拒绝证书。** 内部证书颁发机构重新生成后，旧根不再签任何
-  东西。用 `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust`
-  装新的根。
+- **安装脚本装的版本和你预期的不一样。** 它总是选择最新的版本标签。用 `pingclair version` 确认；
+  如果需要特定版本，请使用上面的回滚方法。
+- **升级后服务无法启动。** 查看 `sudo pingclair validate /etc/Pingclair/Pingclairfile` 的输出。
+  新版本拒绝的指令会以失败关闭的方式报错，给出指令名称和替代方案，所以 journal 会指出需要修改的那一行。
+- **容器立即退出。** `docker logs <container>` 会给出原因。常见原因是挂载的配置目录中缺少
+  `/etc/pingclair/Pingclairfile`，或者主机上的端口已被占用。
+- **重建存储后客户端拒绝证书。** 如果内部证书颁发机构被重新生成，旧的根证书就不再为任何证书签名。
+  用 `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust`
+  安装新的根证书。
 
 ## 🧭 下一步
 
-- [安装](/zh-CN/start/install/)：本页保留或删除的目录布局。
-- [以服务方式运行](/zh-CN/start/service/)：升级会重写的 unit。
+- [安装](/zh-CN/start/install/)：本页保留或移除的目录布局。
+- [以服务方式运行](/zh-CN/start/service/)：升级时被重写的 unit。
 - [项目状态](/zh-CN/project/status/)：当前版本支持什么、拒绝什么。
