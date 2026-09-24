@@ -1,24 +1,20 @@
 ---
-title: 跑在 Cloudflare Tunnel 後面
+title: 在 Cloudflare Tunnel 後方執行
 h1_emoji: '☁️'
 sidebar:
   order: 5
-description: 透過 Cloudflare Tunnel 發佈站台，讓源站不需要任何入站連接埠，並讓 Pingclair 的日誌顯示真實用戶端而不是連接器。
+description: 透過 Cloudflare Tunnel 發布網站，讓源站不需要開放任何對內連接埠，並讓 Pingclair 的日誌顯示真正的用戶端，而不是 connector。
 ---
 
-Cloudflare Tunnel 把源站向外連接：`cloudflared` 主動撥號到 Cloudflare，Cloudflare
-再把請求沿這條連線送回來。沒有東西監聽公開連接埠，邊緣終結 TLS，源站只看到回送
-位址上的明文 HTTP。本頁把它搭起來，並修掉每次都會先踩的那個坑 —— 所有請求都記成
-`127.0.0.1`。
+Cloudflare Tunnel 讓源站主動向外連線：`cloudflared` 撥號到 Cloudflare，Cloudflare 再沿著這條連線把請求送回來。沒有任何東西在公開連接埠上監聽，TLS 由邊緣終結，源站在 loopback 上收到的是明文 HTTP。本頁會把這套架構建立起來，再解決每個人遇到的第一個問題：每個請求都被記錄成來自 `127.0.0.1`。
+
+📌 本頁描述的是 Pingclair 最新公開的發行版 **v0.2.0-rc.3**。
 
 ## 🧾 開始之前
 
-- 網域在 Cloudflare 帳號裡，並且能用 Zero Trust。
-- `cloudflared` 與 Pingclair 在同一台主機上，Pingclair 正在提供站台
-  （[提供靜態網站](/zh-TW/guides/static-site/)）。
-- 用儀表板（Zero Trust → Networks → Tunnels），或者一個帶 **Cloudflare Tunnel:
-  Write** 與區域 **DNS: Edit** 的 API token。範例走 API，需要設定 `$CF_TOKEN`、
-  `$ACCOUNT`、`$ZONE`。
+- 網域已在 Cloudflare 帳號中，且可以使用 Zero Trust。
+- `cloudflared` 與 Pingclair 在同一台主機上，且 Pingclair 正在提供網站（[提供靜態網站](/zh-TW/guides/static-site/)）。
+- 使用儀表板（Zero Trust → Networks → Tunnels），或一個對該 zone 具有 **Cloudflare Tunnel: Write** 與 **DNS: Edit** 權限的 API token。這裡的範例使用 API，並把 `$CF_TOKEN`、`$ACCOUNT` 與 `$ZONE` 分別設為 token、帳號 ID 與 zone ID。
 
 ## 🌐 建立 tunnel
 
@@ -32,17 +28,16 @@ curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicati
 {"success":true,"result":{"id":"bc6869fa-19cf-4780-b95b-f11be77eb329","name":"docs-origin", …}}
 ```
 
-`config_src: cloudflare` 讓 tunnel 變成**遠端管理**：ingress 規則存在 Cloudflare
-一側並透過 API 下發，連接器旁邊不需要寫任何檔案。
+`config_src: cloudflare` 代表這個 tunnel 是**遠端管理**的：它的 ingress 規則存放在 Cloudflare，透過 API 推送，所以 connector 旁邊不需要寫任何檔案。
 
-連接器憑證要另一次呼叫：
+connector 的憑據要另外呼叫取得：
 
 ```bash
 curl -s -H "Authorization: Bearer $CF_TOKEN" \
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/token"
 ```
 
-這個 token 是機密，它讓一台主機加入 tunnel。當成密碼對待，洩漏就輪換。
+這個 token 是機密：任何主機拿到它都能加入這個 tunnel。請把它當成密碼看待，外洩時要輪替。
 
 ## 🔌 連接主機
 
@@ -57,16 +52,16 @@ sudo cloudflared service install "$TUNNEL_TOKEN"
 INF Linux service for cloudflared installed successfully
 ```
 
-連接器會向最近的 Cloudflare 站點註冊四條連線，預設走 QUIC：
+connector 會向附近的 Cloudflare 據點開啟四條連線，預設透過 QUIC：
 
 ```text
 INF Registered tunnel connection connIndex=2 … location=pdx02 protocol=quic
 INF Registered tunnel connection connIndex=3 … location=sea10 protocol=quic
 ```
 
-## 🌍 把網域接到 tunnel
+## 🌍 路由一個主機名稱
 
-ingress 規則決定哪個網域到達哪個源站服務：
+ingress 規則決定哪個主機名稱會連到哪個源站服務：
 
 ```bash
 curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
@@ -76,9 +71,9 @@ curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicatio
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/configurations"
 ```
 
-最後一條是接手規則：其他網域得到 `404`，而不是預設站台。
+最後一條是全部接住的規則：任何其他主機名稱的請求都會得到 `404`，而不會抵達源站。
 
-接著把網域指向 tunnel，代理要打開：
+接著把名稱指向 tunnel，並開啟代理：
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
@@ -99,18 +94,17 @@ accept-ranges: bytes
 server: cloudflare
 ```
 
-`server: cloudflare` 是邊緣在應答；源站是透過 tunnel 到達的，沒有開放任何連接埠。
+`server: cloudflare` 表示回應的是邊緣。源站是透過 tunnel 連到的，沒有為它開放任何對內連接埠。
 
-## 🎯 讓源站看到用戶端
+## 🎯 讓源站看見用戶端
 
-預設情況下每個請求都從連接器經回送位址到達，存取日誌對「用戶端是誰」一無所知：
+每個請求都是從 loopback 上的 connector 抵達，所以存取日誌預設記錄的是 connector，而不是用戶端：
 
 ```text
 📝 Access … host="tunnel-test.pingclair.com" status=200 remote_ip=127.0.0.1 user_agent="curl/8.7.1"
 ```
 
-`trusted_proxies` 告訴 Pingclair 哪些對端可以聲明用戶端位址。連接器跑在同一台
-主機上，所以回送位址網段就夠：
+`trusted_proxies` 列出可以在轉送標頭中聲明用戶端位址的對端。connector 跑在同一台主機上，所以清單只需要 loopback：
 
 ```caddyfile
 {
@@ -124,36 +118,28 @@ http://:80 {
 }
 ```
 
-同一個請求在該選項前後的實測：
+以同一個請求在加上這個選項前後實測：
 
 ```text
-remote_ip=127.0.0.1          # 之前
-remote_ip=16.162.199.171     # 之後：發起請求的用戶端
+remote_ip=127.0.0.1          # before
+remote_ip=16.162.199.171     # after: the client that started the request
 ```
 
-這個設定也讓基於 IP 的限速與規則在 tunnel 後面變得有意義。它在啟動時確立，所以
-改動需要重啟而不是重載，見
-[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)。
+依用戶端的速率限制與 `client_ip` 匹配器，也是靠這個設定才能在 tunnel 後方看見真正的用戶端。它在啟動時讀取，所以變更後需要重啟，而不是重載（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
 
-## ⚠️ 出問題時
+**下一版**：`remote_ip` 匹配器匹配的是連線本身的對端，在 tunnel 後方永遠是 connector。要匹配用戶端，請用 `client_ip`；在 v0.2.0-rc.3 中，兩個匹配器看到的都是轉送過來的用戶端。
 
-- **`HTTP/2 530` 與 `error code: 1033`。** tunnel 沒有連接器。源站上的
-  `systemctl is-active cloudflared` 能說明狀態；連接器註冊後幾秒內請求就恢復
-  `200`。
-- **請求打到別的站台，或 `404`。** ingress 規則依序匹配並以接手規則結束；先檢查
-  規則裡的網域拼寫，再懷疑 DNS。
-- **邊緣回 `502`。** 連接器在，但源站服務拒絕了連線：規則指的那個連接埠上
-  Pingclair 沒有監聽。
-- **存取日誌總是 `127.0.0.1`。** 缺 `trusted_proxies`，見上。
-- **網域不解析。** 記錄必須是指向 `<tunnel-id>.cfargotunnel.com` 的**代理** CNAME；
-  灰雲記錄會直接繞過 tunnel。
-- **連接器 token 洩漏。** 刪除該 tunnel 的 token 並用新的重新安裝服務；舊憑證
-  本來也無法從 API 取回。
+## ⚠️ 無法運作時
+
+- **`HTTP/2 530` 並帶有 `error code: 1033`。**這個 tunnel 沒有 connector。在源站上執行 `systemctl is-active cloudflared` 可以知道它是否在執行；connector 註冊後幾秒內，請求就會恢復回應 `200`。
+- **請求連到了別的網站，或得到 `404`。**ingress 規則依序匹配，最後是全部接住的規則；怪罪 DNS 之前，先檢查規則中的主機名稱拼寫。
+- **邊緣回傳 `502`。**connector 正常，但源站服務拒絕了連線：Pingclair 沒有在規則指定的連接埠上監聽。
+- **存取日誌永遠顯示 `127.0.0.1`。**缺少 `trusted_proxies`，如上所述。
+- **主機名稱無法解析。**這筆記錄必須是指向 `<tunnel-id>.cfargotunnel.com` 且開啟代理的 CNAME；灰色雲朵的記錄會完全繞過 tunnel。
+- **connector token 外洩了。**輪替 tunnel 的 token，並用新的 token 重新安裝服務。
 
 ## 🧭 下一步
 
 - [提供靜態網站](/zh-TW/guides/static-site/)：這些範例指向的源站。
-- [TLS 能調什麼](/zh-TW/guides/tls-tuning/)：邊緣不終結 TLS 時，源站能用憑證
-  做什麼。
-- [以服務方式執行](/zh-TW/start/service/)：源站上的 unit，以及 `trusted_proxies`
-  那條提醒引用的重載語意。
+- [TLS：可以調整什麼](/zh-TW/guides/tls-tuning/)：當邊緣不終結 TLS 時，源站能用憑證做什麼。
+- [以服務方式執行](/zh-TW/start/service/)：源站上的 unit，以及 `trusted_proxies` 那段提到的重載語意。

@@ -1,21 +1,20 @@
 ---
-title: 反向代理一個應用
+title: 代理應用程式
 h1_emoji: '🔀'
 sidebar:
   order: 1
-description: 把 Pingclair 放在應用前面，把流量分散到多個實例，並在其中一台掛掉時繼續服務。
+description: 把 Pingclair 放在應用程式前面、把流量分散到多個執行個體上，並在其中一個掛掉時繼續提供服務。
 ---
 
-反向代理是大多數人最初想要的東西：一個公開位址、後面一到多個應用實例、應用本身
-不用改。本頁從單一上游開始，一路搭到帶健康檢查、逾時與備援的上游池，並展示應用
-在另一側看到什麼。
+反向代理會在一個或多個應用程式執行個體前面放上一個公開位址，而且不必修改應用程式。本頁從單一上游開始，逐步建立一個具備健康檢查、逾時與備援的上游池，最後說明應用程式那一端看到的是什麼。
+
+📌 本頁描述的是最新公開的發行版 **v0.2.0-rc.3**。只存在於伺服器 `main` 分支上的變動，以 **下一版** 標示。
 
 ## 🧾 開始之前
 
-- 已經安裝並執行 Pingclair（[安裝](/zh-TW/start/install/)），實驗期間先停掉服務：
-  `sudo pc service stop`。
-- 一個在本地連接埠監聽的應用。範例用 `127.0.0.1:3000`。
-- 代理自己的連接埠，範例用 `:8080`。
+- 已安裝並執行 Pingclair（[安裝](/zh-TW/start/install/)），實驗期間先停掉服務：`sudo pc service stop`。
+- 一個在本機連接埠上監聽的應用程式。這裡的範例使用 `127.0.0.1:3000`。
+- 代理本身要用的連接埠：範例中是 `:8080`。
 
 ## 🔀 單一上游
 
@@ -36,12 +35,11 @@ sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"
 curl -i http://localhost:8080/
 ```
 
-回應來自應用，它的回應標頭原樣透傳。`admin` 是為了讓 `pingclair reload` 能聯絡
-執行中的伺服器；`SIGUSR1` 不需要它（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
+回應來自應用程式，帶著它自己的標頭。`admin` 選項讓 `pingclair reload` 能連到執行中的伺服器；上面的 `SIGUSR1` 重載則不需要它（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
 
 ## ⚖️ 多個上游
 
-用 `to` 列出實例，再選擇分流方式：
+用 `to` 列出各個執行個體，再選擇流量如何分配：
 
 ```caddyfile
 http://:8080 {
@@ -53,7 +51,7 @@ http://:8080 {
 }
 ```
 
-兩台都活著時，六次請求會交替；這是用「哪個連接埠回答了」的應用測出來的：
+若應用程式會回報是哪個連接埠回應的，六個請求會在兩個執行個體之間輪流：
 
 ```text
 3000 3001 3000 3001 3000 3001
@@ -61,15 +59,17 @@ http://:8080 {
 
 | `lb_policy` | 行為 |
 | --- | --- |
-| `round_robin` | 依序每個上游一次。預設值。 |
-| `random` | 隨機選一個上游。 |
-| `least_conn` | 目前連線數最少的上游。 |
-| `ip_hash` | 同一用戶端位址總是落到同一台。 |
-| `first` | 第一個可用的上游。 |
-| `header <名>`, `cookie <名>`, `query <名>` | 依該欄位雜湊，讓工作階段固定在一台。 |
-| `weighted_round_robin <權重> …` | 在同一行給出每台上游的權重。 |
+| `round_robin` | 依序每個上游一個請求。v0.2.0-rc.3 的預設值。 |
+| `random` | 隨機挑選任一個上游。 |
+| `least_conn` | 進行中連線最少的上游。 |
+| `ip_hash` | 同一個用戶端位址永遠連到同一個上游。 |
+| `first` | 原意是挑第一個可用的上游。在 v0.2.0-rc.3 中，它的行為與 `round_robin` 相同。 |
+| `header <name>`、`cookie <name>`、`query <name>` | 依該欄位雜湊，讓同一個工作階段固定在一個執行個體上。 |
+| `weighted_round_robin <w> …` | 每個上游一個權重，寫在同一行。 |
 
-權重也可以逐台寫，當理由各不相同時更好讀：
+**下一版**：沒有 `lb_policy` 時，會隨機挑選上游，這也是 Caddy 的預設值；若要維持輪流，請寫 `lb_policy round_robin`。而 `first` 會真的固定在第一個可用的上游。
+
+權重也可以設定在每個上游上，當每個執行個體各有理由時，這樣寫比較好讀：
 
 ```caddyfile
 http://:8080 {
@@ -82,11 +82,9 @@ http://:8080 {
 }
 ```
 
-⚠️ `lb_policy weighted_round_robin 3 1` 數的是已經寫出來的上游，所以 `to` 行必須
-寫在**前面**。寫反了，`validate` 會用
-`2 weights were given for 0 upstreams` 拒絕該檔案。
+⚠️ `lb_policy weighted_round_robin 3 1` 會把權重對應到寫在它上方的上游，所以 `to` 這幾行必須寫在它**之前**。順序反過來的話，`validate` 會以 `2 weights were given for 0 upstreams` 拒絕這個檔案。
 
-標了 `backup` 的上游只在其他上游全部不可用時才使用：
+標記為 `backup` 的上游，只有在其他所有上游都無法使用時才會被用到：
 
 ```caddyfile
 http://:8080 {
@@ -99,11 +97,11 @@ http://:8080 {
 }
 ```
 
-兩台都在時，所有請求都去 `3000`。停掉那個行程，下一個請求由 `3001` 應答。
+兩者都正常時，每個請求都會送到 `3000`。停掉那個行程，下一個請求就由 `3001` 回應。
 
 ## 🩺 健康檢查
 
-沒有檢查時，上游要等到某個請求失敗之後才會被摘掉；有檢查則會提前摘掉：
+沒有健康檢查時，上游要等到有請求失敗後才會被移出輪替。健康檢查會在背景探測每個上游，在使用者的請求抵達之前就把失敗的上游移除：
 
 ```caddyfile
 http://:8080 {
@@ -122,22 +120,18 @@ http://:8080 {
 }
 ```
 
-應用需要一個便宜就能應答的端點（這裡是 `/health`）。每次狀態變化都會寫進日誌，
-這也是查清某台為什麼被摘掉的辦法：
+應用程式需要一個回應成本低的端點，這裡是 `/health`。每次狀態改變都會被記錄下來，要知道某個執行個體何時離開輪替，就看這裡：
 
 ```text
 INFO pingclair_proxy::health_check: 🩺 Active upstream health changed backend=Inet(127.0.0.1:3001) healthy=false
 INFO pingclair_proxy::health_check: 🩺 Active upstream health changed backend=Inet(127.0.0.1:3001) healthy=true
 ```
 
-在這套設定上實測：殺掉第二台，全部流量轉到第一台；它回來後，在
-`consecutive_success` 次成功探測之後重新加入輪替。真實 Caddyfile 常用的扁平寫法
-（`health_uri`、`health_interval`、`health_timeout`、`health_status`、
-`health_fails`、`health_passes`）設定的是同一個檢查。
+以這份設定實測：停掉第二個執行個體後，所有流量都送往第一個；它恢復後，經過 `consecutive_success` 次成功的探測就重新加入。Caddy 的扁平寫法（`health_uri`、`health_interval`、`health_timeout`、`health_status`、`health_fails`、`health_passes`）設定的是同一套檢查。
 
 ## ⏱️ 逾時
 
-逾時寫在 `reverse_proxy` 裡面的 `transport http` 區塊中，而不是直接寫在它下面：
+逾時設定寫在 `reverse_proxy` 裡面的 `transport http` 區塊中，而不是直接寫在 `reverse_proxy` 底下：
 
 ```caddyfile
 http://:8080 {
@@ -154,17 +148,13 @@ http://:8080 {
 }
 ```
 
-實測：`127.0.0.1:3099` 什麼都不接受時，`connect_timeout 1s` 花掉一秒，請求會重試
-到第二個上游並拿到 `200`。只接受連線、內容等三秒的應用會觸發
-`first_byte_timeout 1s`，用戶端收到 `504`。
+實測：`127.0.0.1:3099` 不接受任何連線時，`connect_timeout 1s` 會花掉一秒，接著請求改送到第二個上游重試，得到 `200`。若應用程式接受了連線，卻等 3 秒才送出本文，則改由 `first_byte_timeout 1s` 生效，用戶端會收到 `504`。
 
-`dial_timeout` 不是 `reverse_proxy` 的選項；寫在那裡，`validate` 會用
-`Unknown directive 'reverse_proxy: dial_timeout'` 拒絕。`transport http` 裡的名字
-是 `connect_timeout`。
+`dial_timeout` 不是 `reverse_proxy` 的選項；寫在那裡的話，`validate` 會以 `Unknown directive 'reverse_proxy: dial_timeout'` 拒絕這個檔案。`transport http` 裡對應的名稱是 `connect_timeout`。
 
-## 🔁 用網域指定上游
+## 🔁 以主機名稱指定上游
 
-上游可以是名字而不是位址，這正是換了 IP 重新起來的容器需要的：
+上游可以是主機名稱，而不是位址。容器重啟後換了 IP 位址時，需要的就是這個：
 
 ```caddyfile
 {
@@ -178,20 +168,18 @@ http://:8080 {
 }
 ```
 
-依這個間隔重新解析網域，變化會寫進日誌：
+名稱會依該間隔重新解析，每次重新解析都會記錄下來：
 
 ```text
 INFO pingclair_proxy::dns: 🔄 Upstream DNS scheduler enabled interval_secs=5 pools=1
 INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_stale=0 unresolved=0
 ```
 
-把 `/etc/hosts` 當作唯一事實來源實測：把 `api.internal` 指向 `127.0.0.1` 時由第一台
-應答；改成 `127.0.0.2` 後，在一個間隔內改由第二台應答，不需要重啟，也沒有請求
-失敗。解析失敗時，輪替裡會保留上一個位址。
+以 `/etc/hosts` 作為唯一依據實測：`api.internal` 指向 `127.0.0.1` 時由第一個執行個體回應；把檔案改成 `127.0.0.2` 後，在間隔時間內就改由第二個回應，不需重啟，也沒有任何請求失敗。查詢失敗時，會保留先前的位址繼續輪替。
 
-## 📨 上游看到什麼
+## 📨 上游看到的是什麼
 
-應用收到原始的 `Host`，以及依慣例放在標頭裡的用戶端位址：
+應用程式會收到原本的 `Host`，用戶端位址則放在常見的標頭裡：
 
 ```text
 {
@@ -202,27 +190,18 @@ INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_st
 }
 ```
 
-如果前面還有一層代理，除非它被列進 `trusted_proxies`，這些標頭裡的位址就是那一層
-的位址；[Cloudflare Tunnel 指南](/zh-TW/guides/cloudflare-tunnel/) 講的正是這種
-情況。
+如果前面還有另一個代理，除非它列在 `trusted_proxies` 中，否則這些標頭裡的位址會是那個代理的位址；[Cloudflare Tunnel 指南](/zh-TW/guides/cloudflare-tunnel/)說明了這種情況。
 
-## ⚠️ 出問題時
+## ⚠️ 無法運作時
 
-- **代理回 `502`。** 沒有任何上游應答。確認應用在監聽
-  （`sudo ss -ltnp | grep :3000`），位址也沒寫錯。
-- **停頓後 `504`。** 有逾時觸發：後端慢是 `first_byte_timeout`，內容慢是
-  `read_timeout`，對方從不接受連線是 `connect_timeout`。
-- **`Unknown directive 'reverse_proxy: …'`。** 該選項屬於巢狀區塊 —— 逾時在
-  `transport http` 下，檢查在 `health_check` 下 —— `validate` 會指明它拒絕的
-  確切寫法。
-- **設定改動沒有生效。** 重載套用的是策略，不是新的監聽器；當重載新增或移動了
-  監聽器時，unit 的 status line 會指出變動的位址，`sudo pc service restart`
-  才是套用它的指令。見 [以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)。
-- **所有請求都落到同一台。** 那是唯一健康的上游。健康檢查日誌會說明其他幾台何時
-  因何被摘掉（`ConnectRefused`、`failure_statuses` 等）。
+- **代理回傳 `502`。**沒有任何上游回應。請確認應用程式正在監聽（`sudo ss -ltnp | grep :3000`），而且位址相符。**下一版**：由 Pingclair 產生的 `502` 或 `504` 會帶有 `Proxy-Status: pingclair; error=…`；沒有這個欄位的，是應用程式自己回的。
+- **停頓一陣子後出現 `504`。**有逾時觸發了：後端太慢是 `first_byte_timeout`，本文太慢是 `read_timeout`，主機始終不接受連線則是 `connect_timeout`。
+- **`Unknown directive 'reverse_proxy: …'`。**這個選項屬於某個巢狀區塊——逾時放在 `transport http` 底下，檢查放在 `health_check` 底下——`validate` 會指出它拒絕的確切寫法。
+- **設定變更沒有生效。**重載無法新增或搬移監聽器。新檔案有這類變更時，unit 的狀態列會列出變動的位址，執行 `sudo pc service restart` 即可套用。請見[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)。
+- **每個請求都落在同一個執行個體上。**它是唯一健康的那一個。健康檢查的日誌會說明其他執行個體何時、為何離開輪替（`ConnectRefused`、`failure_statuses` 等）。
 
 ## 🧭 下一步
 
-- [提供靜態網站](/zh-TW/guides/static-site/)：壓縮、快取，以及單頁應用的後備。
+- [提供靜態網站](/zh-TW/guides/static-site/)：壓縮、快取，以及單頁應用程式的後備路由。
 - [`reverse_proxy`](/zh-TW/reference/directives/#reverse_proxy)：指令參考。
 - [以服務方式執行](/zh-TW/start/service/)：重載、重啟與日誌。
