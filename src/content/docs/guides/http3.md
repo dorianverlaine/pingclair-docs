@@ -6,10 +6,13 @@ sidebar:
 description: Turn HTTP/3 on, prove that a client really used it, and know which requests behave differently over QUIC.
 ---
 
-HTTP/3 is on by default in the sense that nothing has to be installed for it: the
-server binds a QUIC listener on UDP 443 as soon as the protocol set allows it.
-What needs care is verifying it, because a client that silently falls back to
-HTTP/2 looks exactly like success.
+HTTP/3 is on by default: an HTTPS site gets a QUIC listener on UDP 443 unless
+the global protocol list leaves `h3` out. The part that needs care is proving a
+client really used it, because a client that silently falls back to HTTP/2 looks
+exactly like success.
+
+📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
+that exist only on the server's `main` branch are marked **Next release**.
 
 ## 🧾 Before you start
 
@@ -49,9 +52,11 @@ sudo ss -lunp | grep ':443 '
 UNCONN 0 0 *:443 *:* users:(("pingclair",pid=5425,fd=22))
 ```
 
-Removing `h3` from the list takes that listener away; the list is the switch
-([TLS: what you can tune](/guides/tls-tuning/#-which-protocols-are-served)). A
-single site can be taken out of HTTP/3 without stopping the listener:
+Removing `h3` from the list removes that listener; the list is the switch
+([TLS: what you can tune](/guides/tls-tuning/#-which-protocols-are-served)).
+Without a `protocols` line, HTTP/3 stays on.
+
+The `tls` block also accepts a per-site switch:
 
 ```caddyfile
 example.com {
@@ -62,11 +67,16 @@ example.com {
 }
 ```
 
+⚠️ In v0.2.0-rc.3, `http3 off` is accepted and has no effect: the site is still
+served over QUIC. **Next release:** it keeps that site off QUIC while the
+listener serves the other sites, and its responses stop advertising HTTP/3 in
+`Alt-Svc`.
+
 ## ✅ Prove a client used it
 
-The server's access log does not name the protocol, so the proof comes from the
-client. Any curl built with ngtcp2 or quiche works; a container is the quickest
-way to get one on a host whose curl cannot do HTTP/3:
+The proof comes from the client. Any curl built with ngtcp2 or quiche works,
+and a container is the quickest way to get one on a host whose curl cannot do
+HTTP/3:
 
 ```bash
 docker run --rm --network host \
@@ -77,8 +87,8 @@ docker run --rm --network host \
 curl 8.2.1-DEV (x86_64-pc-linux-gnu) libcurl/8.2.1-DEV BoringSSL zlib/1.2.13 nghttp2/1.52.0 quiche/0.18.0
 ```
 
-`--network host` is what lets the container use the host's UDP path; without it
-the request may travel through a network namespace that blocks QUIC.
+`--network host` lets the container use the host's network directly. Without
+it, the request may pass through a network namespace that blocks QUIC.
 
 ```text
 HTTP/3 200
@@ -89,9 +99,9 @@ x-served-by: pingclair
 server: Pingclair
 ```
 
-The first line is the whole answer: the status line says `HTTP/3`, not `HTTP/2`.
-Requesting the same URL with `--http2` and `--http1.1` shows the other two, which
-proves the client is not simply falling back.
+The first line is the answer: the status line says `HTTP/3`, not `HTTP/2`.
+Requesting the same URL with `--http2` and `--http1.1` shows the other two
+protocols, which confirms that the client is not falling back.
 
 When a container is not available, a QUIC handshake can be checked with the
 system's OpenSSL, if it is 3.5 or newer:
@@ -107,26 +117,25 @@ ALPN protocol: h3
     Verify return code: 0 (ok)
 ```
 
-`ALPN protocol: h3` plus a verified chain proves the QUIC listener answers for
-that name with a certificate the client trusts. It does not prove a full HTTP/3
-request, which is what the curl check is for.
+`ALPN protocol: h3` with a verified chain proves that the QUIC listener answers
+for that name with a certificate the client trusts. It does not prove that a
+full HTTP/3 request works; the curl check does that.
 
 ## 🧭 What differs on HTTP/3
 
-The policy layer is shared with HTTP/1.1 and HTTP/2, so routing, matchers,
-headers, rate limits, and access logging behave the same. What differs is where
-the transport cannot carry something:
+HTTP/3 shares its policy code with HTTP/1.1 and HTTP/2, so routing, matchers,
+headers, rate limits, FastCGI, and access logging behave the same. The
+differences are where HTTP/3 cannot carry something:
 
 | Area | On HTTP/3 |
 | --- | --- |
 | Declared request trailers | Not forwarded: `501` before the response is committed, stream reset after. |
 | Upstream response trailers | `502`. |
-| `CONNECT` and extended `CONNECT` | `501` until tunnels are implemented. |
-| `php_fastcgi` | `501`; FastCGI is served on HTTP/1.1 and HTTP/2 only. |
+| `CONNECT` | Pingclair opens no tunnels. **Next release:** `405` with `Allow`, the same answer as on HTTP/1.1 and HTTP/2. |
 
-A CDN in front terminates HTTP/3 itself and talks HTTP/1.1 or HTTP/2 to the
-origin, so the listener here proves nothing about what the visitor's browser
-used; check the CDN's own HTTP/3 setting for that.
+A CDN in front of the origin terminates HTTP/3 itself and talks HTTP/1.1 or
+HTTP/2 to the origin. The listener here then says nothing about what the
+visitor's browser used; check the CDN's own HTTP/3 setting instead.
 
 ## ⚠️ When it does not work
 
@@ -140,8 +149,9 @@ used; check the CDN's own HTTP/3 setting for that.
 - **HTTP/3 works locally and not from outside.** The client's network blocks UDP
   443, which is common on corporate and hotel networks; browsers fall back
   silently.
-- **FastCGI routes answer `501`.** They do on HTTP/3 by design; the
-  [status page](/project/status/) lists what is served where.
+- **A site with `http3 off` still answers over HTTP/3.** In v0.2.0-rc.3 the
+  option has no effect; remove `h3` from the global list if no site may use
+  HTTP/3.
 
 ## 🧭 Next steps
 
