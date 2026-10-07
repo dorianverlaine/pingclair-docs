@@ -186,7 +186,7 @@ https://byo.test {
 ❌ TLS certificate file does not exist: /etc/pingclair/certs/missing.crt
 ```
 
-## ⚠️ HTTPS 起不來時
+## ⚠️ HTTPS 無法啟用時
 
 - **`contact email has forbidden domain "example.com"`。** Let's Encrypt 不接受保留的範例網域作為帳號聯絡人。請在 `email` 選項裡填入真實的信箱。
 - **日誌中出現 `NO_CERTIFICATE_SET`。** 交握時提出的名稱，伺服器沒有對應的憑證。請看它上方的日誌：沒有 `auto` 的 `tls` 區塊永遠不會開始簽發，並確認 DNS challenge 設定。
