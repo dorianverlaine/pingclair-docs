@@ -441,6 +441,25 @@ Context:  site block; global options
 
 在全域選項區塊中，沒有名稱的 `log { … }` 改為設定伺服器自己的程序日誌：`output file <path>`、`output stdout`、`output stderr`、`format json|text` 與 `level`。檔案輸出端不存在時會以 `0600` 權限建立。`RUST_LOG` 仍然優先於設定的 `level`，啟動橫幅則留在標準輸出。
 
+JSON 記錄的形狀是本伺服器自己的，不是 Caddy 的外層信封，因此針對 Caddy 部署寫的管線會讀到不同的鍵。兩者的對照如下：
+
+| Caddy | 這裡 | 說明 |
+| --- | --- | --- |
+| `ts` | `ts` | 值與形狀相同：請求開始時的 Unix 秒數，含小數 |
+| `.request.uri` | `.path` | 同一個值，提升到最上層 |
+| `.request.method` | `.method` | 提升到最上層 |
+| `.request.host` | `.host` | 提升到最上層 |
+| `.request.proto` | `.protocol` | 改名 |
+| `.request.client_ip` | `.client_ip` | 提升到最上層；由 trusted-proxy 政策決定 |
+| `.request.headers` | `.request_headers` | 提升到最上層；欄位名轉為小寫 |
+| `.resp_headers` | `.response_headers` | 改名 |
+| `.size` | `.bytes` | 同一個量：回應主體位元組數 |
+| `.duration` | `.duration_ms` | 這裡是**毫秒**，單位寫在名稱裡，且低於 1 毫秒的請求保留小數 |
+| `.status` | `.status` | 兩邊唯一原本就同名的鍵 |
+| — | `.ttfb_ms` | 首字節時間（毫秒）；Caddy 沒有對應欄位 |
+| `.bytes_read` | — | 不記錄請求主體位元組數 |
+| `.level`、`.logger`、`.msg` | — | Caddy 的日誌信封；這裡記錄本身就是整個物件 |
+
 存取日誌是監聽器的屬性，與 Caddy 相同：任一網站的 `log` 會為該監聽器服務的每個請求開啟紀錄，而所有網站都沒寫 `log` 的監聽器一行都不寫。`Host` 未匹配任何網站、或在路由前就被拒絕的請求，會寫進程序日誌，也就是預設存取記錄器的位置。
 
 區塊選項包括 `output`（`stdout`、`stderr` 或 `file <path>`）、`format`（`json` 或 `console`）、`level`、`hostnames` 選擇器、`include` 與 `exclude` 過濾器、`sampling`，以及檔案輪替（`roll_size`、`roll_keep`、`roll_keep_for`、`mode`、`dir_mode` 與其他 `roll_*` 選項）。每筆 JSON 存取紀錄都帶有 `ts` 欄位：請求開始時距 Unix 紀元的秒數。

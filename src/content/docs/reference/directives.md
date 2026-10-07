@@ -639,6 +639,27 @@ Block options include `output` (`stdout`, `stderr`, or `file <path>`), `format`
 access record carries a `ts` field: seconds since the Unix epoch at which the
 request began.
 
+The JSON record's shape is this server's own, not Caddy's envelope, so a
+pipeline written against a Caddy deployment reads different keys. The two are
+one table:
+
+| Caddy | Here | Note |
+| --- | --- | --- |
+| `ts` | `ts` | the same value and shape: Unix seconds with a fraction, at request start |
+| `.request.uri` | `.path` | the same value, hoisted |
+| `.request.method` | `.method` | hoisted |
+| `.request.host` | `.host` | hoisted |
+| `.request.proto` | `.protocol` | renamed |
+| `.request.client_ip` | `.client_ip` | hoisted; the trusted-proxy policy decides it |
+| `.request.headers` | `.request_headers` | hoisted; field names are lower-cased |
+| `.resp_headers` | `.response_headers` | renamed |
+| `.size` | `.bytes` | the same quantity: response body bytes |
+| `.duration` | `.duration_ms` | this one is **milliseconds**, the unit is in the name, and sub-millisecond requests keep their fraction |
+| `.status` | `.status` | the only key the two schemas already share |
+| — | `.ttfb_ms` | time to first byte in milliseconds; no Caddy equivalent |
+| `.bytes_read` | — | request-body bytes are not logged |
+| `.level`, `.logger`, `.msg` | — | Caddy's log envelope; here the record is the whole object |
+
 Refusals: a global channel may not use `hostnames`, because it is not attached
 to a site. A channel declared twice is refused.
 
