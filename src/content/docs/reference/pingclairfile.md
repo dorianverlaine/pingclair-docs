@@ -102,6 +102,12 @@ The addresses a request comes from are matched by two different matchers:
 - `remote_ip` matches the connection's own peer, regardless of forwarding headers.
   Behind a trusted load balancer, that is the balancer.
 
+Either matcher also takes Caddy's `private_ranges` keyword in place of a list,
+which expands at load to the same six ranges `trusted_proxies static
+private_ranges` uses: `192.168.0.0/16`, `172.16.0.0/12`, `10.0.0.0/8`,
+`127.0.0.1/8`, `fd00::/8` and `::1`. So `@local client_ip private_ranges`
+matches a client on a private or loopback address.
+
 A range that does not parse, such as `10.0.0.0/33`, is refused at load.
 
 `handle`, `handle_path`, and `route` take at most one matcher token before
