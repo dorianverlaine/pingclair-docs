@@ -12,6 +12,8 @@ description: 本參考涵蓋的 Pingclairfile 指令與全域選項：語法、�
 
 📖 本頁只涵蓋語言的一部分。沒有列在這裡的指令仍會由 `pingclair validate` 檢查，而伺服器沒有實作的指令會被指名拒絕，而不是接受後忽略。
 
+目前有六個 Caddy 標準指令會被指名拒絕，其中 `map` 是實際設定最常缺的一個：它把值算一次然後重複使用，而這裡沒有機械式的改寫方式。同樣被拒絕的還有 `tracing`（OpenTelemetry span）、`push`（HTTP/2 伺服器推送）、`invoke`（呼叫具名路由），以及兩個存取日誌指令 `log_append`（在紀錄中加一個欄位）與 `log_name`（逐請求選擇日誌記錄器）。每個拒絕都會指名該指令，因此搬遷時遇到的是清楚的句子，而不是靜默失效。
+
 ## basic_auth
 
 ```text

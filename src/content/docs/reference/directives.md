@@ -19,6 +19,15 @@ place.
 is still checked by `pingclair validate`, and a directive the server does not
 implement is refused by name rather than accepted and ignored.
 
+Six of Caddy's standard directives are refused by name today, with `map` the
+one most configurations actually miss: it derives a value once and reuses it,
+and there is no mechanical rewrite into what this server accepts. Also refused
+are `tracing` (OpenTelemetry spans), `push` (HTTP/2 server push), `invoke`
+(calling a named route), and the two access-log directives `log_append` (adding
+a field to a record) and `log_name` (choosing the logger per request). Each
+refusal names the directive, so a migration meets a sentence rather than a
+silent no-op.
+
 ## basic_auth
 
 ```text
