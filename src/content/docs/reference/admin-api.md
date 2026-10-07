@@ -62,7 +62,12 @@ Every endpoint below, `/live` and `/ready` included, is behind these checks.
 
 The configuration document is Pingclair's own JSON schema, the one
 `pingclair adapt` prints. A Caddy document (`{"apps": …}`) is refused with a
-message that names the schema this endpoint takes.
+message that names the schema this endpoint takes, and that refusal is a
+deliberate boundary rather than a missing adapter: the two documents share no
+top-level key and no handler name, so accepting Caddy's JSON would mean a
+second configuration surface kept in step with Caddy's module tree. What
+`POST /load` does accept besides its own JSON is a **Caddyfile**, sent with
+`Content-Type: text/caddyfile` — the format operators keep in git.
 
 ## 📄 Reading and writing configuration
 

@@ -49,7 +49,7 @@ http://:8080 {
 | `GET /cache` | 回應快取使用量與容量。 |
 | `POST /cache/purge` | 清除一個快取 URL，本文為 `{"host": "…", "path": "…"}`。 |
 
-JSON 是 `pingclair adapt` 輸出的 Pingclair 結構。Caddy 的 `{"apps": …}` 文件會被指名拒絕。
+設定文件是 `pingclair adapt` 輸出的 Pingclair 結構。Caddy 的 `{"apps": …}` 文件會被指名拒絕，而這個拒絕是刻意的邊界、不是缺漏的轉接器：兩份文件沒有任何共同的頂層鍵或處理器名稱，接受 Caddy 的 JSON 等於要再維護一套跟著 Caddy 模組樹跑的設定介面。`POST /load` 除了自己的 JSON 之外，還接受 **Caddyfile**（`Content-Type: text/caddyfile`），也就是維運人員實際放在 git 裡的格式。
 
 ## 📄 設定讀寫
 
