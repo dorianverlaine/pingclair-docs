@@ -132,7 +132,7 @@ Context:  site block
 
 拒絕條件：
 
-- `encode br` 會在載入時被拒絕。代理沒有串流式的 Brotli 編碼器，而伺服器不會悄悄退回 gzip：`` `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``。
+- `encode br` 會在載入時被拒絕。代理未實作串流式 Brotli 編碼器，也不會自動改用 gzip：`` `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``。
 - 未知的格式，或區塊內未知的設定，會被拒絕。
 - 帶有區塊的 `encode off` 會被拒絕。
 - 路徑匹配器或具名匹配器會被拒絕，因為壓縮是以網站為單位設定，而不是以路由為單位。匹配所有請求的 `*` 匹配器則可以接受。
@@ -772,4 +772,4 @@ http://:8080 {
 
 📚 上述 0.2.0 變動的依據與完整升級清單請見[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)。
 
-⚠️ 目前 `metrics` 變更仍需要重啟。雖然 CHANGELOG 的收集指標條目描述可重載，候選二進位檔的 `/load` 實測回應 `409 restart_required`；全域相容性檢查拒絕變更。依據：[runtime_listeners.rs](https://github.com/dorianverlaine/pingclair/blob/main/pingclair/src/runtime_listeners.rs)。
+⚠️ 變更全域 `metrics` 後需要重啟服務。透過 `/load` 套用此變更會收到 `409 restart_required`。詳見：[runtime_listeners.rs](https://github.com/dorianverlaine/pingclair/blob/main/pingclair/src/runtime_listeners.rs)。

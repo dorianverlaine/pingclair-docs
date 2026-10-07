@@ -1031,7 +1031,6 @@ and `Forwarded`, with `X-Real-IP` when neither was sent.
 
 📚 The [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md) records the evidence and complete 0.2.0 upgrade list.
 
-⚠️ Changing global `metrics` currently requires restart. Although its CHANGELOG
-entry describes hot reload, the candidate binary returns `409 restart_required`
-from `/load`; the global compatibility check rejects the change. See
+⚠️ Restart the service after changing global `metrics`. Applying this change
+through `/load` returns `409 restart_required`. See
 [runtime_listeners.rs](https://github.com/dorianverlaine/pingclair/blob/main/pingclair/src/runtime_listeners.rs).

@@ -8,7 +8,7 @@ description: Pingclair 遵循哪些 TLS 與協定設定、指名拒絕哪些，�
 
 📌 下方 TLS 範例使用目前工作目錄的 `./certs/`；請放入自己的憑證、配對金鑰或用戶端 CA 檔案。驗證也會讀取這些檔案。
 
-Pingclair 的 TLS 設定刻意很少：名稱會自動取得憑證，本頁的設定只決定取得的方式。Caddy 接受的其他 TLS 設定都會被指名拒絕，而不是被忽略，所以設定永遠不會悄悄做得比寫的少。下面每一項結果都是在真實主機上量測的。
+Pingclair 會為網站名稱自動取得憑證。本頁說明如何設定憑證來源、HTTP/3 與用戶端憑證驗證。不支援的 TLS 選項會在載入時被拒絕。
 
 📌 本頁描述 **v0.2.0**。
 
@@ -66,7 +66,7 @@ https://internal.test {
 
 ## 🔐 用戶端憑證
 
-`client_auth` 會讓伺服器向用戶端要求憑證。先用 `openssl` 建立一個小型憑證授權單位與一張用戶端憑證，再把網站指向該憑證授權單位的憑證**檔案**：
+`client_auth` 會讓伺服器向用戶端要求憑證。先用 `openssl` 建立一個小型憑證授權單位與一張用戶端憑證，再把網站指向該憑證授權單位的憑證 **檔案**：
 
 ```caddyfile
 https://internal.test {
@@ -107,15 +107,15 @@ sudo systemctl start pingclair
 ✅ Store imported into /var/lib/pingclair/.local/share/pingclair
 ```
 
-這次執行中有三個細節。不論檔名是什麼，封存檔都是**單純的 tar**，以 `600` 權限寫入，所以要讀回來需要 root。匯入會還原封存檔中記錄的擁有者。此外，儲存區裡還有 `autosave.json`，也就是 Admin API 最後套用的設定，所以匯入也會把它還原。
+這次執行中有三個細節。不論檔名是什麼，封存檔都是 **單純的 tar**，以 `600` 權限寫入，所以要讀回來需要 root。匯入會還原封存檔中記錄的擁有者。此外，儲存區裡還有 `autosave.json`，也就是 Admin API 最後套用的設定，所以匯入也會把它還原。
 
-📌 **0.2.0**: 內部憑證授權單位會照 Caddy 的方式存放在 `pki/authorities/local/` 底下。舊的 `internal/` 目錄不會被遷移：伺服器會建立新的憑證授權單位，每個用戶端都必須再次信任新的根憑證（`pingclair trust`）。全域的 `storage file_system <path>` 選項也能在設定中指定儲存區的位置。
+📌 **0.2.0** : 內部憑證授權單位會照 Caddy 的方式存放在 `pki/authorities/local/` 底下。舊的 `internal/` 目錄不會被遷移：伺服器會建立新的憑證授權單位，每個用戶端都必須再次信任新的根憑證（`pingclair trust`）。全域的 `storage file_system <path>` 選項也能在設定中指定儲存區的位置。
 
 如果之後服務以 `Internal CA I/O error: Permission denied` 拒絕啟動，代表服務帳號無法寫入儲存區的檔案；執行 `sudo chown -R pingclair:pingclair /var/lib/pingclair/.local/share/pingclair` 即可修正，網站也會恢復回應。
 
 ## 🚫 無法調整的部分
 
-Pingclair 認得下列 Caddy 設定並會拒絕它們，所以檔案絕不會在其中一項被悄悄丟掉的情況下執行：
+下列 Caddy TLS 選項尚未支援，載入時會被明確拒絕：
 
 ```text
 Caddy-compatible directive 'tls ciphers' is not supported by Pingclair yet: Pingclair does not implement this TLS option yet
@@ -128,14 +128,14 @@ Caddy-compatible directive 'tls on_demand' is not supported by Pingclair yet: Pi
 
 ## ⚠️ 無法運作時
 
-- **`client_auth` 以 `not valid base64` 拒絕啟動。**你把路徑傳給了 `trusted_ca_cert`；檔案的寫法是 `trusted_ca_cert_file`。
-- **持有有效憑證的用戶端被拒絕。**請確認簽發它的 CA 就是 `trusted_ca_cert_file` 裡的那一個，而且憑證沒有過期。
-- **`tls ciphers`／`tls curves`／`tls alpn`／`tls on_demand` 讓檔案被拒絕。**它們沒有實作；請見上一節。
-- **設定 `protocols h1 h2` 後 HTTP/3 仍在執行。**這不應該發生，因為那份清單控制的就是它。如果 UDP 443 仍在監聽，代表正在執行的檔案不是你編輯的那一份（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
-- **搬移儲存區後服務無法啟動。**是擁有者的問題，如上所述。
+- **`client_auth` 以 `not valid base64` 拒絕啟動。** 你把路徑傳給了 `trusted_ca_cert`；檔案的寫法是 `trusted_ca_cert_file`。
+- **持有有效憑證的用戶端被拒絕。** 請確認簽發它的 CA 就是 `trusted_ca_cert_file` 裡的那一個，而且憑證沒有過期。
+- **`tls ciphers`／`tls curves`／`tls alpn`／`tls on_demand` 讓檔案被拒絕。** 它們沒有實作；請見上一節。
+- **設定 `protocols h1 h2` 後 HTTP/3 仍在執行。** 這不應該發生，因為那份清單控制的就是它。如果 UDP 443 仍在監聽，代表正在執行的檔案不是你編輯的那一份（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
+- **搬移儲存區後服務無法啟動。** 是擁有者的問題，如上所述。
 
 ## 🧭 下一步
 
 - [HTTPS](/zh-TW/start/https/)：取得憑證的四種方式，以及它們確切的日誌內容。
-- [HTTP/3](/zh-TW/guides/http3/)：開啟它，並證明用戶端真的用了它。
+- [HTTP/3](/zh-TW/guides/http3/)：設定 HTTP/3，並確認用戶端使用的協定版本。
 - [`tls`](/zh-TW/reference/directives/#tls)：指令參考。

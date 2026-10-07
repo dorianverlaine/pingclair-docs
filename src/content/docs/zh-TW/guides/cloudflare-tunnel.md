@@ -6,7 +6,7 @@ sidebar:
 description: 透過 Cloudflare Tunnel 發布網站，讓源站不需要開放任何對內連接埠，並讓 Pingclair 的日誌顯示真正的用戶端，而不是 connector。
 ---
 
-Cloudflare Tunnel 讓源站主動向外連線：`cloudflared` 撥號到 Cloudflare，Cloudflare 再沿著這條連線把請求送回來。沒有任何東西在公開連接埠上監聽，TLS 由邊緣終結，源站在 loopback 上收到的是明文 HTTP。本頁會把這套架構建立起來，再解決每個人遇到的第一個問題：每個請求都被記錄成來自 `127.0.0.1`。
+Cloudflare Tunnel 由源站上的 `cloudflared` 主動連線至 Cloudflare，再透過該連線接收請求。源站不需要開放公開連接埠；TLS 在 Cloudflare 邊緣終結，源站透過 loopback 接收明文 HTTP。本頁說明 Tunnel 設定，以及如何記錄實際用戶端位址。
 
 📌 本頁描述 **v0.2.0**。
 
@@ -28,7 +28,7 @@ curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicati
 {"success":true,"result":{"id":"bc6869fa-19cf-4780-b95b-f11be77eb329","name":"docs-origin", …}}
 ```
 
-`config_src: cloudflare` 代表這個 tunnel 是**遠端管理**的：它的 ingress 規則存放在 Cloudflare，透過 API 推送，所以 connector 旁邊不需要寫任何檔案。
+`config_src: cloudflare` 代表這個 tunnel 是 **遠端管理** 的：它的 ingress 規則存放在 Cloudflare，透過 API 推送，所以 connector 旁邊不需要寫任何檔案。
 
 connector 的憑據要另外呼叫取得：
 
@@ -134,12 +134,12 @@ remote_ip=16.162.199.171     # after: the client that started the request
 
 ## ⚠️ 無法運作時
 
-- **`HTTP/2 530` 並帶有 `error code: 1033`。**這個 tunnel 沒有 connector。在源站上執行 `systemctl is-active cloudflared` 可以知道它是否在執行；connector 註冊後幾秒內，請求就會恢復回應 `200`。
-- **請求連到了別的網站，或得到 `404`。**ingress 規則依序匹配，最後是全部接住的規則；怪罪 DNS 之前，先檢查規則中的主機名稱拼寫。
-- **邊緣回傳 `502`。**connector 正常，但源站服務拒絕了連線：Pingclair 沒有在規則指定的連接埠上監聽。
-- **存取日誌永遠顯示 `127.0.0.1`。**缺少 `trusted_proxies`，如上所述。
-- **主機名稱無法解析。**這筆記錄必須是指向 `<tunnel-id>.cfargotunnel.com` 且開啟代理的 CNAME；灰色雲朵的記錄會完全繞過 tunnel。
-- **connector token 外洩了。**輪替 tunnel 的 token，並用新的 token 重新安裝服務。
+- **`HTTP/2 530` 並帶有 `error code: 1033`。** 這個 tunnel 沒有 connector。在源站上執行 `systemctl is-active cloudflared` 可以知道它是否在執行；connector 註冊後幾秒內，請求就會恢復回應 `200`。
+- **請求連到了別的網站，或得到 `404`。** ingress 規則依序匹配，最後是全部接住的規則；怪罪 DNS 之前，先檢查規則中的主機名稱拼寫。
+- **邊緣回傳 `502`。** connector 正常，但源站服務拒絕了連線：Pingclair 沒有在規則指定的連接埠上監聽。
+- **存取日誌永遠顯示 `127.0.0.1`。** 缺少 `trusted_proxies`，如上所述。
+- **主機名稱無法解析。** 這筆記錄必須是指向 `<tunnel-id>.cfargotunnel.com` 且開啟代理的 CNAME；灰色雲朵的記錄會完全繞過 tunnel。
+- **connector token 外洩了。** 輪替 tunnel 的 token，並用新的 token 重新安裝服務。
 
 ## 🧭 下一步
 

@@ -124,5 +124,5 @@ Report defects and documentation errors on the
 ## 📚 Related pages
 
 - [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md): release changes and known defects.
-- [Benchmarks](/project/benchmarks/): historical measurement conditions.
+- [Benchmarks](/project/benchmarks/): measurement conditions and results.
 - [Architecture](/concepts/architecture/): components and request handling.

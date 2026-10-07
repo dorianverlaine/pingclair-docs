@@ -4,12 +4,10 @@ h1_emoji: '🏗️'
 description: The crates that make up the server, the path a request takes through them, and where HTTP/1.1, HTTP/2, and HTTP/3 behave differently.
 ---
 
-A web server that speaks three HTTP versions has two ways to go wrong: each
-protocol grows its own copy of the rules, or one protocol quietly misses a rule
-the others follow. Pingclair avoids both by giving each transport only the job
-of moving bytes, and sending every request through one shared policy layer.
-This page describes the components, the path a request takes, and the few
-places where the protocols still differ. It describes **v0.2.0**.
+Pingclair supports HTTP/1.1, HTTP/2, and HTTP/3. Each transport handles protocol
+I/O, while a shared policy layer applies routing, header rules, rate limits,
+and access logging. This page describes the components, the request path, and
+protocol differences in **v0.2.0**.
 
 ## 🧱 The server is one binary built from a few crates
 

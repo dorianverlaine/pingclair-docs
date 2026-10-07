@@ -3,18 +3,18 @@ title: 提供 HTTP/3
 h1_emoji: '⚡'
 sidebar:
   order: 4
-description: 開啟 HTTP/3、證明用戶端真的用了它，並了解哪些請求在 QUIC 上的行為不同。
+description: 設定 HTTP/3、確認用戶端使用的協定版本，並了解 QUIC 的請求處理差異。
 ---
 
-HTTP/3 預設就是開啟的：除非全域協定清單排除了 `h3`，否則 HTTPS 網站都會在 UDP 443 上得到一個 QUIC 監聽器。需要小心的是如何證明用戶端真的用了它，因為悄悄退回 HTTP/2 的用戶端，看起來和成功一模一樣。
+HTTP/3 預設開啟：除非全域協定清單排除了 `h3`，否則 HTTPS 網站都會在 UDP 443 啟用 QUIC 監聽器。請檢查回應使用的協定版本；用戶端可能在 HTTP/3 連線失敗後改用 HTTP/2。
 
 📌 本頁描述 **v0.2.0**。
 
 ## 🧾 開始之前
 
 - 一個解析到這台主機的名稱，以及它的憑證（[HTTPS](/zh-TW/start/https/)）。
-- 在供應商與主機的防火牆上都**開放 UDP 443**。QUIC 沒有後備方案：UDP 被擋住時，用戶端會改用 HTTP/2，而且完全不會提起。
-- 支援 HTTP/3 的用戶端。多數發行版內建的 `curl` 都不支援——硬要用的話，它會明確告訴你：
+- 在供應商與主機的防火牆上都 **開放 UDP 443**。UDP 被擋住時，用戶端可能改用 HTTP/2。
+- 支援 HTTP/3 的用戶端。多數發行版內建的 `curl` 不支援 HTTP/3，執行時會顯示下列錯誤：
 
   ```text
   curl: option --http3: the installed libcurl version doesn't support this
@@ -35,7 +35,7 @@ example.com {
 }
 ```
 
-網站執行時在主機上實測：
+網站啟動後，在主機上檢查 UDP 監聽器：
 
 ```bash
 sudo ss -lunp | grep ':443 '
@@ -115,10 +115,10 @@ HTTP/3 與 HTTP/1.1、HTTP/2 共用政策程式碼，所以路由、匹配器、
 
 ## ⚠️ 無法運作時
 
-- **`option --http3: the installed libcurl version doesn't support this`。**用戶端不支援 HTTP/3；請照上面的方式使用容器。
-- **`curl --http3` 卡住或逾時。**UDP 443 在某處被擋住了。請先檢查供應商的防火牆或安全群組，再檢查主機本身的。
-- **主機上沒有 UDP 監聽器。**`servers` 的協定清單中少了 `h3`，或正在執行的檔案不是你編輯的那一份（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
-- **HTTP/3 在本機可以用，從外部卻不行。**用戶端的網路擋掉了 UDP 443，這在企業與飯店網路上很常見；瀏覽器會悄悄退回。
+- **`option --http3: the installed libcurl version doesn't support this`。** 用戶端不支援 HTTP/3；請照上面的方式使用容器。
+- **`curl --http3` 卡住或逾時。** UDP 443 可能被封鎖。請先檢查供應商的防火牆或安全群組，再檢查主機本身的。
+- **主機上沒有 UDP 監聽器。** `servers` 的協定清單中少了 `h3`，或正在執行的檔案不是你編輯的那一份（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
+- **HTTP/3 在本機可以用，從外部卻不行。** 用戶端所在的網路可能封鎖 UDP 443；瀏覽器可能改用 HTTP/2。
 
 ## 🧭 下一步
 

@@ -78,7 +78,7 @@ notAfter=Dec 21 02:35:02 2026 GMT
 
 DNS-01 以發布一筆 TXT 記錄來證明你掌控某個名稱，而不是在 80 連接埠上回應。萬用字元憑證必須用它，80 連接埠關閉的主機也一樣。
 
-📌 **0.2.0 的 DNS-01 可使用 Cloudflare。**伺服器發布 ACME TXT 摘要，並保留同名的其他 TXT 記錄。以下是修正後建置的歷史實測輸出；本次文件更新未重新進行公開 CA 簽發。
+📌 **0.2.0 的 DNS-01 可使用 Cloudflare。** 伺服器發布 ACME TXT 摘要，並保留同名的其他 TXT 記錄。
 
 設定需要 provider 區塊：
 
@@ -101,7 +101,7 @@ DNS-01 以發布一筆 TXT 記錄來證明你掌控某個名稱，而不是在 8
 有兩個細節容易漏掉。第一，區塊裡的 `auto` 這一行才會把名稱放進簽發清單；少了它，伺服器會記錄 `authorised for 0
 hostname(s)`，永遠不會申請憑證，每次交握都會以 `NO_CERTIFICATE_SET` 失敗。第二，token 是 Cloudflare API token，必須對存放該名稱的 zone 具有 `Zone:DNS:Edit` 權限。
 
-🃏 **一張葉憑證涵蓋整個網站。**`*.example.com` 網站申請的就是 `*.example.com` 本身：一張在啟動時取得的憑證，提供給它底下的每一個名稱。萬用字元只涵蓋恰好一層標籤，所以頂層網域需要自己的項目——如果網站也要回應 `example.com`，請寫成 `*.example.com, example.com`，每個主體都會照書寫的樣子申請。以這種方式提供的子網域不會出現在 Certificate Transparency 日誌中，這本來就是使用萬用字元的隱私理由。
+🃏 **一張葉憑證涵蓋整個網站。** `*.example.com` 網站申請的就是 `*.example.com` 本身：一張在啟動時取得的憑證，提供給它底下的每一個名稱。萬用字元只涵蓋恰好一層標籤，所以頂層網域需要自己的項目——如果網站也要回應 `example.com`，請寫成 `*.example.com, example.com`，每個主體都會照書寫的樣子申請。以這種方式提供的子網域不會出現在 Certificate Transparency 日誌中，這本來就是使用萬用字元的隱私理由。
 
 網站底下的任何名稱都由這一張葉憑證提供。從另一台機器：
 
@@ -164,7 +164,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
 
 `pingclair untrust` 可以再把它移除，同樣要加上儲存區前綴。
 
-📌 **升級注意。**舊的 `internal/` 目錄不會遷移；0.2.0 會建立新的憑證授權單位。每個用戶端都必須重新信任根憑證。
+📌 **升級注意。** 舊的 `internal/` 目錄不會遷移；0.2.0 會建立新的憑證授權單位。每個用戶端都必須重新信任根憑證。
 
 ## 📜 你自己提供的憑證
 
@@ -188,11 +188,11 @@ https://byo.test {
 
 ## ⚠️ HTTPS 起不來時
 
-- **`contact email has forbidden domain "example.com"`。**Let's Encrypt 不接受保留的範例網域作為帳號聯絡人。請在 `email` 選項裡填入真實的信箱。
-- **日誌中出現 `NO_CERTIFICATE_SET`。**交握時提出的名稱，伺服器沒有對應的憑證。請看它上方的日誌：沒有 `auto` 的 `tls` 區塊永遠不會開始簽發，並確認 DNS challenge 設定。
-- **驗證回應從未被提供。**80 連接埠被防火牆擋住，或被其他程式佔用。憑證授權單位必須能從網際網路連到 `http://your-name/.well-known/acme-challenge/`。
-- **名稱沒有解析到這台主機。**`dig +short A your-name` 會顯示憑證授權單位將連到哪裡，剛改過設定時，結果不一定是你預期的。
-- **反覆失敗。**Let's Encrypt 會依主機名稱限制驗證失敗的次數。重試前先修好原因，否則重試本身就會變成錯誤。
+- **`contact email has forbidden domain "example.com"`。** Let's Encrypt 不接受保留的範例網域作為帳號聯絡人。請在 `email` 選項裡填入真實的信箱。
+- **日誌中出現 `NO_CERTIFICATE_SET`。** 交握時提出的名稱，伺服器沒有對應的憑證。請看它上方的日誌：沒有 `auto` 的 `tls` 區塊永遠不會開始簽發，並確認 DNS challenge 設定。
+- **驗證回應從未被提供。** 80 連接埠被防火牆擋住，或被其他程式佔用。憑證授權單位必須能從網際網路連到 `http://your-name/.well-known/acme-challenge/`。
+- **名稱沒有解析到這台主機。** `dig +short A your-name` 會顯示憑證授權單位將連到哪裡，剛改過設定時，結果不一定是你預期的。
+- **反覆失敗。** Let's Encrypt 會依主機名稱限制驗證失敗的次數。重試前先修好原因，否則重試本身就會變成錯誤。
 
 ## 🧭 下一步
 

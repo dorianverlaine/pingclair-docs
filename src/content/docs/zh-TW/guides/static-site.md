@@ -59,7 +59,7 @@ gzip      200  301 bytes   content-encoding: gzip
 identity  200 36000 bytes  (no content-encoding)
 ```
 
-代理的回應沒有實作 Brotli，要求使用它會是編譯錯誤，而不是悄悄降級：
+代理回應尚未支援 Brotli；設定此編碼會在編譯時被拒絕：
 
 ```text
 Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip`
@@ -144,11 +144,11 @@ http://:8080 {
 
 ## ⚠️ 無法運作時
 
-- **`Unsupported feature: 'encode br'`。**Brotli 會被指名拒絕；請使用 `encode zstd gzip`。
-- **`Unknown directive 'file_server: …'`。**這個選項不存在，`validate` 會指出被拒絕的寫法，而不是忽略它。
-- **出現目錄列表而不是頁面。**該目錄沒有 `index.html`，這要嘛正是你要的，要嘛是少了檔案。
-- **應用程式處理的路由回應 `404`。**缺少單頁應用程式的後備路由：`try_files {path} /index.html`。
-- **重載後變更沒有出現。**檔案是每個請求時才讀取的，所以新檔案不需重載就會立即出現。新增或搬移的監聽器則需要重啟（[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)）。
+- **`Unsupported feature: 'encode br'`。** Brotli 會被指名拒絕；請使用 `encode zstd gzip`。
+- **`Unknown directive 'file_server: …'`。** 這個選項不存在，`validate` 會指出被拒絕的寫法，而不是忽略它。
+- **出現目錄列表而不是頁面。** 該目錄沒有 `index.html`，這要嘛正是你要的，要嘛是少了檔案。
+- **應用程式處理的路由回應 `404`。** 缺少單頁應用程式的後備路由：`try_files {path} /index.html`。
+- **重載後變更沒有出現。** 檔案是每個請求時才讀取的，所以新檔案不需重載就會立即出現。新增或搬移的監聽器則需要重啟（[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)）。
 
 ## 🧭 下一步
 

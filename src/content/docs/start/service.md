@@ -6,8 +6,6 @@ sidebar:
 description: What the installed systemd unit does, how to start, stop, and reload it, where the logs go, and what a failing configuration looks like from the outside.
 ---
 
-📌 The recorded output below retains its original version. Its version strings and measurements are not new 0.2.0 verification.
-
 The installer leaves a `systemd` unit enabled and running. This page reads that
 unit line by line, shows how to drive it, and describes what the two failure
 shapes look like from the outside: a server that will not start and a
@@ -189,7 +187,6 @@ Startup, reloads, certificate work, and one access line per request appear
 there:
 
 ```text
-INFO pingclair::run: 🚀 Starting Pingclair v0.2.0-rc.3
 INFO pingclair::run: 📄 Loaded configuration from: /etc/Pingclair/Pingclairfile
 INFO pingclair::run: 🔔 Received SIGUSR1, reloading configuration from: /etc/Pingclair/Pingclairfile
 INFO pingclair::run: ✅ Configuration reload completed successfully in 323.341µs

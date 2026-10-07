@@ -76,10 +76,8 @@ pingclair version
 pc service status
 ```
 
-This update was checked against the release-candidate source and local binary.
-The published 0.2.0 installer, Ubuntu/Fedora service upgrade, public certificate
-issuance, and container pull have not been rerun for this page. Verify the
-installed tag and your own routes before treating the upgrade as complete.
+Confirm that `pingclair version` reports `v0.2.0`, the service is running, and
+your routes respond as expected.
 
 The installer has no version-pinning flag. For containers, pin the intended tag:
 

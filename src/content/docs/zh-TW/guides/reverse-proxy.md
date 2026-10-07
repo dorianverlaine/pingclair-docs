@@ -82,7 +82,7 @@ http://:8080 {
 }
 ```
 
-⚠️ `lb_policy weighted_round_robin 3 1` 會把權重對應到寫在它上方的上游，所以 `to` 這幾行必須寫在它**之前**。順序反過來的話，`validate` 會以 `2 weights were given for 0 upstreams` 拒絕這個檔案。
+⚠️ `lb_policy weighted_round_robin 3 1` 會把權重對應到寫在它上方的上游，所以 `to` 這幾行必須寫在它 **之前**。順序反過來的話，`validate` 會以 `2 weights were given for 0 upstreams` 拒絕這個檔案。
 
 標記為 `backup` 的上游，只有在其他所有上游都無法使用時才會被用到：
 
@@ -194,11 +194,11 @@ INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_st
 
 ## ⚠️ 無法運作時
 
-- **代理回傳 `502`。**沒有任何上游回應。請確認應用程式正在監聽（`sudo ss -ltnp | grep :3000`），而且位址相符。由 Pingclair 產生的 `502` 或 `504` 會帶有 `Proxy-Status: pingclair; error=…`；自訂 `handle_errors` 回應也不帶此欄位，不能只以缺少欄位判定來自應用程式。
-- **停頓一陣子後出現 `504`。**有逾時觸發了：後端太慢是 `first_byte_timeout`，本文太慢是 `read_timeout`，主機始終不接受連線則是 `connect_timeout`。
-- **`Unknown directive 'reverse_proxy: …'`。**這個選項屬於某個巢狀區塊——逾時放在 `transport http` 底下，檢查放在 `health_check` 底下——`validate` 會指出它拒絕的確切寫法。
-- **設定變更沒有生效。**重載無法新增或搬移監聽器。新檔案有這類變更時，unit 的狀態列會列出變動的位址，執行 `sudo pc service restart` 即可套用。請見[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)。
-- **每個請求都落在同一個執行個體上。**它是唯一健康的那一個。健康檢查的日誌會說明其他執行個體何時、為何離開輪替（`ConnectRefused`、`failure_statuses` 等）。
+- **代理回傳 `502`。** 沒有任何上游回應。請確認應用程式正在監聽（`sudo ss -ltnp | grep :3000`），而且位址相符。由 Pingclair 產生的 `502` 或 `504` 會帶有 `Proxy-Status: pingclair; error=…`；自訂 `handle_errors` 回應也不帶此欄位，不能只以缺少欄位判定來自應用程式。
+- **停頓一陣子後出現 `504`。** 有逾時觸發了：後端太慢是 `first_byte_timeout`，本文太慢是 `read_timeout`，主機始終不接受連線則是 `connect_timeout`。
+- **`Unknown directive 'reverse_proxy: …'`。** 這個選項屬於某個巢狀區塊——逾時放在 `transport http` 底下，檢查放在 `health_check` 底下——`validate` 會指出它拒絕的確切寫法。
+- **設定變更沒有生效。** 重載無法新增或搬移監聽器。新檔案有這類變更時，unit 的狀態列會列出變動的位址，執行 `sudo pc service restart` 即可套用。請見[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)。
+- **每個請求都落在同一個執行個體上。** 它是唯一健康的那一個。健康檢查的日誌會說明其他執行個體何時、為何離開輪替（`ConnectRefused`、`failure_statuses` 等）。
 
 ## 🧭 下一步
 

@@ -7,7 +7,7 @@ description: Put Pingclair on a Linux host from a release binary, with Docker, o
 ---
 
 Pingclair ships as a single Linux binary. This page installs it, shows what the
-installer left behind, and verifies that the server answers. This page targets **v0.2.0**. The transcripts below retain their historical release-candidate output. The 0.2.0 installer and container downloads have not been rerun on fresh hosts; install after the release tag is available and confirm it with `pingclair version`.
+installer left behind, and verifies that the server answers. This page targets **v0.2.0**.
 
 ## 🧾 What you need
 
@@ -36,24 +36,7 @@ that host cannot be reached it falls back to the GitHub releases API and the
 checksum file published beside the archive, so the install does not depend on
 one provider. It then creates the service user, grants that user the capability
 to bind low ports, writes the default configuration, installs the unit, and
-starts the service. A complete run ends like this:
-
-```text
-Detected architecture: x86_64
-Installing v0.2.0-rc.3 — a release candidate, not a final release.
-Downloading https://releases.pingclair.com/pingclair/releases/0.2.0-rc.3/pingclair-linux-x86_64.tar.gz (from releases.pingclair.com)...
-✅ sha256 matches the release channel document
-Creating system user 'pingclair'...
-Setting capabilities...
-Configuring directories and assets...
-Fetching default landing page...
-Creating default Pingclairfile...
-Installing Systemd service...
-Creating 'pc' symlink...
-✅ Installation Complete!
-Use pc service status to check the service.
-Config: /etc/Pingclair/Pingclairfile
-```
+starts the service.
 
 To run an unreleased fix, build `main` on the host instead:
 
@@ -106,12 +89,8 @@ Ask the binary for its version:
 pingclair version
 ```
 
-```text
-v0.2.0-rc.3
-```
-
-`pc` is the same binary, so `pc version` prints the same string. Then ask
-`systemd` what it thinks:
+For the 0.2.0 release, the version is `v0.2.0`. `pc version` reports the same
+version. Check the service status next:
 
 ```bash
 pc service status
@@ -136,17 +115,6 @@ Finally, ask the server:
 
 ```bash
 curl -i http://localhost/
-```
-
-```text
-HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-Content-Length: 18747
-Last-Modified: Tue, 22 Sep 2026 03:21:54 GMT
-ETag: "493b-6ab1f452"
-Vary: Accept-Encoding
-Accept-Ranges: bytes
-server: Pingclair
 ```
 
 A `200` with `ETag` and `Last-Modified` means the file server answered, and the

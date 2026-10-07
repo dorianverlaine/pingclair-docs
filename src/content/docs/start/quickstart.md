@@ -6,8 +6,6 @@ sidebar:
 description: Write a first Pingclairfile, validate it, run it in the foreground or the background, and serve a real directory.
 ---
 
-📌 The recorded output below retains its original version. Its version strings and measurements are not new 0.2.0 verification.
-
 This page walks from an installed host to a running server: write a
 configuration, validate it, start the server, and verify that it answers. It
 assumes the [installation](/start/install/) is done.
@@ -111,14 +109,6 @@ In the foreground, where the log stays attached to your terminal:
 pingclair run Pingclairfile
 ```
 
-```text
-🚀 Starting Pingclair with config: Pingclairfile
-🚀 Starting Pingclair v0.2.0-rc.3
-📄 Loaded configuration from: Pingclairfile
-🔧 Configured 1 server(s)
-🔐 Auto HTTPS: enabled
-```
-
 Add `--watch` to reload the configuration every time you save it, which is the
 development loop:
 
@@ -149,17 +139,6 @@ does not need it.
 
 ```bash
 curl -i http://localhost:8080/
-```
-
-```text
-HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-Content-Length: 34
-Last-Modified: Tue, 22 Sep 2026 03:26:39 GMT
-ETag: "22-6ab1f56f"
-Vary: Accept-Encoding
-Accept-Ranges: bytes
-server: Pingclair
 ```
 
 `ETag` and `Last-Modified` mean the file server read the file from disk. The

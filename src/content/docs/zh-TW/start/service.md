@@ -3,12 +3,10 @@ title: 以服務方式執行
 h1_emoji: '🔁'
 sidebar:
   order: 4
-description: 已安裝的 systemd unit 做了什麼、如何啟動、停止與重載它、日誌寫到哪裡，以及設定出錯時從外部看起來是什麼樣子。
+description: systemd 服務設定、啟動與停止方式、重載規則、日誌位置，以及設定錯誤的處理方式。
 ---
 
-📌 以下實測輸出保留原始版本；其版本號與效能數字不代表重新驗證了 0.2.0。
-
-安裝程式會留下一個已啟用且正在執行的 `systemd` unit。本頁逐行解讀這個 unit、說明如何操作它，並描述兩種失敗的外觀：伺服器起不來，以及執行中的伺服器拒絕了新設定。
+安裝程式會建立並啟用 `systemd` 服務。本頁說明服務設定、操作命令，以及啟動失敗或重載遭拒時的檢查方式。
 
 ## 🧾 unit 做了什麼
 
@@ -42,11 +40,11 @@ NoNewPrivileges=true
 
 依序來看：
 
-- `Type=notify` 與 `NotifyAccess=main`：伺服器在監聽器綁定完成時主動通知 `systemd`，所以 `systemctl start` 會等到代理真的能回應才返回，而不是行程一出現就算。
+- `Type=notify` 與 `NotifyAccess=main`：伺服器在監聽器綁定完成時主動通知 `systemd`，因此 `systemctl start` 會等待監聽器就緒後才返回。
 - `User=pingclair` 搭配 `AmbientCapabilities=CAP_NET_BIND_SERVICE`：伺服器以非特權身分執行，仍然可以綁定 80 與 443 連接埠。
 - 這裡刻意沒有 `PINGCLAIR_TLS_STORE`。服務帳號的家目錄是 `/var/lib/pingclair`，憑證自然落在 `/var/lib/pingclair/.local/share/pingclair`：這是二進位檔的預設值、安裝程式建立並遷移進去的目錄，也是 `pingclair
   environ` 印出的路徑。再多指定一個儲存區，等於替一個已有答案的問題硬塞第二個答案。
-- 這裡刻意沒有執行 `validate` 的 `ExecStartPre`。它看起來是做這項檢查最安全的位置，但正是陷阱所在：`systemd` 只把 `RestartPreventExitStatus=` 套用在主行程上，不套用在失敗的前置命令上，所以編譯器拒絕的設定曾經每五秒就被重試一次，而不是讓 unit 停在失敗狀態。伺服器會在綁定任何東西之前自行編譯檔案，拒絕時以 1 結束，而上面的重啟策略正是為這個結束碼寫的——`pingclair run` 就是為了當這個行程而存在。
+- unit 不使用 `ExecStartPre` 執行 `validate`，因為 `RestartPreventExitStatus=` 只適用於主行程，無法阻止失敗的前置命令被持續重試。伺服器會在綁定監聽器前編譯設定；無效設定以結束碼 1 終止，讓 unit 保持失敗狀態。
 - `ExecReload` 送出 `SIGUSR1`，伺服器把這個訊號視為「重新讀取檔案」。`SIGHUP` 會被刻意忽略；曾有 unit 送出它，回報成功，舊設定卻繼續在提供服務（[issue #66](https://github.com/dorianverlaine/pingclair/issues/66)）。由於 `systemd` 只能看到 `kill` 結束了，伺服器會把它對檔案的處理結果發布在這個 unit 的狀態列上——`Serving (reloaded 1
   listener(s) in 323.341µs)` 或 `Reload rejected: …`——`systemctl status` 會顯示出來。完整說明見下方的[重載一節](#-重載意味著什麼)。
 - `Restart=on-failure` 搭配 `RestartPreventExitStatus=1` 與 `RestartSec=5s`：結束碼 1 代表設定或憑證儲存區完全無法使用，所以 unit 會停在 `failed`，等維運人員查看，而不是每五秒重試一次。其他任何失敗都會重啟。
@@ -141,7 +139,6 @@ sudo journalctl -u pingclair --since '10 min ago'
 啟動、重載、憑證作業，以及每個請求一行的存取紀錄都會出現在那裡：
 
 ```text
-INFO pingclair::run: 🚀 Starting Pingclair v0.2.0-rc.3
 INFO pingclair::run: 📄 Loaded configuration from: /etc/Pingclair/Pingclairfile
 INFO pingclair::run: 🔔 Received SIGUSR1, reloading configuration from: /etc/Pingclair/Pingclairfile
 INFO pingclair::run: ✅ Configuration reload completed successfully in 323.341µs
@@ -158,14 +155,14 @@ ERROR pingclair::run:    💡 Previous configuration remains active, unchanged
 
 若要一份獨立、可輪替的日誌，請設定 `log` 輸出，寫到 `/var/log/pingclair` 底下；這個目錄由安裝程式建立，並交給服務使用者擁有。
 
-## ⚠️ 服務起不來時
+## ⚠️ 服務啟動失敗時
 
-- **`is-active` 顯示 `activating`，`NRestarts` 不斷增加。**這個 unit 是舊版安裝程式寫的，它有兩個缺陷。它帶有 `Restart=always` 卻沒有 `RestartPreventExitStatus`，而且以 `ExecStartPre` 命令執行 `validate`，而 `RestartPreventExitStatus` 管不到前置命令——所以編譯器拒絕的設定每五秒就被重試一次，看起來像是一個始終安定不下來的 unit，而不是一個已經失敗的 unit。現在安裝的 unit 帶有 `Restart=on-failure` + `RestartPreventExitStatus=1`，沒有前置命令，被拒絕的啟動會讓 `is-active` 停在 `failed`，`NRestarts` 為零。在舊的安裝上，除錯前請先停止這個迴圈：`sudo systemctl stop pingclair`，修好檔案，再執行 `sudo systemctl reset-failed pingclair`。
+- **`is-active` 顯示 `activating`，`NRestarts` 不斷增加。** 舊版 unit 的 `Restart=always` 或 `ExecStartPre` 驗證命令可能造成持續重試。目前的 unit 使用 `Restart=on-failure`、`RestartPreventExitStatus=1`，且不執行前置驗證。請先執行 `sudo systemctl stop pingclair`，更新 unit 並修正設定，再執行 `sudo systemctl reset-failed pingclair`。
 - **`Job for pingclair.service failed because the control process exited with
-  error code`。**伺服器在綁定任何東西之前就拒絕了設定，編譯器給的理由在 journal 裡，例如 ``Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``。
-- **`TLS store /var/lib/pingclair/.local/share/pingclair is not writable: Permission denied`。**儲存區屬於服務帳號。請檢查 `sudo ls -ld /var/lib/pingclair/.local/share/pingclair`；擁有者應該是 `pingclair`。
-- **`systemd-analyze verify` 對已安裝的 unit 回報 `Missing '=', ignoring line`。**舊版的一行式安裝寫出的 unit，其註解被 shell 展開了——變成 25 行 `--help` 輸出，`systemd` 會忽略它們。用目前的安裝程式重新安裝，就會原封不動地寫出 unit，這則回報也會消失。
-- **unit 在執行，卻沒有任何回應。**監聽器已綁定，請求卻沒有抵達。請依[安裝頁面](/zh-TW/start/install/)的說明，先檢查供應商的防火牆，再檢查主機本身的。
+  error code`。** 伺服器在綁定任何東西之前就拒絕了設定，編譯器給的理由在 journal 裡，例如 ``Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``。
+- **`TLS store /var/lib/pingclair/.local/share/pingclair is not writable: Permission denied`。** 儲存區屬於服務帳號。請檢查 `sudo ls -ld /var/lib/pingclair/.local/share/pingclair`；擁有者應該是 `pingclair`。
+- **`systemd-analyze verify` 對已安裝的 unit 回報 `Missing '=', ignoring line`。** 舊版的一行式安裝寫出的 unit，其註解被 shell 展開了——變成 25 行 `--help` 輸出，`systemd` 會忽略它們。用目前的安裝程式重新安裝，就會原封不動地寫出 unit，這則回報也會消失。
+- **unit 在執行，卻沒有任何回應。** 監聽器已綁定，請求卻沒有抵達。請依[安裝頁面](/zh-TW/start/install/)的說明，先檢查供應商的防火牆，再檢查主機本身的。
 
 ## 🧭 下一步
 

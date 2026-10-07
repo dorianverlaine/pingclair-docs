@@ -6,9 +6,7 @@ sidebar:
 description: 寫出第一份 Pingclairfile、驗證它、在前景或背景執行，並提供一個真實的目錄。
 ---
 
-📌 以下實測輸出保留原始版本；其版本號與效能數字不代表重新驗證了 0.2.0。
-
-本頁帶你在一台已裝好 Pingclair 的主機上，從零開始建立一個你能掌控的伺服器：寫一份設定、通過驗證、啟動並觀察它，最後確認檔案伺服器確實有回應。前提是你已經完成[安裝](/zh-TW/start/install/)。
+完成[安裝](/zh-TW/start/install/)後，依照本頁建立設定、驗證並啟動伺服器，再確認網站能正常回應。
 
 ## 🧾 開始之前
 
@@ -56,7 +54,7 @@ pingclair validate
 
 `validate` 預設讀取 `./Pingclairfile`，也會偵測 `./Caddyfile`。它會編譯設定並執行語意檢查，例如憑證路徑是否存在。驗證不是參考意見：沒通過的設定就不會執行，失敗時最後一行會印出原因。
 
-## 3. 🧭 看看設定會變成什麼
+## 3. 🧭 查看編譯後的設定
 
 ```bash
 pingclair adapt --pretty
@@ -76,7 +74,7 @@ pingclair adapt --pretty
       ],
 ```
 
-編譯後的 JSON 就是伺服器實際執行的形式。當某個指令的行為與文件不符時，這是第一個該看的地方。若想看 `pingclair fmt` 會怎麼改這個檔案：
+編譯後的 JSON 是伺服器使用的設定格式。若指令的行為不符預期，請先檢查此輸出。以下命令可顯示 `pingclair fmt` 的格式調整：
 
 ```bash
 pingclair fmt --diff
@@ -95,14 +93,6 @@ pingclair fmt --diff
 
 ```bash
 pingclair run Pingclairfile
-```
-
-```text
-🚀 Starting Pingclair with config: Pingclairfile
-🚀 Starting Pingclair v0.2.0-rc.3
-📄 Loaded configuration from: Pingclairfile
-🔧 Configured 1 server(s)
-🔐 Auto HTTPS: enabled
 ```
 
 加上 `--watch`，每次存檔都會重新載入設定，這就是開發時的工作循環：
@@ -134,17 +124,6 @@ pingclair start -c Pingclairfile
 curl -i http://localhost:8080/
 ```
 
-```text
-HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-Content-Length: 34
-Last-Modified: Tue, 22 Sep 2026 03:26:39 GMT
-ETag: "22-6ab1f56f"
-Vary: Accept-Encoding
-Accept-Ranges: bytes
-server: Pingclair
-```
-
 `ETag` 與 `Last-Modified` 代表檔案伺服器確實從磁碟讀取了檔案，本文就是 `public/index.html`。要停止背景執行的伺服器：
 
 ```bash
@@ -155,9 +134,9 @@ pingclair stop
 ✅ Pingclair stopped
 ```
 
-## ⚡ 一行命令就能起的伺服器
+## ⚡ 使用單一命令啟動伺服器
 
-有三個子命令不需要設定檔就能起服務，適合隨手試東西，或用在用完即丟的主機上：
+下列三個子命令不需要設定檔，適合本機測試與臨時環境：
 
 ```bash
 pingclair file-server --listen :8081 --root ./public
@@ -192,11 +171,11 @@ curl -i http://localhost/
 
 ## ⚠️ 無法運作時
 
-- **`Address already in use`。**安裝程式的服務仍佔著 `:80`，或有其他行程佔用了你的連接埠。`sudo ss -ltnp | grep :80` 會列出佔用者；`sudo pc service stop` 可以釋放預設的那個。
-- **對 `http://localhost:8080` 出現 `Empty reply from server`。**你正在用明文跟 TLS 監聽器說話。請在網站位址加上 `http://` scheme，或改用 `https://` 連線並信任內部憑證。
-- **`Cannot reach admin API at 127.0.0.1:2019`。**設定裡沒有 `admin` 選項，所以沒有東西在等 `pingclair stop` 與 `pingclair reload`。請把它加進全域選項區塊，或在前景行程按 Ctrl-C 停止。
-- **`curl` 連 loopback 位址時卡住。**有系統代理攔截了請求。請改用 `curl --noproxy '*'` 再試一次。
-- **驗證失敗並顯示 `Unsupported feature`。**這個指令認得但沒有實作，訊息會指出替代方案，例如 `encode br`：代理的回應沒有實作 Brotli，所以訊息會指向 `encode zstd gzip`。
+- **`Address already in use`。** 安裝程式的服務仍佔著 `:80`，或有其他行程佔用了你的連接埠。`sudo ss -ltnp | grep :80` 會列出佔用者；`sudo pc service stop` 可以釋放預設的那個。
+- **對 `http://localhost:8080` 出現 `Empty reply from server`。** 你正在用明文跟 TLS 監聽器說話。請在網站位址加上 `http://` scheme，或改用 `https://` 連線並信任內部憑證。
+- **`Cannot reach admin API at 127.0.0.1:2019`。** 設定裡沒有 `admin` 選項，所以沒有東西在等 `pingclair stop` 與 `pingclair reload`。請把它加進全域選項區塊，或在前景行程按 Ctrl-C 停止。
+- **`curl` 連 loopback 位址時卡住。** 有系統代理攔截了請求。請改用 `curl --noproxy '*'` 再試一次。
+- **驗證失敗並顯示 `Unsupported feature`。** 這個指令認得但沒有實作，訊息會指出替代方案，例如 `encode br`：代理的回應沒有實作 Brotli，所以訊息會指向 `encode zstd gzip`。
 
 ## 🧭 下一步
 

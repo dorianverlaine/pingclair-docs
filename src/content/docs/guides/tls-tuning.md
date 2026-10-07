@@ -8,10 +8,9 @@ description: Which TLS and protocol settings Pingclair honors, which it refuses 
 
 📌 TLS examples below use `./certs/` in the working directory. Supply your own certificate, matching private key, or client CA file there; validation reads these files too.
 
-Pingclair intentionally exposes few TLS settings: a name gets a certificate
-automatically, and the settings on this page decide how. Any other TLS setting
-Caddy accepts is refused by name rather than ignored, so a configuration never
-quietly does less than it says. Each result below was measured on a real host.
+Pingclair obtains certificates for site names automatically. This page covers
+certificate sources, HTTP/3, and client certificate authentication. Unsupported
+TLS options are rejected when the configuration loads.
 
 📌 This page describes **v0.2.0**.
 

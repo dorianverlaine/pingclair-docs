@@ -3,13 +3,12 @@ title: Serve HTTP/3
 h1_emoji: '⚡'
 sidebar:
   order: 4
-description: Turn HTTP/3 on, prove that a client really used it, and know which requests behave differently over QUIC.
+description: Configure HTTP/3, verify the protocol used by the client, and understand request handling differences over QUIC.
 ---
 
 HTTP/3 is on by default: an HTTPS site gets a QUIC listener on UDP 443 unless
-the global protocol list leaves `h3` out. The part that needs care is proving a
-client really used it, because a client that silently falls back to HTTP/2 looks
-exactly like success.
+the global protocol list excludes `h3`. Check the response protocol: a client
+may use HTTP/2 after an HTTP/3 connection fails.
 
 📌 This page describes **v0.2.0**.
 
@@ -17,10 +16,10 @@ exactly like success.
 
 - A name that resolves to the host, and a certificate for it
   ([HTTPS](/start/https/)).
-- **UDP 443 open** in the provider's firewall and the host's. QUIC has no
-  fallback: if UDP is blocked, clients use HTTP/2 and never mention it.
+- **UDP 443 open** in the provider's firewall and the host's. If UDP is
+  blocked, clients may use HTTP/2 instead.
 - A client with HTTP/3 support. The system `curl` on most distributions does not
-  have it — asking anyway is explicit about it:
+  have it and reports this error:
 
   ```text
   curl: option --http3: the installed libcurl version doesn't support this
