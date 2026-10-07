@@ -557,6 +557,8 @@ Context:  site block, handle, route
 
 以主機名稱指定的上游，會依全域 `dns_refresh` 設定的間隔重新解析，所以換了位址重新啟動的後端不需要重新載入就能跟上。解析失敗時，先前的位址會繼續留在輪替中。
 
+上游自己的 `Server` 欄位行會原樣到達用戶端：Caddy 在處理鏈之前先設定自己的 `Server`，接著代理把上游標頭複製上去而覆蓋它，本伺服器遵循同一規則，只對自己產生的回應加上 `Server: Pingclair`。`Via` 是附加而非取代，並在回應原本經過的鏈之後標示這個中間節點（`1.1 Pingclair`）。回應也會帶著伺服器為每個請求產生的 `X-Request-Id`。
+
 主動健康檢查會在請求之外探測每個上游。失敗的上游會在使用者請求到達之前離開輪替，並在達到設定的成功探測次數後重新加入。`backup` 上游只有在所有主要上游都無法使用時才會被使用。權重為 `0` 的上游會被排空：它不會收到任何請求。
 
 逾時設定寫在 `transport http` 區塊中：`connect_timeout`（Caddy 的 `dial_timeout`）、`first_byte_timeout`（Caddy 的 `response_header_timeout`）、`read_timeout` 與 `write_timeout`。`lb_try_duration` 限制請求抵達後多久之內還能開始新的嘗試；它不會切斷已在進行中的回應。

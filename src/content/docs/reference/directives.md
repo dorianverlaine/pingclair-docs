@@ -768,6 +768,14 @@ A hostname upstream is resolved again on the interval set by the global
 `dns_refresh`, so a backend that restarts on a new address is followed without
 a reload. A failed lookup keeps the previous address in rotation.
 
+The origin's own `Server` field line reaches the client unchanged: Caddy sets
+its own before the handler chain and the proxy's copy of the upstream headers
+replaces it, and this server follows that rule, adding `Server: Pingclair`
+only to responses it generates itself. `Via` is appended, not replaced, and
+names this intermediary (`1.1 Pingclair`) after whatever chain the response
+already crossed. Responses also carry `X-Request-Id`, which the server
+generates for every request it handles.
+
 Active health checks probe each upstream out of band. A failed upstream leaves
 rotation before a user request reaches it, and rejoins after the configured
 number of successful probes. A `backup` upstream is used only when every
