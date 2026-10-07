@@ -618,6 +618,12 @@ own process log instead: `output file <path>`, `output stdout`,
 mode `0600` if it is missing. `RUST_LOG` takes precedence over a configured `level`,
 and the startup banner stays on standard output.
 
+Access logging is a property of the listener, as it is in Caddy: one site's
+`log` turns records on for every request that listener serves, and a listener
+whose sites never mention `log` writes none. A request whose `Host` matches no
+site — or one refused before routing — is written to the process log, which is
+where the default access logger goes.
+
 Block options include `output` (`stdout`, `stderr`, or `file <path>`), `format`
 (`json` or `console`), `level`, the `hostnames` selector, `include` and
 `exclude` filters, `sampling`, and file rotation (`roll_size`, `roll_keep`,
