@@ -489,10 +489,13 @@ regular-expression replace on a header named `set`.
 
 Differences from Caddy: a bare field name replaces the value the response
 already carries, while Caddy's `header X-Name value` without `defer` adds a
-field line beside it. An upstream that answered with `X-Name: from-upstream`
-therefore keeps that line under Caddy and loses it here. Write `+X-Name` to
-keep both field lines, or `?X-Name` to set the value only when the response
-has none.
+field line beside it. nginx does the same — `add_header` pushes a field onto
+the response without touching the upstream's — and has no general replace
+directive either: replacing an upstream field there is `proxy_hide_header`
+plus `add_header`. An upstream that answered with `X-Name: from-upstream`
+therefore keeps that line under both servers and loses it here. Write
+`+X-Name` to keep both field lines, or `?X-Name` to set the value only when
+the response has none.
 
 `Strict-Transport-Security` is sent only on encrypted responses and is removed
 from every plaintext one, as RFC 6797 requires. Writing
