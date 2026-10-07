@@ -488,6 +488,8 @@ Context:  site block, handle, route
 
 只有在收集開啟時，這條路由才會提供數據，而收集由全域 `metrics` 選項控制（見[全域選項](#global-options)）。收集關閉時，它會以空的本文回應 `200`。
 
+輸出格式是 Prometheus 文字（`text/plain; version=0.0.4; charset=utf-8`），且不隨用戶端的 `Accept` 標頭改變：這個建置不協商 OpenMetrics，因此 `disable_openmetrics` 會被接受，並描述已經生效的行為，而不是關掉某個功能。要求 OpenMetrics 的抓取程式會收到 Prometheus 文字，這類抓取程式都能讀取。
+
 ```caddyfile
 {
     metrics

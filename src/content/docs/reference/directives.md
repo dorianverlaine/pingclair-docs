@@ -690,6 +690,12 @@ The route serves the numbers only while collection is on, which the global
 `metrics` option controls (see [Global options](#global-options)). With
 collection off, it answers `200` with an empty body.
 
+The exposition is Prometheus text (`text/plain; version=0.0.4; charset=utf-8`)
+and stays that whatever the client's `Accept` header says: this build does not
+negotiate OpenMetrics, so `disable_openmetrics` is accepted and describes the
+behaviour already in force rather than turning something off. A scraper that
+asks for OpenMetrics receives the Prometheus text, which such scrapers read.
+
 ```caddyfile
 {
     metrics
