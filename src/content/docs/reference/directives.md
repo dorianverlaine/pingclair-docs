@@ -245,7 +245,9 @@ the site root set by `root`, or from a root given to this directive alone.
 - `compress off` exempts this file server on a site that otherwise compresses.
 - `precompressed` serves a sidecar such as `app.js.gz` when the client accepts
   that coding. With no arguments, the order is `br zstd gzip`. Sidecars are
-  served only when this option is present.
+  served only when this option is present. While the client accepts the coding,
+  a range request is served from the sidecar's bytes, so `Content-Range` and
+  `ETag` describe the compressed representation.
 - `hide` keeps the named paths from being served or listed. A pattern without
   a `/` hides any path component of that name (`.git` hides `/a/.git/b`); a
   pattern with a `/` is a path under the root. Repeated lines are combined.
