@@ -1106,6 +1106,17 @@ Inside `servers`, `client_ip_headers <field> ...` lists the headers that may
 name the client, in order. Without it, the client comes from `X-Forwarded-For`
 and `Forwarded`, with `X-Real-IP` when neither was sent.
 
+A few of Caddy's global options are refused by name rather than accepted and
+ignored: `acme_ca` and `acme_ca_root` (a custom ACME directory and the CA that
+signs its responses), `on_demand_tls` (issuance driven by a client handshake),
+`filesystem` (named file systems; the local one is the only one registered)
+and `preferred_chains` (choosing which issuer chain to prefer — the ACME client
+takes the one the authority returns first). Each refusal names the option;
+`preferred_chains` is the one whose refusal arrives at `validate` rather than
+`adapt`, because the document itself converts and only the provisioning step
+cannot honour it. `servers { timeouts { … } }` is refused as well: the spelling
+for the same limits here is the site-level [`limits`](#limits) block.
+
 **Changed in 0.2.0:**
 
 - `CF-Connecting-IP` names the client only when `client_ip_headers` lists it.

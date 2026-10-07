@@ -789,6 +789,8 @@ http://:8080 {
 
 在 `servers` 內，`client_ip_headers <field> ...` 依序列出可以指出用戶端的標頭。沒有它時，用戶端取自 `X-Forwarded-For` 與 `Forwarded`，兩者都沒送時才取 `X-Real-IP`。
 
+有幾個 Caddy 的全域選項會被指名拒絕，而不是接受後忽略：`acme_ca` 與 `acme_ca_root`（自訂 ACME 目錄與簽署其回應的 CA）、`on_demand_tls`（由用戶端握手驅動的簽發）、`filesystem`（具名檔案系統；本建置只註冊本機那一種），以及 `preferred_chains`（偏好的簽發者鏈——這裡的 ACME 用戶端採用憑證頒發機構先回傳的那一條）。每個拒絕都會指名該選項；`preferred_chains` 是唯一在 `validate` 而非 `adapt` 階段被拒絕的，因為文件本身可以轉換，只有佈建步驟無法照辦。`servers { timeouts { … } }` 同樣被拒絕：這裡表達同一組限制的寫法是網站層級的 [`limits`](#limits) 區塊。
+
 **0.2.0 變更**：
 
 - 只有 `client_ip_headers` 列出 `CF-Connecting-IP` 時，它才會指出用戶端。
