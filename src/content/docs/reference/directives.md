@@ -807,6 +807,11 @@ The [reverse proxy guide](/guides/reverse-proxy/) explains each option.
 buffer before forwarding, then stream the remainder after the ceiling. Here
 `unlimited` still has an 8 MiB memory ceiling. Sizes use SI/IEC units, so
 `1MB` and `1MiB` differ. Request buffering also reaches FastCGI.
+A FastCGI request that never declared a `Content-Length` — a chunked upload,
+or an HTTP/2 or HTTP/3 body — is read so its length can be measured before
+PHP-FPM sees it, which makes the ceiling a hard limit for that shape: a body
+past it is answered `413` instead of being forwarded as a body PHP-FPM would
+read as empty.
 `flush_interval -1` flushes immediately and bypasses response-cache admission.
 
 ## root

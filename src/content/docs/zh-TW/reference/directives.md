@@ -594,7 +594,7 @@ Pingclair 自己產生的 `502` 或 `504` 會帶有 `Proxy-Status: pingclair; er
 
 [反向代理指南](/zh-TW/guides/reverse-proxy/)會逐一說明每個選項。
 
-`request_buffers <size|unlimited>` 與 `response_buffers <size|unlimited>` 在轉送前先緩衝，達上限後串流傳送其餘資料；`unlimited` 在此仍有 8 MiB 的記憶體上限。使用 SI／IEC 單位，`1MB` 與 `1MiB` 不同。FastCGI 會套用請求緩衝政策。`flush_interval -1` 立即排出回應，不納入回應快取。
+`request_buffers <size|unlimited>` 與 `response_buffers <size|unlimited>` 在轉送前先緩衝，達上限後串流傳送其餘資料；`unlimited` 在此仍有 8 MiB 的記憶體上限。使用 SI／IEC 單位，`1MB` 與 `1MiB` 不同。FastCGI 會套用請求緩衝政策；未宣告 `Content-Length` 的 FastCGI 請求（分塊上傳，或 HTTP/2、HTTP/3 的內容）必須先讀取才能量出長度，因此對這種請求而言上限是硬限制：超過上限會回應 `413`，不會以 PHP-FPM 讀成空內容的形式轉送。`flush_interval -1` 立即排出回應，不納入回應快取。
 
 ## root
 
