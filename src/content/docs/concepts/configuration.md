@@ -10,7 +10,7 @@ Work that the configuration can decide, such as parsing addresses or compiling
 matchers, happens before the first request instead of on every request. And a
 configuration that cannot be honored stops the server at load time, instead of
 causing unexpected behavior for a request after startup. This page describes
-**v0.2.0-rc.3**.
+**v0.2.0**.
 
 ## 🗂️ A file is global options followed by site blocks
 
@@ -76,20 +76,11 @@ example.com {
 
 ## 🚦 Which route answers a request
 
-When several routes in a site match the same request, one of them has to
-answer. In v0.2.0-rc.3, the route with the most specific path wins, wherever it
-is written in the file.
+Routes are ranked by directive, and the first matching route answers. `redir`, `handle`, and `route` precede `respond`; `respond` precedes `reverse_proxy`, `php_fastcgi`, and `file_server`. Within one directive, single paths sort by length after removing a trailing `*`, then exact before the corresponding wildcard, then file order. Multiple-path and pathless matchers follow single-path routes.
 
-📌 **Next release, breaking.** On `main`, routes follow Caddy's directive
-order instead: the directives are ranked by kind (for example, `respond` ranks
-ahead of `file_server` and `reverse_proxy`), and the first matching route in
-that order answers. A site that relies on a narrower route written below a
-broader one of an earlier rank will answer differently after the upgrade. Two
-ways keep the old answer on both versions: put each route in its own `handle`
-block, which the example above already does, or list the routes in a `route`
-block, which keeps the order they are written in. The
-[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
-records the complete ranking under Unreleased.
+Use exclusive `handle` blocks to separate routes, or `route` to retain written order. Path comparisons ignore ASCII letter case and decode percent escapes once; use `path_regexp` when case matters. `handle`, `handle_path`, and `route` accept only `*`, a path beginning with `/`, or `@name` before the block, and refuse a bare token such as `*.php`.
+
+[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md) · [Pingclairfile](/reference/pingclairfile/)
 
 ## 🧩 Snippets and imports reuse configuration
 
@@ -160,10 +151,10 @@ and keeps the old configuration rather than applying part of it:
 
 - **Listener changes.** Adding, removing, or moving an address, or switching a
   listener between plaintext and TLS, requires a restart, because listening
-  sockets are created at startup.
+  sockets are created at startup. On Unix, an admin-only startup may load its
+  first plaintext HTTP generation; TLS and later topology changes require a restart.
 - **Global options.** Options established at startup, such as
-  `trusted_proxies`, apply to the whole process, so any change to the global
-  options block requires a restart.
+  `trusted_proxies`, apply to the whole process, so changing those policies requires a restart. Process-log settings can reload.
 - **Certificate topology.** Adding a TLS hostname, or changing how a site gets
   its certificate, requires a restart.
 

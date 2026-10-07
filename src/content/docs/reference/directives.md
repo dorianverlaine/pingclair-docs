@@ -94,6 +94,48 @@ http://example.test:8080 {
 }
 ```
 
+## cache
+
+```text
+Syntax:   reverse_proxy <upstream> {
+              cache {
+                  ttl       <duration>
+                  max_size  <bytes>
+              }
+          }
+Default:  disabled; max_size 134217728 when enabled
+Context:  reverse_proxy block
+```
+
+This Pingclair option enables the H1/H2 proxy response cache. `ttl` is required
+and supplies a fallback lifetime; `max_size` is a positive integer byte budget
+shared by all caching routes. Conflicting budgets, zero, and unknown options
+are refused. Reload resizes the store, evicts immediately when shrinking, and
+drains it when caching is removed.
+
+Freshness includes upstream `Age`, apparent age from `Date`, and response delay.
+`Expires` is measured relative to `Date`. Every `Vary` field line and the request
+fields it names participate in variants; invalid `Vary` and `Vary: *` prevent
+storage. Request `no-cache` and `no-store` are recognized by directive name
+across all field lines. SSE and `flush_interval -1` bypass admission.
+
+```caddyfile
+http://:8080 {
+    reverse_proxy 127.0.0.1:3000 {
+        cache {
+            ttl 30s
+            max_size 134217728
+        }
+    }
+}
+```
+
+Without a usable origin lifetime, `ttl` applies only to `200`. Silent `404`
+and `410` responses live for at most ten seconds or the shorter TTL; silent
+server errors are not stored. `206`, `428`, `429`, `431`, and `511` are never
+stored. The cache keeps origin bytes and compresses per client afterward.
+Hits and misses both apply `header_down`. HTTP/3 does not use this response cache.
+
 ## encode
 
 ```text
@@ -246,6 +288,45 @@ and a 16,384-entry ceiling, including empty files. Canonical redirects clean
 the path, escape backslashes, and preserve the query rather than forming a
 reference to another host. A configured `ETag` header is currently not used for
 revalidation.
+
+## forward_auth
+
+```text
+Syntax:   forward_auth <upstream> {
+              uri <path>
+              copy_headers <fields...>
+              transport http {
+                  tls
+                  tls_server_name <name>
+                  tls_trusted_ca_certs <files...>
+                  tls_client_auth <cert> <key>
+                  tls_insecure_skip_verify
+              }
+          }
+Default:  no authentication subrequest
+Context:  site block, handle, route
+```
+
+Makes a bodyless GET subrequest to the authentication service with the original
+method and URI. A 2xx copies the configured identity headers before continuing;
+other responses stream to the client. Each destination header is removed before
+copying, even when renamed. `transport http` accepts only the listed TLS
+options. Unsupported options, missing client key pairs, and combining custom
+CAs with skipped verification are refused. Keep certificate verification enabled
+unless disabling it is an explicit requirement.
+
+```caddyfile
+http://:8080 {
+    forward_auth https://auth.example.com {
+        uri /check
+        copy_headers Remote-User
+        transport http {
+            tls_server_name auth.example.com
+        }
+    }
+    reverse_proxy 127.0.0.1:3000
+}
+```
 
 ## handle
 
@@ -565,6 +646,47 @@ http://:9180 {
 }
 ```
 
+## php_fastcgi
+
+```text
+Syntax:   php_fastcgi [<matcher>] <upstream...> {
+              root                  <path>
+              split                 <suffix...>
+              index                 <filename|off>
+              try_files             <candidates...>
+              env                   <name> <value>
+              resolve_root_symlink
+              dial_timeout          <duration>
+              read_timeout          <duration>
+              write_timeout         <duration>
+              capture_stderr
+          }
+Default:  disabled; split .php; index index.php
+Context:  site block, handle, route
+```
+
+Expands file matching and rewriting into a FastCGI proxy. The upstream is a
+FastCGI service such as PHP-FPM. Reverse-proxy options are also accepted where
+supported. Request-body buffering policy reaches the FastCGI transport; script
+paths retain non-UTF-8 filename bytes, and repeated Cookie lines are combined.
+HEAD sends no body, download pacing applies, parameters too large for a FastCGI
+record return `431`, and truncated or malformed bodies abort the response.
+
+⚠️ Chunked and bodyless requests still receive `411`. Do not infer that a
+configuration passing validation proves these request shapes work. See
+[Known defects](/project/status/#-known-defects-in-020).
+
+```caddyfile
+http://:8080 {
+    root * /srv/php
+    php_fastcgi 127.0.0.1:9000 {
+        read_timeout 30s
+        write_timeout 30s
+    }
+    file_server
+}
+```
+
 ## request_body
 
 ```text
@@ -806,6 +928,54 @@ example.com {
         key ./certs/example.com.key
     }
     reverse_proxy localhost:3000
+}
+```
+
+## try_files
+
+```text
+Syntax:   try_files <candidates...> {
+              policy first_exist|first_exist_fallback|smallest_size|largest_size|most_recently_modified
+          }
+Default:  no rewrite; policy first_exist
+Context:  site block, handle, route
+```
+
+Selects a file candidate and rewrites the request to it. Every positional
+argument is a candidate, including the first path; this directive takes no
+matcher token. Candidates use the configured root, support placeholders and
+globs, and retain non-UTF-8 filename bytes. `=404` is an error fallback.
+Unknown policies and unsafe paths are refused.
+
+```caddyfile
+http://:8080 {
+    root * /srv/site
+    try_files {path} /index.html
+    file_server
+}
+```
+
+## uri
+
+```text
+Syntax:   uri [<matcher>] strip_prefix <prefix>
+          uri [<matcher>] strip_suffix <suffix>
+          uri [<matcher>] path_regexp <pattern> <replacement>
+Default:  unchanged URI
+Context:  site block, handle, route
+```
+
+Changes the request path. Prefix and suffix removal ignore ASCII letter case,
+matching path routing and `handle_path`. Operands resolve placeholders before
+the operation; regular-expression replacements use `$1` for a capture.
+`${1}` is read as the placeholder `{1}`, so it does not preserve the capture.
+Unknown operations, wrong argument counts, blocks, and invalid regular
+expressions are refused.
+
+```caddyfile
+http://:8080 {
+    uri path_regexp ^/old/(.*)$ /new/$1
+    reverse_proxy 127.0.0.1:3000
 }
 ```
 

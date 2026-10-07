@@ -1,61 +1,82 @@
 ---
 title: Pingclairfile
 h1_emoji: '📖'
-description: Pingclairfile 的結構，包括詞法規則、網站位址、匹配器、路由順序、片段，以及檢查它的工具。
+description: Pingclairfile 的詞法、網站位址、匹配器、佔位符、路由順序、片段與驗證工具。
 ---
 
-Pingclairfile 是 Pingclair 的設定檔，以 Caddyfile 語言撰寫：開頭是可有可無的全域選項區塊，接著每個網站一個區塊，區塊裡放指令。只使用受支援指令的 Caddyfile，可以不經修改直接載入。本頁說明語言本身；各指令的作用則請見[指令參考](/zh-TW/reference/directives/)。
+Pingclairfile 使用 Caddyfile 語言，由可省略的全域選項區塊與網站區塊組成。只使用支援語法的 Caddyfile 可直接載入。[指令參考](/zh-TW/reference/directives/)說明各指令的作用。
 
-📌 本頁描述的是最新公開的發行版 **v0.2.0-rc.3**。
+📌 本頁描述 **v0.2.0**。
 
 ## 🔤 詞法規則
 
 | 規則 | 說明 |
 | --- | --- |
 | 註解 | 從 `#` 到行尾。 |
-| 引號 | 含有空白的值以 `"` 括起來。解析值之前會先移除引號。 |
-| 時間長度 | 必須帶單位：`30s`、`5m`、`1h`。在需要時間長度的地方寫單獨的數字會被拒絕。 |
-| 大小寫 | 指令與選項名稱一律小寫。 |
-| 佔位符 | `{host}`、`{path}`、`{args[0]}`、`{block}` 以及其餘佔位符，會在指令文件說明的位置展開。 |
+| 引號 | 有空白的值以 `"` 括起，解析前移除引號。 |
+| 區塊 | 開啟區塊的 `{` 必須結束該行；`route { respond "hi"` 會被拒絕。 |
+| 時間長度 | `30s`、`5m`、`1h` 必須有單位。 |
+| 大小 | `kb`、`mb`、`gb`、`tb` 使用 1000 的冪；`kib`、`mib`、`gib`、`tib` 使用 1024 的冪。`10MB` 是 10,000,000 位元組。 |
+| 大小寫 | 指令與選項名稱小寫。 |
+| 佔位符 | `{host}`、`{path}`、`{args[0]}`、`{block}` 等在指令支援的位置展開。 |
 
 ## 🌐 位址
 
-網站區塊以它的位址命名。位址決定網站監聽哪個連接埠，以及是否透過 HTTPS 提供。
+網站位址決定連接埠及是否使用 HTTPS。
 
 ```text
 example.com {          # HTTPS on 443 with a public certificate; 80 redirects
 example.com:8443 {     # HTTPS on 8443: a host with a port is still HTTPS
 localhost:8080 {       # HTTPS on 8080, from the internal authority
-:8080 {                # plaintext HTTP on 8080, for any host
-http://example.com {   # plaintext HTTP on 80
+:8080 {                # Plaintext HTTP on 8080, for any host.
+http://example.com {   # Plaintext HTTP on http_port.
+http://[::1]:8080 {    # Plaintext HTTP for the host [::1].
+*.example.com {        # One label, such as a.example.com.
 ```
 
-帶連接埠但沒有 scheme 的主機會透過 HTTPS 提供，與 Caddy 相同。在位址前面寫上 `http://`，就能在任何連接埠上要求明文。共用同一個連接埠的兩個網站在 TLS 上必須一致，否則設定會被拒絕。
+帶連接埠但沒有 scheme 的具名網站仍是 HTTPS；明文請加 `http://`。只有 scheme 而沒有連接埠的位址使用全域 `http_port` 或 `https_port`。方括號 IPv6 會命名網站，不再成為任意 Host 的後備；錯誤括號或 IPv6 會被拒絕。`http://0.0.0.0:8080` 是該連接埠的全域匹配。主機名稱比較忽略大小寫與尾端的點。
+
+### 🔌 一個連接埠共用一個監聽器
+
+同一連接埠的網站共用 socket，以 Host 區分。明確 IP 位址與全介面網站合併後，前者也能從其他介面以相符 Host 存取；需要隔離時請用獨立連接埠。載入時會記錄合併。`0.0.0.0` 與 `[::]` 合併後使用 IPv6。
+
+若同一連接埠的 socket 政策不一致，設定會被拒絕：例如 `bind`／`default_bind` 限制的網站與全介面網站、明文與 TLS，或只有其中一個要求 PROXY protocol。
 
 ## 🧭 匹配器
 
-匹配器把指令限制在部分請求上。它可以直接寫在行內，例如 `/api/*` 這樣的路徑，也可以用 `@name` 宣告一次，之後以名稱引用。
+匹配器可直接使用 `/api/*`，或先宣告 `@name` 再引用。
 
 ```caddyfile
 example.com {
     @api path /api/*
     header @api Cache-Control "no-store"
-
     handle /assets/* {
         file_server ./assets
     }
 }
 ```
 
-`handle` 區塊把多個指令組成一條路由。同層的 `handle` 區塊彼此互斥：恰好只有其中一個會執行，沒有匹配器的 `handle` 則是網站的後備路由。在 v0.2.0-rc.3 中，執行的是匹配路徑最具體的那個。**下一版**：執行排序最前面的那個，較長的路徑排在較短的之前，其餘依檔案中的順序（見[哪一條路由回應](#-哪一條路由回應)）。
+- ASCII 大小寫不影響路徑比較；需要區分時使用 `path_regexp`。
+- 百分比編碼解碼一次。`/secret%21` 匹配 `path /secret!`；空白請以 `"/a b"` 撰寫匹配路徑。
+- 開頭的 `*` 匹配任意深度的後綴，兩端 `*` 匹配子字串，中間的 `*` 不跨越路徑片段。`?`、`[…]` 與反斜線是字面字元。
+- 大括號是字面值；擷取群組請用 `path_regexp`。
+- `client_ip` 匹配套用受信任代理政策後的用戶端；`remote_ip` 匹配連線對端。無效 IP 範圍在載入時被拒絕。
+- `handle`、`handle_path` 與 `route` 在區塊前最多接受一個 `*`、以 `/` 開頭的路徑或 `@name`。`*.php` 等裸字串會被拒絕。
 
-`client_ip` 匹配套用 `trusted_proxies` 之後的用戶端位址。**下一版**：`remote_ip` 改為匹配連線本身的對端，與 Caddy 相同；在 v0.2.0-rc.3 中，兩者匹配的都是轉送過來的用戶端。
+## 🏷️ 位址佔位符
+
+| 佔位符 | 值 |
+| --- | --- |
+| `{client_ip}`、`{http.request.client_ip}` | 受信任代理政策套用後的用戶端。 |
+| `{remote_host}`、`{http.request.remote.host}` | 連線對端位址。 |
+| `{remote_port}`、`{http.request.remote.port}` | 連線對端連接埠。 |
+| `{remote}`、`{http.request.remote}` | 對端的 `host:port`。 |
+
+`{remote_ip}` 不是支援的佔位符，會被拒絕。要轉送用戶端位址，請寫 `header_up X-Real-IP {client_ip}`。
 
 ## 🧭 哪一條路由回應
 
-在 v0.2.0-rc.3 中，當好幾條路由都匹配同一個請求時，由路徑最具體的那一條回應，不論它寫在哪裡。
-
-**下一版**：路由依 Caddy 的指令順序嘗試，第一個匹配的負責回應。例如 `respond` 排在 `file_server` 前面，所以在下面這個網站中，`/assets/a.txt` 會得到 `hello`，而不是那個檔案：
+依指令順序選第一條匹配路由：`redir`、`handle` 與 `route` 在 `respond` 之前；`respond` 在 `reverse_proxy`、`php_fastcgi` 與 `file_server` 之前。以下 `/assets/a.txt` 會得到 `hello`：
 
 ```caddyfile
 example.com {
@@ -65,11 +86,13 @@ example.com {
 }
 ```
 
-若要讓較窄的路由維持在前面，可以把路由包進 `handle` 區塊、用全域的 `order` 選項移動某個指令，或把路由列在 `route` 區塊裡，它會保留書寫順序。
+同一指令的單一路徑先比較移除尾端 `*` 後的長度，較長者優先；`/foo` 排在 `/foo*` 之前，其餘保留檔案順序。多路徑或無路徑匹配器排在單一路徑之後。等長不同路徑在 Caddy 依字母排序，此處保留書寫順序。
+
+帶匹配器的中介指令會保護或修飾相符的回應路由。需要較窄路由優先時，使用互斥 `handle`、全域 `order`，或保留書寫順序的 `route`。
 
 ## 🧩 片段與匯入
 
-片段是可重用的設定。以 `(name) { ... }` 宣告的片段，用 `import name` 引入，並可以接收呼叫端傳來的區塊：
+以 `(name)` 宣告片段，透過 `import name` 引入：
 
 ```caddyfile
 (proxied) {
@@ -84,18 +107,16 @@ import proxied example.com {
 }
 ```
 
-`{args[0]}` 是片段名稱之後的第一個參數，`{block}` 則是呼叫端提供的區塊。呼叫端沒有提供區塊時，`{block}` 會展開成空白，片段仍然可以編譯。
+`{args[0]}` 是第一個參數，`{block}` 插入呼叫端區塊，沒有提供時展開為空。具名子區塊使用 `{blocks.<name>}`。
 
 ## 🧰 命令列工具
 
-撰寫設定時，有三個命令可以幫忙：
+- `pingclair validate` 編譯、讀取 TLS 檔案並檢查金鑰配對。
+- `pingclair adapt --pretty` 經相同驗證後印出 JSON。
+- `pingclair fmt` 使用每層一個 tab；未格式化的輸入以狀態碼 1 結束。
 
-- `pingclair validate` 編譯檔案，並指出第一個問題。
-- `pingclair adapt --pretty` 印出檔案編譯後的 JSON。
-- `pingclair fmt` 格式化檔案。
-
-[命令列](/zh-TW/reference/command-line/)列出了所有子命令與旗標。
+[命令列](/zh-TW/reference/command-line/)列出所有旗標。
 
 ## 🚫 不屬於這個語言的部分
 
-Caddyfile 語言定義的指令與選項比 Pingclair 實作的多。Pingclair 認得但沒有實作的名稱，會在載入檔案時被拒絕，訊息會指出缺少的功能，所以設定永遠不會在某個設定被悄悄丟掉的情況下執行。完整清單保存在伺服器儲存庫的 README 中，[專案狀態](/zh-TW/project/status/)則提供摘要。
+尚未實作的名稱在載入時被指名拒絕。[專案狀態](/zh-TW/project/status/)列出支援範圍與差異；[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)提供 0.2.0 變更的依據。
