@@ -386,6 +386,9 @@ Errors reach the block when a handler raises them (`error`, or `file_server`
 with a missing file) and when the server produces them itself: a
 `reverse_proxy` that cannot reach its upstream (`502`, `503`, `504`), a body
 over the `request_body` limit (`413`), and a body that stops arriving (`408`).
+A request refused before routing — an oversized header block, today — never
+reaches the block; it is answered with the built-in refusal, which names the
+field that was too large. `error_page <status> …` still supplies that body.
 
 - `root` inside the block sets the error route's own document root; it may
   appear anywhere in the block. A matcher-scoped `root @name …` is refused.
@@ -754,6 +757,10 @@ Configure timeouts in a `transport http` block: `connect_timeout` (Caddy's
 `dial_timeout`), `first_byte_timeout` (Caddy's `response_header_timeout`),
 `read_timeout`, and `write_timeout`. `lb_try_duration` limits how long after the
 request arrived a new attempt may start; it does not terminate an active response.
+
+An upstream `103 Early Hints` reaches an HTTP/1.1 client before the final
+response. The HTTP/2 path drops interim responses inside the proxy library
+(`pingora-core 0.9.0`), and the HTTP/3 path skips them by design.
 
 A `502` or `504` that Pingclair generates itself carries
 `Proxy-Status: pingclair; error=…`, on the built-in error path. Custom `handle_errors` responses omit it too;
