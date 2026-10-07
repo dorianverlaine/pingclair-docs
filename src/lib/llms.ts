@@ -4,7 +4,7 @@ import { LOCALES, isRootLocale, pagePath, slugOf, toMarkdown, twinPath, type Loc
 /**
  * 🤖 The llms.txt surfaces.
  *
- * Two shapes, each in three languages: `llms.txt` is the index a model reads to
+ * Two shapes, each in two languages: `llms.txt` is the index a model reads to
  * decide which pages to fetch, and `llms-full.txt` is the whole documentation
  * in one file. Entries use `- [Title](url) — description`; the em dash keeps a
  * description from running into the URL after a closing parenthesis, which is
@@ -15,7 +15,6 @@ import { LOCALES, isRootLocale, pagePath, slugOf, toMarkdown, twinPath, type Loc
 export type DocEntry = CollectionEntry<'docs'>;
 
 const localeNames: Record<Locale, string> = {
-	'zh-CN': 'Simplified Chinese',
 	'zh-TW': 'Traditional Chinese',
 };
 
@@ -44,7 +43,7 @@ export function llmsIndex(origin: URL, docs: DocEntry[], locale: Locale | null):
 			new URL(locale === null ? '/llms-full.txt' : `/${locale}/llms-full.txt`, origin).toString() +
 			'.',
 		'',
-		'> English, Simplified Chinese, and Traditional Chinese are published side by side: the English index is /llms.txt, and the others are /zh-CN/llms.txt and /zh-TW/llms.txt.',
+		'> English and Traditional Chinese are published side by side: the English index is /llms.txt, and the Traditional Chinese index is /zh-TW/llms.txt.',
 		'',
 	];
 
@@ -66,7 +65,7 @@ export function llmsFull(origin: URL, docs: DocEntry[], locale: Locale | null): 
 			(locale === null ? 'in English' : `in ${scope}`) +
 			'. Each section names its source URL.',
 		'',
-		'English, Simplified Chinese, and Traditional Chinese are published side by side: /llms-full.txt for English, and /zh-CN/llms-full.txt and /zh-TW/llms-full.txt.',
+		'English and Traditional Chinese are published side by side: /llms-full.txt for English and /zh-TW/llms-full.txt for Traditional Chinese.',
 		'',
 	];
 
@@ -92,5 +91,5 @@ export const llmsHeaders = {
 	'Cache-Control': 'public, max-age=600',
 } as const;
 
-/** The two prefixed locales, for `getStaticPaths`. */
+/** The prefixed locale, for `getStaticPaths`. */
 export const localePaths = () => LOCALES.map((locale) => ({ params: { locale } }));

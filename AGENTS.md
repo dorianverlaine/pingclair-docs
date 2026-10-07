@@ -56,8 +56,7 @@ done
 
 `src/content.config.ts` passes a case-preserving `generateId` to `docsLoader`.
 Astro's default slugifies entry ids, which lowercases the locale directory, and
-Starlight matches locales by that directory name. Without it, `zh-TW/` and
-`zh-CN/` stop matching their locale keys: the Chinese pages are replaced by
+Starlight matches locales by that directory name. Without it, `zh-TW/` stops matching its locale key: the Chinese pages are replaced by
 English fallbacks that carry an "untranslated" notice.
 
 ## Content rules
@@ -125,25 +124,23 @@ For every change to published English prose:
 - The default locale is the `root` key, not `en`. Naming it `en` makes Starlight
   look for English pages under `en/`; the English sidebar then renders empty
   while the localized sidebars keep working.
-- English is the root locale. The other two live in `zh-CN/` (Simplified
-  Chinese) and `zh-TW/` (Traditional Chinese). Their directory names use the
+- English is the root locale. Traditional Chinese lives in `zh-TW/`. Its directory name uses the
   standard Starlight locale codes so the built-in UI translations, `<html
   lang>`, and CJK typography rules all match.
 - The language menu is built from the `locales` object in `astro.config.mjs` in
   insertion order, so that object *is* the menu order. The agreed order is
-  English, Simplified Chinese, Traditional Chinese.
+  English, Traditional Chinese.
   A new locale means: add it to that object, add its label map to
   `src/components/PageTitle.astro`, `ThemeSelect.astro`, and `Footer.astro`,
   add it to `otherLocales` in `src/pages/llms.txt.ts` and
   `llms-full.txt.ts`, and translate every page.
-- Keep the three trees structurally identical: same page paths, same headings,
+- Keep the two trees structurally identical: same page paths, same headings,
   same anchors. Directive entry headings stay in English in every locale
   (`## reverse_proxy`) because other pages link to those anchors, and so do the
   `Syntax:` / `Default:` / `Context:` labels inside their code fences.
 - Code-block comments stay in English in every locale. The snippets are shared
   with the server repository and are read as configuration, not as prose.
-- Chinese pages use mainland terminology in `zh-CN` (文件, 配置, 服务器, 端口,
-  证书) and Taiwan terminology in `zh-TW` (檔案, 設定, 伺服器, 連接埠, 憑證).
+- Traditional Chinese pages use 檔案, 設定, 伺服器, 連接埠, and 憑證.
   A character-level conversion is not a translation.
 - Never rename the locale directories to lowercase: `zh-tw/` breaks Starlight's
   locale matching, which also breaks `<html lang>` and the CJK typography rules
@@ -168,11 +165,11 @@ expected Caddyfile behavior, and a working example.
 
 ## Adding or changing a page
 
-A page is not finished when it renders. Six locale trees, four generated
+A page is not finished when it renders. Two locale trees, four generated
 surfaces, and three agent endpoints read from the same content, so the work ends
 when all of them agree. In order:
 
-1. **Write the English page first**, then port it into `zh-CN/` and `zh-TW/` at
+1. **Write the English page first**, then port it into `zh-TW/` at
    the same path. Never add a page to one tree only:
    a missing translation falls back to English with an "untranslated" notice,
    and a partial tree is what makes readers distrust the localized site.
@@ -194,7 +191,7 @@ when all of them agree. In order:
    pnpm build
    pnpm preview --port 4321 &          # serves dist/ on a fresh port
    PAGE=/start/quickstart               # the page path without a trailing slash
-   for l in "" zh-CN/ zh-TW/; do
+   for l in "" zh-TW/; do
      [ -f "dist/$l$PAGE.md" ] || echo "MISSING dist/$l$PAGE.md"
    done
    curl -s -o /dev/null -w '%{http_code} %{content_type}\n' \
@@ -203,7 +200,7 @@ when all of them agree. In order:
    ```
 
    The Markdown twinned path is `<path>.md` for ordinary pages and
-   `<path>/index.md` for a directory page (`/zh-TW/`, `/zh-CN/`). `llms.txt`
+   `<path>/index.md` for a directory page (`/zh-TW/`). `llms.txt`
    indexes English pages only, which is deliberate; the localized pages are
    reachable under their own prefix.
 

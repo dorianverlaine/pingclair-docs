@@ -9,7 +9,7 @@
  */
 
 /** The locales that live under a path prefix; the root locale has none. */
-export const LOCALES = ['zh-CN', 'zh-TW'] as const;
+export const LOCALES = ['zh-TW'] as const;
 
 export type Locale = (typeof LOCALES)[number];
 

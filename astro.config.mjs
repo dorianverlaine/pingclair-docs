@@ -57,14 +57,11 @@ export default defineConfig({
 			// the `root` key. Listing it as `en` instead would make Starlight look
 			// for English pages in an `en/` directory and leave the sidebar empty.
 			defaultLocale: 'root',
-			// Menu order follows this order: English, Simplified Chinese,
-			// Traditional Chinese. `LanguageSelect.astro`
+			// 🌐 Menu order is English, then Traditional Chinese. `LanguageSelect.astro`
 			// renders the entries in the order they appear here.
 			locales: {
 				root: { label: 'English', lang: 'en' },
-				'zh-CN': { label: '简体中文', lang: 'zh-CN' },
-				// Both Chinese locales ship UI translations with Starlight, so
-				// the locale keys are the standard ones rather than a bare `zh`.
+				// 🌐 Traditional Chinese uses Starlight’s standard locale key.
 				'zh-TW': { label: '繁體中文', lang: 'zh-TW' },
 			},
 			// Shiki ships no Caddyfile grammar. The fences stay `caddyfile` so the
@@ -93,7 +90,6 @@ export default defineConfig({
 					label: 'Start',
 					translations: {
 						'zh-TW': '開始',
-						'zh-CN': '开始',
 					},
 					items: [{ autogenerate: { directory: 'start' } }],
 				},
@@ -101,7 +97,6 @@ export default defineConfig({
 					label: 'Concepts',
 					translations: {
 						'zh-TW': '核心概念',
-						'zh-CN': '核心概念',
 					},
 					items: [{ autogenerate: { directory: 'concepts' } }],
 				},
@@ -109,7 +104,6 @@ export default defineConfig({
 					label: 'Guides',
 					translations: {
 						'zh-TW': '操作指南',
-						'zh-CN': '操作指南',
 					},
 					items: [{ autogenerate: { directory: 'guides' } }],
 				},
@@ -117,7 +111,6 @@ export default defineConfig({
 					label: 'Reference',
 					translations: {
 						'zh-TW': '參考手冊',
-						'zh-CN': '参考手册',
 					},
 					items: [{ autogenerate: { directory: 'reference' } }],
 				},
@@ -125,7 +118,6 @@ export default defineConfig({
 					label: 'Project',
 					translations: {
 						'zh-TW': '專案資訊',
-						'zh-CN': '项目信息',
 					},
 					items: [{ autogenerate: { directory: 'project' } }],
 				},
