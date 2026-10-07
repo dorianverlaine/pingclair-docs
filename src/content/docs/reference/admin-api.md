@@ -9,7 +9,9 @@ replacing the running configuration, checking readiness, and scraping metrics.
 `pingclair reload` and `pingclair stop` use it. This page describes
 **v0.2.0**.
 
-## 🔌 Turning it on
+<span id="-turning-it-on"></span>
+
+## 🔌 Enable the Admin API
 
 The API exists only when the global `admin` option is present, or when
 `pingclair run` starts without any configuration file. The default address is
@@ -25,16 +27,16 @@ http://:8080 {
 }
 ```
 
-A taken admin port stops startup with `failed to bind admin API on ADDR`.
-`admin off` binds nothing.
+An occupied admin port prevents startup with `failed to bind admin API on ADDR`.
+`admin off` disables the Admin API listener.
 
 ## 🔐 Who may call it
 
 - **With a token**, written as `admin <address> <token>`, every request must
-  send `Authorization: Bearer <token>`. A missing or wrong token gets `401` with
+  send `Authorization: Bearer <token>`. A missing or incorrect token receives `401` with
   `WWW-Authenticate: Bearer`.
 - **Without a token**, the server logs a warning and admits loopback clients
-  only. Any other client gets `403`.
+  only. Other clients receive `403`.
 - **`origins` and `enforce_origin`** in an `admin { … }` block restrict which
   browser origins may call the API. A request without an `Origin` header is
   admitted unless `enforce_origin` is set.
@@ -56,7 +58,7 @@ Every endpoint below, `/live` and `/ready` included, is behind these checks.
 | `POST /stop` | Stop the process gracefully. |
 | `GET /reverse_proxy/upstreams` | The upstream addresses the configuration names, including those inside `handle` blocks. |
 | `GET /cache` | Response-cache size against its ceiling. |
-| `POST /cache/purge` | Drop one cached URL. The body is `{"host": "…", "path": "…"}`. |
+| `POST /cache/purge` | Purge one cached URL. The body is `{"host": "…", "path": "…"}`. |
 
 The configuration document is Pingclair's own JSON schema, the one
 `pingclair adapt` prints. A Caddy document (`{"apps": …}`) is refused with a
@@ -68,7 +70,7 @@ message that names the schema this endpoint takes.
   that does not exist answers `200` with the JSON value `null`. Writes to a
   missing path still fail, and the error names the nearest parent.
 - **Reads carry a path-qualified `Etag`.** A config write that sends `If-Match` with the value read from the same path is
-  applied only if the document has not changed since; otherwise it gets `412`
+  applied only if the document has not changed since; otherwise it receives `412`
   and the running document stays unchanged. A write without `If-Match` is
   unconditional. This does not extend conditional writes to `/load` or `/adapt`.
 - **Secrets are masked.** Reads show `[redacted]` in place of the admin token,
@@ -78,11 +80,11 @@ message that names the schema this endpoint takes.
   `token`, `secret`, or `password`. The stored configuration keeps the real
   values, and a traversal write (`PATCH /config/…`) edits them in place.
 - **A document carrying `[redacted]` as a secret is refused** by `/load` and
-  `POST /config`. Put the real values back before loading an exported
+  `POST /config`. Restore the original secret values before loading an exported
   document.
 - **Reads keep working during a reload.** Each request is answered from one
-  published generation of the document. A write that races another reload may
-  get `409`, or `412` for a conditional write; read again and retry.
+  published generation of the document. A write concurrent with another reload may
+  receive `409`, or `412` for a conditional write; read again and retry.
 
 ## 🔁 What a load can change
 

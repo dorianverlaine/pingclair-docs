@@ -80,12 +80,7 @@ pingclair adapt --pretty
 pingclair fmt --diff
 ```
 
-```text
--    file_server ./public
-+  file_server ./public
-```
-
-`fmt` 會印出標準格式，以兩個空白縮排。
+`fmt` 輸出標準格式，每層以一個定位字元縮排。
 
 ## 4. 🚀 執行
 

@@ -41,7 +41,7 @@ http://[::1]:8080 {    # plaintext HTTP for the host [::1]
 ```
 
 - A host with a port and no scheme is served over HTTPS, as in Caddy. Write
-  `http://` in front of the address to ask for plaintext on any port.
+  `http://` in front of the address to use plaintext HTTP on any port.
 - An address with a scheme and no port, such as `https://example.com`, listens
   on the global `http_port` or `https_port`.
 - A bracketed IPv6 address names a site, exactly as `127.0.0.1` does. A bracket
@@ -53,8 +53,8 @@ http://[::1]:8080 {    # plaintext HTTP for the host [::1]
 
 ### 🔌 One port is one listener
 
-Sites that share a port share one socket, and the `Host` header tells them
-apart. A site with a specific address, such as `http://127.0.0.1:8080`, that
+Sites that share a port share one socket, and the `Host` header selects
+the site. A site with a specific address, such as `http://127.0.0.1:8080`, that
 shares its port with a site listening on every interface is therefore reachable
 on every interface by a client that sends its `Host`; give it a port of its own
 if it must stay on loopback. Each such fold is logged when the configuration
@@ -99,7 +99,7 @@ The addresses a request comes from are matched by two different matchers:
 
 - `client_ip` matches the client after `trusted_proxies` is applied: the
   forwarded address when the connection comes from a trusted proxy.
-- `remote_ip` matches the connection's own peer, whatever any header says.
+- `remote_ip` matches the connection's own peer, regardless of forwarding headers.
   Behind a trusted load balancer, that is the balancer.
 
 A range that does not parse, such as `10.0.0.0/33`, is refused at load.
@@ -127,7 +127,7 @@ A site's routes are tried as one list, ordered the way Caddy orders them, and
 the first route that matches answers. The order comes from the directive, not
 from where the line is written: `redir`, `handle`, and `route` rank ahead of
 `respond`, which ranks ahead of `reverse_proxy`, `php_fastcgi`, and
-`file_server`. In the site below, `/assets/a.txt` gets `hello` instead of the
+`file_server`. In the site below, `/assets/a.txt` receives `hello` instead of the
 file:
 
 ```caddyfile
@@ -142,14 +142,14 @@ Between routes of the same directive:
 
 1. The one whose single path is longer once a trailing `*` is removed goes
    first: `/foobar*` before `/foo`.
-2. Between twins that differ only by the trailing `*`, the exact path goes
+2. For paths that differ only by the trailing `*`, the exact path goes
    first: `/foo` before `/foo*`.
 3. Otherwise, file order decides. Caddy sorts two different paths of equal
    length alphabetically instead.
 4. A matcher with several paths, or none, goes after every single-path route.
 
 A middleware directive written with a matcher, such as `basic_auth /admin/*` or
-`header @api …`, protects or decorates every route that answers the requests it
+`header @api …`, applies authentication or header changes to every route that answers the requests it
 matches, wherever the order puts that route.
 
 To keep a narrower route in front, wrap the routes in `handle` blocks, move a
@@ -159,7 +159,7 @@ them in a `route` block, which keeps the written order.
 ## 🧩 Snippets and imports
 
 Snippets are reusable fragments. A snippet declared as `(name) { ... }` is
-pulled in with `import name`, and can receive a block from its caller:
+included with `import name`, and can receive a block from its caller:
 
 ```caddyfile
 (proxied) {
@@ -196,7 +196,7 @@ Three commands help while writing a configuration:
 
 The Caddyfile language defines more directives and options than Pingclair
 implements. A name Pingclair recognizes but does not implement is refused when
-the file loads, with a message naming the missing feature, so a configuration
-never runs with a setting silently dropped.
+the file loads, with a message naming the missing feature, and the configuration
+is rejected.
 [Project status](/project/status/#️-names-the-server-refuses-by-design) lists
 those names.

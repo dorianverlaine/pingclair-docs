@@ -4,13 +4,10 @@ h1_emoji: '🧠'
 description: How a Pingclairfile is structured, how it is compiled and validated before any request arrives, how routes are chosen, and what a reload changes.
 ---
 
-A Pingclairfile is compiled once, when it is loaded, into the state the server
-runs. Two consequences follow, and they explain most of Pingclair's behavior.
-Work that the configuration can decide, such as parsing addresses or compiling
-matchers, happens before the first request instead of on every request. And a
-configuration that cannot be honored stops the server at load time, instead of
-causing unexpected behavior for a request after startup. This page describes
-**v0.2.0**.
+Pingclair compiles the Pingclairfile when it loads the configuration. Address
+parsing and matcher compilation are completed before requests are processed,
+and unsupported or invalid settings are rejected at load time. This page
+describes configuration loading and reload behavior in **v0.2.0**.
 
 ## 🗂️ A file is global options followed by site blocks
 
@@ -59,8 +56,7 @@ example.com {
 ```
 
 A `handle` block groups the directives for one route. Only one `handle` block
-answers a request, and a `handle` with no matcher catches everything the others
-did not:
+answers a request, and a `handle` with no matcher matches requests not handled by the other blocks:
 
 ```caddyfile
 example.com {
@@ -106,7 +102,9 @@ re-reads the line after inserting the snippet, and Pingclair's parser cannot.
 Pingclair therefore rejects the construct instead of inferring its intended
 meaning.
 
-## 🛡️ Validation refuses what the server cannot do
+<span id="️-validation-refuses-what-the-server-cannot-do"></span>
+
+## 🛡️ Validation rejects unsupported settings
 
 `pingclair validate` compiles the file and applies the checks that need more
 than syntax: directive arguments, matcher syntax, whether certificate and key
@@ -118,11 +116,10 @@ fails:
 
 - **An unimplemented name is refused by name.** Pingclair recognizes every name
   the Caddyfile format defines. A name it does not implement produces a message
-  saying the feature is missing; it is never mistaken for a typo and never
-  silently ignored.
-- **An option that cannot be honored is refused, not downgraded.** `encode br`
+  identifying the unsupported feature, and the configuration is rejected.
+- **Unsupported options are rejected.** `encode br`
   is a compile error, because there is no streaming Brotli encoder; the server
-  does not quietly serve gzip instead.
+  does not automatically substitute gzip.
 - **Correct syntax that points at missing files is still an error.** The server
   repository's `examples/full_featured.pingclair` is valid syntax, and
   `validate` still rejects it on a machine where the certificate paths it names
@@ -140,11 +137,10 @@ configuration keeps serving. There are three ways to initiate a reload:
   the installed unit.
 - `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` sends the
   same signal directly.
-- `pingclair reload` goes through the Admin API and prints the server's
-  verdict. It needs the `admin` global option.
+- `pingclair reload` goes through the Admin API and prints the reload result. It needs the `admin` global option.
 
 `systemctl reload` can only report that the signal was delivered, so the
-server's verdict appears on the unit's status line and in the journal.
+reload result appears on the unit's status line and in the journal.
 
 Some changes cannot be applied by a reload, and the server refuses the reload
 and keeps the old configuration rather than applying part of it:
@@ -161,8 +157,7 @@ and keeps the old configuration rather than applying part of it:
 The refusal names the change, for example `listener topology changed (added:
 …, removed: …)`, and `sudo pc service restart` applies it.
 
-[Run it as a service](/start/service/#-what-a-reload-means) shows what each
-outcome looks like.
+[Run it as a service](/start/service/#-what-a-reload-means) describes each reload outcome.
 
 ## 🧭 Related pages
 

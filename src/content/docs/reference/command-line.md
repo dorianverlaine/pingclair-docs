@@ -12,15 +12,15 @@ pingclair <command> [<args…>]
 ```
 
 Angle brackets mark a required value, square brackets an optional one, and `…`
-a value that can be repeated. Every command answers `--help`, and
+a value that can be repeated. Every command accepts `--help`, and
 `pingclair help <command>` prints the same text. Running the binary with no
 command prints the list of commands.
 
 📌 This page describes **v0.2.0**. Behavior that changed from the 0.1.x line and
 the 0.2.0 release candidates is marked **Changed in 0.2.0**.
 
-The installer also links the binary as `pc`, so every command below has a
-two-letter spelling: `pc validate`, `pc service reload`, and so on. The two are
+The installer also links the binary as `pc`, so commands can also be invoked as
+`pc validate`, `pc service reload`, and other `pc` subcommands. The two are
 the same program: `pc` is a symbolic link, not a second binary.
 
 ## 🚩 Global flags
@@ -135,9 +135,8 @@ pingclair start [OPTIONS]
 | `-c`, `--config <CONFIG>` | `./Pingclairfile`, then `./Caddyfile` | Configuration file to load. |
 
 The process is detached from the terminal and its output is discarded, so its
-log is not kept anywhere. On a host with systemd, the installed unit is the
-better tool: it captures the log, restarts on failure, and knows when the
-listeners are bound. See [Run it as a service](/start/service/).
+log is not kept anywhere. On a host with systemd, use the installed unit to
+capture logs, restart after failures, and track listener readiness. See [Run it as a service](/start/service/).
 
 ## pingclair stop
 
@@ -217,9 +216,9 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
   pingclair storage-export -o /tmp/store.tar
 ```
 
-The archive contains private keys, so it is written mode `600` and belongs on
-encrypted media rather than in a backup that ships to a bucket. The
-[TLS guide](/guides/tls-tuning/) covers what it carries and when to move it.
+The archive contains private keys, so it is written mode `600` and must be stored
+securely, with encryption and appropriate access controls. The
+[TLS guide](/guides/tls-tuning/) describes the archive contents and when to move it.
 
 ## pingclair storage-import
 
@@ -287,7 +286,7 @@ development servers never compete for one port.
 
 Proxies a listener to one or more upstreams without a configuration file.
 `--to` is required; repeating it spreads requests over several upstreams. The
-[reverse proxy guide](/guides/reverse-proxy/) covers the same ground with a
+[reverse proxy guide](/guides/reverse-proxy/) describes the equivalent
 configuration file.
 
 ```bash
@@ -338,7 +337,7 @@ configuration file; the [static site guide](/guides/static-site/) covers them.
 ## pingclair validate
 
 Compiles a configuration and reports the first problem it finds, without
-starting anything. The exit status is non-zero when the configuration is
+starting the server. The exit status is non-zero when the configuration is
 refused, so the command works as a gate in a deployment script.
 
 ```bash
@@ -368,7 +367,7 @@ sudo pingclair validate /etc/Pingclair/Pingclairfile
 
 Prints the JSON document a Pingclairfile compiles to. This is Pingclair's own
 schema, the one `validate`, `run`, and the Admin API's `/load` accept. Unlike
-`caddy adapt`, the output is not Caddy's `{"apps": …}` shape, and Caddy cannot
+`caddy adapt`, the output is not Caddy's `{"apps": …}` schema, and Caddy cannot
 load it.
 
 `--pretty` indents the JSON. `adapt` runs the same validation as `validate`
@@ -377,7 +376,7 @@ before printing, so exit status 0 means this build can load the result.
 
 The exported form changed in 0.2.0: route matchers use a tagged
 representation, the `handle` container is spelled `pipeline`, and the retry
-policy is printed as one predicate. Documents in the older shapes still load.
+policy is printed as one predicate. Documents using earlier representations remain supported.
 
 ```bash
 pingclair adapt [OPTIONS]
@@ -400,11 +399,11 @@ Formats a Pingclairfile and prints the result. With no path, it reads
 one tab per level.
 
 `fmt` exits with status 1 when the input was not already formatted, so it can
-gate a commit the way `caddy fmt` does; `--overwrite` rewrites the file and
+be used as a formatting check, as with `caddy fmt`; `--overwrite` rewrites the file and
 exits 0.
 
 **Changed in 0.2.0:** the indent is one tab per level instead of two spaces, so
-a file formatted by an earlier release shows a whole-file difference once.
+reformatting a file from an earlier release changes its indentation throughout.
 
 ```bash
 pingclair fmt [OPTIONS] [PATH]
@@ -435,7 +434,7 @@ pingclair hash-password [OPTIONS]
 | --- | --- | --- |
 | `-p`, `--plaintext <PLAINTEXT>` | read from standard input | Password to hash. |
 | `--algorithm <ALGORITHM>` | `bcrypt` | `bcrypt` or `argon2id`. |
-| `--bcrypt-cost <COST>` | `14` | bcrypt cost, 4 to 31. Higher is slower and stronger. |
+| `--bcrypt-cost <COST>` | `14` | bcrypt cost, 4 to 31. Higher values increase computational cost and resistance to password guessing. |
 | `--argon2id-time <TIME>` | `1` | argon2id iterations. |
 | `--argon2id-memory <MEMORY>` | `65536` | argon2id memory cost, in KiB. |
 | `--argon2id-threads <THREADS>` | `4` | argon2id parallelism. |
@@ -463,7 +462,7 @@ pingclair version
 ## pingclair service
 
 Controls the systemd unit the installer wrote. It wraps `systemctl`, so either
-can be used; this subcommand keeps the unit's commands next to the others.
+can be used; this subcommand provides the same service operations through `pingclair`.
 
 ```bash
 pingclair service <start|stop|restart|reload|status>
@@ -474,7 +473,7 @@ pingclair service <start|stop|restart|reload|status>
 | `start` | Start the unit. |
 | `stop` | Stop the unit. |
 | `restart` | Restart the unit, which is what a changed listener or a process-wide option needs. |
-| `reload` | Ask the running server to read its configuration file again, by signal. The result is on the unit's status line and in the journal, not in this command's exit code. |
+| `reload` | Send a signal to reload the running server's configuration file. The result is on the unit's status line and in the journal, not in this command's exit code. |
 | `status` | Print the unit's state. |
 
 It works only on Linux with systemd; on any other platform it refuses to run.

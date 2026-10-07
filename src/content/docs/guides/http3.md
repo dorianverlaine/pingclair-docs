@@ -6,7 +6,7 @@ sidebar:
 description: Configure HTTP/3, verify the protocol used by the client, and understand request handling differences over QUIC.
 ---
 
-HTTP/3 is on by default: an HTTPS site gets a QUIC listener on UDP 443 unless
+HTTP/3 is enabled by default: an HTTPS site uses a QUIC listener on UDP 443 unless
 the global protocol list excludes `h3`. Check the response protocol: a client
 may use HTTP/2 after an HTTP/3 connection fails.
 
@@ -25,7 +25,9 @@ may use HTTP/2 after an HTTP/3 connection fails.
   curl: option --http3: the installed libcurl version doesn't support this
   ```
 
-## 🔌 Turn it on
+<span id="-turn-it-on"></span>
+
+## 🔌 Configure HTTP/3
 
 ```caddyfile
 {
@@ -40,7 +42,7 @@ example.com {
 }
 ```
 
-Measured on the host, with the site running:
+After starting the site, check the UDP listener on the host:
 
 ```bash
 sudo ss -lunp | grep ':443 '
@@ -50,9 +52,9 @@ sudo ss -lunp | grep ':443 '
 UNCONN 0 0 *:443 *:* users:(("pingclair",pid=5425,fd=22))
 ```
 
-Removing `h3` from the list removes that listener; the list is the switch
+Removing `h3` from the list removes the QUIC listener
 ([TLS: what you can tune](/guides/tls-tuning/#-which-protocols-are-served)).
-Without a `protocols` line, HTTP/3 stays on.
+Without a `protocols` line, HTTP/3 remains enabled.
 
 The `tls` block also accepts a per-site switch:
 
@@ -67,11 +69,12 @@ example.com {
 
 `http3 off` refuses this site's QUIC handshake and removes its HTTP/3 advertisement from `Alt-Svc`. Other sites on the port may continue to use QUIC.
 
-## ✅ Prove a client used it
+<span id="-prove-a-client-used-it"></span>
 
-The proof comes from the client. Any curl built with ngtcp2 or quiche works,
-and a container is the quickest way to get one on a host whose curl cannot do
-HTTP/3:
+## ✅ Verify the client protocol
+
+Use an HTTP/3-capable client, such as curl built with ngtcp2 or quiche. If the
+host's curl lacks HTTP/3 support, use a container:
 
 ```bash
 docker run --rm --network host \
@@ -94,7 +97,7 @@ x-served-by: pingclair
 server: Pingclair
 ```
 
-The first line is the answer: the status line says `HTTP/3`, not `HTTP/2`.
+The `HTTP/3` status line confirms the protocol used for this response.
 Requesting the same URL with `--http2` and `--http1.1` shows the other two
 protocols, which confirms that the client is not falling back.
 
@@ -120,35 +123,36 @@ full HTTP/3 request works; the curl check does that.
 
 HTTP/3 shares its policy code with HTTP/1.1 and HTTP/2, so routing, matchers,
 headers, rate limits, FastCGI, and access logging behave the same. The
-differences are where HTTP/3 cannot carry something:
+following limitations apply:
 
 | Area | On HTTP/3 |
 | --- | --- |
 | Declared request trailers | Not forwarded, as on every protocol: `501` before the response is committed; on HTTP/3 the stream is reset after that. |
 | Upstream response trailers | `502`, as on every protocol. |
-| `CONNECT` | Pingclair opens no tunnels. A usable `host:port` target gets `405` with `Allow`; a target without a usable port gets `400`. HTTP/1.1 closes the connection after refusal. |
+| `CONNECT` | Pingclair opens no tunnels. A usable `host:port` target receives `405` with `Allow`; a target without a usable port receives `400`. HTTP/1.1 closes the connection after refusal. |
 
-A CDN in front of the origin terminates HTTP/3 itself and talks HTTP/1.1 or
-HTTP/2 to the origin. The listener here then says nothing about what the
-visitor's browser used; check the CDN's own HTTP/3 setting instead.
+A CDN in front of the origin terminates HTTP/3 itself and uses HTTP/1.1 or
+HTTP/2 to reach the origin. The origin listener does not identify the protocol
+used between the browser and the CDN; check the CDN's HTTP/3 settings.
 
-## ⚠️ When it does not work
+<span id="️-when-it-does-not-work"></span>
+
+## ⚠️ Troubleshooting
 
 - **`option --http3: the installed libcurl version doesn't support this`.** The
   client has no HTTP/3; use a container as above.
-- **`curl --http3` hangs or times out.** UDP 443 is blocked somewhere. Check the
+- **`curl --http3` does not complete or times out.** UDP 443 may be blocked. Check the
   provider's firewall or security group first, then the host's.
 - **No UDP listener on the host.** `h3` is missing from the `servers` protocol
   list, or the file that is running is not the one you edited
   ([what a reload means](/start/service/#-what-a-reload-means)).
-- **HTTP/3 works locally and not from outside.** The client's network blocks UDP
-  443, which is common on corporate and hotel networks; browsers fall back
-  silently.
+- **HTTP/3 works locally and not from outside.** The client's network may block UDP
+  443; browsers may use HTTP/2 instead.
 
 ## 🧭 Next steps
 
 - [TLS: what you can tune](/guides/tls-tuning/): the protocol list, certificates,
   and client certificates.
-- [Project status](/project/status/): what is supported, refused, and known
-  broken in this release.
+- [Project status](/project/status/): what is supported, refused, and affected by known
+  defects in this release.
 - [`tls`](/reference/directives/#tls): the `http3` option in context.

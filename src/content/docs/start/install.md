@@ -3,11 +3,11 @@ title: Install
 h1_emoji: '📦'
 sidebar:
   order: 1
-description: Put Pingclair on a Linux host from a release binary, with Docker, or from source, and verify that the service answers.
+description: Install Pingclair on Linux from a release binary, with Docker, or from source, and verify the service.
 ---
 
-Pingclair ships as a single Linux binary. This page installs it, shows what the
-installer left behind, and verifies that the server answers. This page targets **v0.2.0**.
+Pingclair is distributed as a single Linux binary. This page describes
+installation, installed files, and service verification for **v0.2.0**.
 
 ## 🧾 What you need
 
@@ -50,7 +50,9 @@ and the C toolchain BoringSSL and jemalloc require: `cmake`, `clang`,
 both `apt` and `dnf` systems. The first build takes several minutes because
 BoringSSL is compiled from source.
 
-## 🗂️ What the installer left behind
+<span id="️-what-the-installer-left-behind"></span>
+
+## 🗂️ Installed files
 
 | Path | What it holds |
 | --- | --- |
@@ -63,8 +65,8 @@ BoringSSL is compiled from source.
 | `/var/log/pingclair` | Where a `log` sink writes once you configure one. |
 | `/etc/systemd/system/pingclair.service` | The unit, enabled and running. |
 
-The service is already serving when the script finishes. The configuration it
-runs is the placeholder, and it is small enough to read in one screen:
+After installation, the service uses this default configuration to serve the
+welcome page:
 
 ```caddyfile
 # 🦀 Pingclair default configuration file
@@ -77,13 +79,12 @@ runs is the placeholder, and it is small enough to read in one screen:
 ```
 
 The service user and the certificate store are created only if they are missing,
-and an existing `/etc/Pingclair/Pingclairfile` is never replaced. That is what
-makes re-running the installer an upgrade rather than a reset
+and an existing `/etc/Pingclair/Pingclairfile` is never replaced. Re-running the installer upgrades the service while preserving these files
 ([Upgrading and removing](/start/upgrade/)).
 
 ## ✅ Verify the installation
 
-Ask the binary for its version:
+Check the installed version:
 
 ```bash
 pingclair version
@@ -107,11 +108,10 @@ pc service status
      Memory: 8.2M (peak: 8.5M)
 ```
 
-`Status: "Serving"` comes from the server itself rather than from `systemd`
-watching a process that is merely alive: the unit is of type `notify`, and the
-server reports ready only after every listener is bound.
+The server reports `Status: "Serving"` through the unit's `notify` mechanism
+only after every listener is bound.
 
-Finally, ask the server:
+Send an HTTP request to the server:
 
 ```bash
 curl -i http://localhost/
@@ -190,16 +190,17 @@ the build, so the first build takes several minutes.
 - **`Job for pingclair.service failed` right after the install.** Read
   `journalctl -u pingclair -n 20`. Common causes are a configuration that does
   not validate, or something already listening on port 80.
-- **The service is running but nothing answers from outside.** The listeners are
-  bound and the packets never arrive. Check the provider's firewall or security
+- **The service is running but nothing answers from outside.** Check the provider's firewall or security
   group first, then the host's own rules.
 - **The host has no `systemd`.** The binary is installed and usable, but the
   installer's service step cannot run. Use Docker, or `pingclair run`.
 
-## 🧹 Removing it again
+<span id="-removing-it-again"></span>
 
-[Upgrading and removing](/start/upgrade/) walks through the teardown and names
-the directories that hold data worth keeping.
+## 🧹 Removing Pingclair
+
+[Upgrading and removing](/start/upgrade/) describes removal commands and the
+directories retained for reinstall or rollback.
 
 ## 🧭 Next steps
 

@@ -3,12 +3,12 @@ title: HTTPS
 h1_emoji: '🔐'
 sidebar:
   order: 3
-description: Get a certificate for a public name, issue one from the internal authority, or supply your own files, and verify what the server serves.
+description: Configure public certificates, the internal certificate authority, or certificate files, and verify the certificate served.
 ---
 
 📌 TLS examples below use `./certs/` in the working directory. Supply your own certificate, matching private key, or client CA file there; validation reads these files too.
 
-A site block whose address is a public name gets HTTPS without a `tls`
+A site block with a public hostname enables HTTPS without a `tls`
 directive: Pingclair obtains a certificate from Let's Encrypt over ACME, answers
 the HTTP-01 challenge on port 80, stores the result, and renews it in the
 background. The other three paths — DNS-01, the internal authority, and
@@ -41,7 +41,7 @@ example.com {
 }
 ```
 
-There is nothing else to configure. At startup the server authorizes the
+At startup, the server authorizes the
 hostname, starts the ACME flow, and serves the challenge:
 
 ```text
@@ -60,7 +60,7 @@ not from a browser:
 📝 Access ... path="/.well-known/acme-challenge/Ix9X74-..." status=200 user_agent="Mozilla/5.0 (compatible; Let's Encrypt validation server; +https://www.letsencrypt.org)"
 ```
 
-Verify what is actually served, from another machine:
+Verify the HTTPS response and certificate from another machine:
 
 ```bash
 curl -I https://example.com/
@@ -122,13 +122,12 @@ hostname(s)` and never requests a certificate, so every handshake fails with
 `NO_CERTIFICATE_SET`. Second, the token is a Cloudflare API token with
 `Zone:DNS:Edit` for the zone that holds the name.
 
-🃏 **One leaf covers the site.** A `*.example.com` site orders `*.example.com`
+🃏 **One wildcard certificate covers matching subdomains.** A `*.example.com` site orders `*.example.com`
 itself: one certificate, obtained at startup, served to every name beneath it.
 A wildcard covers exactly one label, so the apex needs its own entry — write
 `*.example.com, example.com` if the site answers at `example.com` too, and each
-subject is ordered as written. The subdomains served this way stay out of
-Certificate Transparency logs, which is the privacy argument for a wildcard in
-the first place.
+subject is ordered as written. Individual subdomain names are not included in the wildcard certificate's
+Certificate Transparency entry.
 
 Any name under the site is served by that one leaf. From another machine:
 
@@ -157,7 +156,7 @@ X509v3 Subject Alternative Name:
 ## 🏛️ Certificates from the internal authority
 
 For private origins — a tunnel, an internal hostname, a lab machine — Pingclair
-can be its own authority:
+can issue certificates from its internal authority:
 
 ```caddyfile
 https://internal.test {
@@ -219,7 +218,9 @@ that user. `validate` reads and parses the files and checks that the private key
 ❌ TLS certificate file does not exist: /etc/pingclair/certs/missing.crt
 ```
 
-## ⚠️ When HTTPS does not come up
+<span id="️-when-https-does-not-come-up"></span>
+
+## ⚠️ HTTPS setup failures
 
 - **`contact email has forbidden domain "example.com"`.** Let's Encrypt rejects
   the reserved example domains as account contacts. Put a real mailbox in the
@@ -234,8 +235,8 @@ that user. `validate` reads and parses the files and checks that the private key
   what the authority will connect to, which is not always what you expect after
   a recent change.
 - **Repeated failures.** Let's Encrypt rate-limits failed validations per
-  hostname. Fix the cause before retrying, or the retries themselves become the
-  error.
+  hostname. Resolve the underlying cause before retrying to avoid exceeding the
+  validation limit.
 
 ## 🧭 Next steps
 

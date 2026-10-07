@@ -47,9 +47,9 @@ handler              file server | reverse proxy | FastCGI | static response
 upstream or disk
 ```
 
-The transport adapter turns protocol frames into a request and hands it on.
-Routing, header rules, rate limiting, and access logging live once, in the
-policy layer, so they behave the same on HTTP/1.1, HTTP/2, and HTTP/3. Both
+The transport adapter converts protocol frames into a request and passes it
+to the shared policy layer. That layer applies routing, header rules, rate
+limiting, and access logging across HTTP/1.1, HTTP/2, and HTTP/3. Both
 transports also reach upstreams through the same connector, so connection
 pooling, upstream TLS, and timeouts are shared as well.
 
@@ -62,7 +62,7 @@ pooling, upstream TLS, and timeouts are shared as well.
 - **Upstream connections are reused.** Keepalive connections to backends are
   pooled. A hostname upstream is resolved again on the interval set by
   `dns_refresh`, so a backend container that restarts on a new address is
-  followed without operator action.
+  resolved automatically.
 - **Configuration is read, never changed, while requests run.** Each request
   reads a published snapshot of the compiled configuration. A reload builds a
   new snapshot and swaps it in; requests already running finish on the old one.
@@ -75,7 +75,7 @@ account for them before deployment.
 | Area | Behavior in v0.2.0 |
 | --- | --- |
 | Trailers | Request trailers are not forwarded on any protocol. A request that declares them is answered `501` before the response starts; an HTTP/3 stream whose response has already started is reset instead. An upstream response that advertises trailers is answered `502`. |
-| `CONNECT` | A usable `host:port` target gets `405` with `Allow`; a target without a usable port gets `400`. HTTP/1.1 closes after refusal. |
+| `CONNECT` | A usable `host:port` target receives `405` with `Allow`; a target without a usable port receives `400`. HTTP/1.1 closes after refusal. |
 | FastCGI | `php_fastcgi` works on every protocol, HTTP/3 included. |
 
 📌 `TRACE` also receives `405` with `Allow`. Malformed HTTP/1 chunked bodies, raw whitespace or controls in request targets, and HTTP/1.1 requests without Host receive `400` and close.
@@ -86,8 +86,7 @@ Pingclair proxies WebSocket, but roughly 10-15% of upgrades fail when the
 machine is busy. From the outside, a failed upgrade is a connection closed
 immediately after the `101 Switching Protocols` response. The cause is a race
 in the upstream `pingora-proxy` crate, not in Pingclair's upgrade handling, and
-no configuration avoids it. An idle developer machine rarely reproduces it,
-which is why it is stated here. [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).
+no configuration avoids it. The failure is less frequent on an idle machine. [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).
 
 ## 🧭 Related pages
 

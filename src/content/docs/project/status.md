@@ -33,8 +33,8 @@ field but did not enforce it, so the Admin API did not authenticate requests.
 
 ## 🛡️ Names the server refuses by design
 
-The Caddyfile format defines more names than Pingclair implements. A name the
-server cannot honor is refused when the file is loaded, with a message that
+The Caddyfile format defines more names than Pingclair implements. An unsupported
+name is rejected when the file is loaded, with a message that
 names the missing feature. A configuration that contains one does not start.
 
 The following complete lists are derived from the registries in 0.2.0. They

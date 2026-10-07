@@ -6,7 +6,7 @@ sidebar:
 description: Publish a site through a Cloudflare Tunnel so the origin needs no inbound port, and make Pingclair's logs show the real client instead of the connector.
 ---
 
-A Cloudflare Tunnel connects the origin outward: `cloudflared` dials
+A Cloudflare Tunnel uses an outbound connection from `cloudflared` to
 Cloudflare, and Cloudflare sends requests back over that connection. Nothing
 listens on a public port, the edge terminates TLS, and the origin receives plain
 HTTP on loopback. This page configures the tunnel, then configures the origin to
@@ -40,7 +40,7 @@ curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicati
 rules live in Cloudflare and are pushed through the API, so nothing has to be
 written next to the connector.
 
-The connector credential is a separate call:
+Retrieve the connector credential with a separate API request:
 
 ```bash
 curl -s -H "Authorization: Bearer $CF_TOKEN" \
@@ -83,10 +83,10 @@ curl -s -X PUT -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: applicatio
   "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL_ID/configurations"
 ```
 
-The last rule is the catch-all: a request for any other hostname gets `404`
+The last rule is the catch-all: a request for any other hostname receives `404`
 instead of reaching the origin.
 
-Then point the name at the tunnel, with the proxy on:
+Create a proxied DNS record for the tunnel:
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
@@ -110,7 +110,9 @@ server: cloudflare
 `server: cloudflare` shows the edge answering. The origin was reached through the
 tunnel, and no inbound port was opened for it.
 
-## 🎯 Let the origin see the client
+<span id="-let-the-origin-see-the-client"></span>
+
+## 🎯 Record the client address
 
 Every request arrives from the connector on loopback, so by default the access
 log records the connector, not the client:
@@ -145,24 +147,26 @@ remote_ip=127.0.0.1          # before
 remote_ip=16.162.199.171     # after: the client that started the request
 ```
 
-The same setting is what makes per-client rate limits and the `client_ip`
-matcher see the real client behind a tunnel. It is read at startup, so a change
+The same setting enables per-client rate limits and the `client_ip` matcher
+to use the forwarded client address. It is read at startup, so a change
 needs a restart rather than a reload
 ([what a reload means](/start/service/#-what-a-reload-means)).
 
 `client_ip` and `{client_ip}` use the client from the listed headers; `remote_ip` and `{remote_host}` remain the connector address. Only trusted peers may supply these headers. `CF-Connecting-IP` must be listed explicitly in `client_ip_headers`.
 
-## ⚠️ When it does not work
+<span id="️-when-it-does-not-work"></span>
+
+## ⚠️ Troubleshooting
 
 - **`HTTP/2 530` with `error code: 1033`.** The tunnel has no connector.
-  `systemctl is-active cloudflared` on the origin says whether it is running;
+  `systemctl is-active cloudflared` on the origin reports its status;
   requests answer `200` again within seconds of the connector registering.
 - **A request reaches a different site, or `404`.** The ingress rules are
   matched in order and end with the catch-all; check the hostname spelling in the
   rule before investigating DNS.
-- **`502` from the edge.** The connector is up, but the origin service refused
+- **`502` from the edge.** The connector is running, but the origin service refused
   the connection: Pingclair is not listening on the port the rule names.
-- **The access log always says `127.0.0.1`.** `trusted_proxies` is missing, as
+- **The access log records `127.0.0.1` for every client.** `trusted_proxies` is missing, as
   above.
 - **The hostname does not resolve.** The record has to be a proxied CNAME to
   `<tunnel-id>.cfargotunnel.com`; a DNS-only record bypasses the tunnel

@@ -4,9 +4,8 @@ h1_emoji: '📊'
 description: How Pingclair compares with nginx and Caddy on one controlled workload, the conditions of that measurement, and what the numbers do not show.
 ---
 
-A throughput number means something only next to the conditions that produced
-it. This page gives the latest comparison and, beside it, every condition that
-limits what it shows.
+This page compares throughput under a controlled workload and documents the
+versions, environment, and measurement conditions.
 
 ## 🧭 How the comparison was run
 
@@ -36,9 +35,9 @@ Each value is requests per second: the median of three interleaved rounds of
 | HTTP/2 reverse proxy | 23,181 | 20,396 | not completed |
 | HTTP/3 reverse proxy | 28,078 | 22,213 | not completed |
 
-Against nginx, Pingclair is ahead on the
+Against nginx, Pingclair has higher throughput in the
 HTTP/1.1, HTTPS/1.1, and HTTP/2 static rows (1.2x, 1.3x, and 2.2x
-respectively), while HTTP/3 static is effectively level. On the reverse-proxy
+respectively), while HTTP/3 static throughput is approximately equal. On the reverse-proxy
 workload it is 14% ahead on HTTP/2 and 26% ahead on HTTP/3, while HTTP/1.1 and
 HTTPS/1.1 remain about 8% behind nginx.
 

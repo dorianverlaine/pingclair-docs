@@ -22,7 +22,7 @@ TLS options are rejected when the configuration loads.
 
 ## 🌐 Which protocols are served
 
-The protocol set lives in the global `servers` block:
+Configure protocols in the global `servers` block:
 
 ```caddyfile
 {
@@ -39,14 +39,14 @@ Measured with `sudo ss -lun | grep ':443 '`:
 | `protocols h1 h2` | 0 — no HTTP/3 |
 | `protocols h1 h2 h3` | 1 — HTTP/3 enabled |
 
-⚠️ The list decides **HTTP/3**, and only HTTP/3. Listing `h1` alone does not
+⚠️ The list controls **HTTP/3** only. Listing `h1` alone does not
 turn HTTP/2 off: with `protocols h1`, a client that offered `h2` still
 negotiated HTTP/2. The only thing the server reads from the list is whether `h3`
 is in it, so no setting disables HTTP/2. Without a `protocols` line, HTTP/3 is
 on.
 
-Per site, `http3 off` takes one name out of HTTP/3 while the QUIC
-listener keeps serving the others:
+The per-site `http3 off` option disables HTTP/3 for that site while the QUIC
+listener continues serving other sites:
 
 ```caddyfile
 https://internal.test {
@@ -75,7 +75,7 @@ how early it starts, as a fraction of each certificate's lifetime.
 
 ## 🔐 Client certificates
 
-`client_auth` makes the server ask the client for a certificate. Create a small
+`client_auth` configures the server to request a client certificate. Create a small
 authority and a client certificate with `openssl`, then point the site at the
 authority's certificate **file**:
 
@@ -109,7 +109,7 @@ An exact site's `client_auth` policy takes precedence over a wildcard on the sam
 
 ## 📦 Moving the certificate store
 
-The store holds the issued certificates, the ACME account, and the internal
+The store contains the issued certificates, the ACME account, and the internal
 authority. For a package install it is `/var/lib/pingclair/.local/share/pingclair`,
 the data directory under the service account's home. A command run as another
 user looks in that user's own data directory, so the examples set
@@ -130,12 +130,12 @@ sudo systemctl start pingclair
 ✅ Store imported into /var/lib/pingclair/.local/share/pingclair
 ```
 
-Three details from the run. The archive is a **plain tar** whatever its name,
+The archive is an **uncompressed tar**, regardless of its filename,
 written with mode `600`, so reading it back needs root. The import restores the
-ownership recorded in the archive. And the store holds `autosave.json`, the
+ownership recorded in the archive. The store also contains `autosave.json`, the
 configuration the Admin API last applied, so an import restores that too.
 
-📌 **0.2.0:** the internal authority is filed the way Caddy files it, under
+📌 **0.2.0:** the internal authority uses Caddy's directory layout, under
 `pki/authorities/local/`. The old `internal/` directory is not migrated: the
 server creates a new authority, and every client must trust the new root
 again (`pingclair trust`). A global `storage file_system <path>` option can also
@@ -144,12 +144,14 @@ name the store in the configuration.
 If the service refuses to start afterwards with
 `Internal CA I/O error: Permission denied`, the store's files are not writable by
 the service account; `sudo chown -R pingclair:pingclair /var/lib/pingclair/.local/share/pingclair`
-fixes it, and the site answers again.
+restores the required ownership.
 
-## 🚫 What cannot be tuned
+<span id="-what-cannot-be-tuned"></span>
 
-Pingclair recognizes these Caddy settings and refuses them, so a file never runs
-with one silently dropped:
+## 🚫 Unsupported TLS options
+
+The following Caddy TLS options are recognized but rejected during
+configuration loading:
 
 ```text
 Caddy-compatible directive 'tls ciphers' is not supported by Pingclair yet: Pingclair does not implement this TLS option yet
@@ -160,10 +162,11 @@ Caddy-compatible directive 'tls on_demand' is not supported by Pingclair yet: Pi
 
 Cipher suites, curves, the ALPN list, and on-demand issuance are therefore
 fixed by the build, not by the configuration. OCSP stapling is not performed
-either. If one of them matters to you, it is a feature request, not a
-configuration mistake.
+either. These settings cannot be enabled through configuration.
 
-## ⚠️ When it does not work
+<span id="️-when-it-does-not-work"></span>
+
+## ⚠️ Troubleshooting
 
 - **`client_auth` refuses to start with `not valid base64`.** A path was given to
   `trusted_ca_cert`; the file spelling is `trusted_ca_cert_file`.
@@ -178,7 +181,7 @@ configuration mistake.
 
 ## 🧭 Next steps
 
-- [HTTPS](/start/https/): the four ways to get a certificate, with their exact
+- [HTTPS](/start/https/): the four certificate sources, with their exact
   log lines.
-- [HTTP/3](/guides/http3/): turning it on and proving a client used it.
+- [HTTP/3](/guides/http3/): configuration and client-side protocol verification.
 - [`tls`](/reference/directives/#tls): the directive reference.

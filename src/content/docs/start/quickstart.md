@@ -6,15 +6,13 @@ sidebar:
 description: Write a first Pingclairfile, validate it, run it in the foreground or the background, and serve a real directory.
 ---
 
-This page walks from an installed host to a running server: write a
-configuration, validate it, start the server, and verify that it answers. It
-assumes the [installation](/start/install/) is done.
+After [installation](/start/install/), follow these steps to create and
+validate a configuration, start the server, and verify its response.
 
 ## 🧾 Before you start
 
-The installer left a service running on port 80, and that service holds the
-configuration in `/etc/Pingclair/Pingclairfile`. Stop it while you experiment so
-the ports are free:
+The installed service listens on port 80 and uses
+`/etc/Pingclair/Pingclairfile`. Stop it before testing to free its ports:
 
 ```bash
 sudo pc service stop
@@ -66,7 +64,9 @@ compiles the configuration and applies semantic checks, such as whether
 certificate paths exist. A configuration that fails validation does not run,
 and the output prints the reason on the last line.
 
-## 3. 🧭 Read what the configuration becomes
+<span id="3--read-what-the-configuration-becomes"></span>
+
+## 3. 🧭 Inspect the compiled configuration
 
 ```bash
 pingclair adapt --pretty
@@ -86,20 +86,14 @@ pingclair adapt --pretty
       ],
 ```
 
-The compiled JSON is the form the server runs. When a directive does not
-behave as expected, this is the first place to look. To see what
-`pingclair fmt` would change in the file instead:
+The compiled JSON is the configuration used by the server. Check this output
+when a directive behaves unexpectedly. To inspect formatting changes, run:
 
 ```bash
 pingclair fmt --diff
 ```
 
-```text
--    file_server ./public
-+  file_server ./public
-```
-
-`fmt` prints the canonical form, which indents with two spaces.
+`fmt` prints the canonical form, which uses one tab per indentation level.
 
 ## 4. 🚀 Run it
 
@@ -109,8 +103,8 @@ In the foreground, where the log stays attached to your terminal:
 pingclair run Pingclairfile
 ```
 
-Add `--watch` to reload the configuration every time you save it, which is the
-development loop:
+For local development, add `--watch` to reload the configuration after each
+file change:
 
 ```bash
 pingclair run --watch Pingclairfile
@@ -121,7 +115,7 @@ pingclair run --watch Pingclairfile
 ✅ Configuration reloaded completed successfully in 2.478622ms
 ```
 
-Or run it in the background, where it survives your shell:
+To keep the server running after the shell exits, start it in the background:
 
 ```bash
 pingclair start -c Pingclairfile
@@ -154,8 +148,8 @@ pingclair stop
 
 ## ⚡ Servers in one command
 
-Three subcommands serve without a configuration file, useful for quick tests
-or throwaway hosts:
+Three subcommands run without a configuration file and are suitable for local
+tests or temporary environments:
 
 ```bash
 pingclair file-server --listen :8081 --root ./public
@@ -176,8 +170,8 @@ answers with the body you passed. `respond` is for development only.
 
 ## 🔁 Move it into the service
 
-The service runs `/etc/Pingclair/Pingclairfile`, so putting your configuration
-there is what makes it survive a reboot:
+The service loads `/etc/Pingclair/Pingclairfile`. Copy the configuration there
+to apply it when the service starts, including after a reboot:
 
 ```bash
 sudo cp Pingclairfile /etc/Pingclair/Pingclairfile
@@ -186,32 +180,34 @@ sudo pc service reload
 curl -i http://localhost/
 ```
 
-`pc service reload` asks the running server to read the file again by sending
+`pc service reload` requests a configuration reload by sending
 `SIGUSR1`. `pingclair reload` reaches the same code through the Admin API and
-reports the server's verdict, but it requires the `admin` global option.
+reports the reload result, but it requires the `admin` global option.
 `sudo kill -USR1 "$(systemctl show -p MainPID --value pingclair)"` sends the
 signal directly, with no Admin API needed.
 
 Validate first either way, and check the result afterwards. `systemctl reload`
-reports only that the signal was delivered; the server's verdict — applied, or
+reports only that the signal was delivered; the reload result — applied, or
 refused with a reason — appears on the unit's status line and in the journal. A
 refused reload leaves the previous configuration serving.
 [Run it as a service](/start/service/#-what-a-reload-means) covers the details.
 
-## ⚠️ When it does not work
+<span id="️-when-it-does-not-work"></span>
+
+## ⚠️ Troubleshooting
 
 - **`Address already in use`.** The installer's service still holds `:80`, or
   another process holds your port. `sudo ss -ltnp | grep :80` names the owner;
   `sudo pc service stop` frees the default one.
-- **`Empty reply from server` on `http://localhost:8080`.** You are speaking
-  plaintext to a TLS listener. Add the `http://` scheme to the site address, or
-  talk to it with `https://` and trust the internal certificate.
+- **`Empty reply from server` on `http://localhost:8080`.** The request uses
+  plaintext HTTP with a TLS listener. Add the `http://` scheme to the site
+  address, or use `https://` and trust the internal certificate.
 - **`Cannot reach admin API at 127.0.0.1:2019`.** The configuration has no
   `admin` option, so nothing is listening for `pingclair stop` and
   `pingclair reload`. Add it to the global options block, or stop the foreground
   process with Ctrl-C.
-- **`curl` hangs on a loopback address.** A system proxy is intercepting the
-  request. Repeat it with `curl --noproxy '*'`.
+- **`curl` does not complete a loopback request.** A system proxy may be
+  intercepting the request. Repeat it with `curl --noproxy '*'`.
 - **Validation fails with `Unsupported feature`.** The directive is recognized
   but not implemented, and the message names the alternative, as in
   `encode br`: Brotli is not implemented for proxied responses, so the message

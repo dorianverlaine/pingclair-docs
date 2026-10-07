@@ -6,10 +6,9 @@ sidebar:
 description: Serve a directory with compression, caching headers, byte ranges, a single-page fallback, and a rule that keeps dotfiles private.
 ---
 
-This page serves a directory of files, starting with `root` and `file_server`
-and adding compression, cache headers, range requests, and the fallback a
-single-page application needs. Each step shows what the server answered on a
-real host.
+This page explains how to serve a directory with `root` and `file_server`,
+configure compression and cache headers, and support range requests and
+single-page applications.
 
 📌 This page describes **v0.2.0**.
 
@@ -65,24 +64,23 @@ gzip      200  301 bytes   content-encoding: gzip
 identity  200 36000 bytes  (no content-encoding)
 ```
 
-Brotli is not implemented for proxied responses, and asking for it is a compile
-error rather than a silent downgrade:
+Brotli is not implemented for proxied responses. Configuring it produces a
+compilation error:
 
 ```text
 Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip`
 ```
 
-The message names the alternative. A configuration that asks for something the
-server cannot do does not run at all.
+The error identifies the supported alternatives. Unsupported options prevent
+the configuration from loading.
 
-A site compresses only when `encode` asks. Gzip defaults to level 5; a block can select levels 1–9 and a `minimum_length` (512 bytes by default). Static responses always carry `Vary: Accept-Encoding`. Each coding has its own ETag, and gzip tags include the level. Precompressed sidecars use their own size and modification time for validators and take precedence over cached live compression.
+A site compresses responses only when `encode` is configured. Gzip defaults to level 5; a block can select levels 1–9 and a `minimum_length` (512 bytes by default). Static responses always carry `Vary: Accept-Encoding`. Each coding has its own ETag, and gzip tags include the level. Precompressed sidecars use their own size and modification time for validators and take precedence over cached live compression.
 
 ## ⏳ Caching headers
 
 `file_server` evaluates `If-Match`, `If-Unmodified-Since`, `If-None-Match`, and `If-Modified-Since` in that order, returning `304` or `412`. A failed `If-Range` returns the whole file with `200`. A configured `ETag` header is currently not used for revalidation; use the derived file validators. Ranges stream in bounded chunks with identity encoding. Canonical redirects preserve the query string and clean the path.
 
-How long a client may keep a file is a decision for the site, and it belongs
-on the paths where it is true:
+Set `Cache-Control` for the paths to which each cache lifetime applies:
 
 ```caddyfile
 http://:8080 {
@@ -102,8 +100,8 @@ Measured: `Cache-Control: public, max-age=60` on the page, and
 when a file's name changes whenever its content does, which is why build tools
 add a content hash to asset names.
 
-Range requests need no configuration; a client that asks for the first ten bytes
-gets them:
+Range requests require no additional configuration. For example, request the
+first ten bytes of a file:
 
 ```text
 HTTP/1.1 206 Partial Content
@@ -140,14 +138,13 @@ http://:8080 {
 ```
 
 The listing names the entries: `/assets/` shows `big.txt` under an `Index of`
-heading. Leave `browse` off unless the directory is meant to be read that way.
+heading. Enable `browse` only for directories intended to have public listings.
 
 ## 🔒 Hiding files
 
 ⚠️ Dotfiles are served like any other file: `.hidden` answered `200` in the
-configuration above. That is how `.git`, `.env`, and editor backups end up on
-the internet. To keep them out, answer those paths before the file server
-does:
+configuration above. This can expose `.git`, `.env`, and editor backups. Deny requests for
+these paths before the file-server handler runs:
 
 ```caddyfile
 http://:8080 {
@@ -165,14 +162,16 @@ answer `200`. The status is intentionally `404` rather than `403`: a `403`
 confirms that the file exists. `/.*` matches only dotfiles at the top of the
 site; the `file_server { hide … }` option hides paths wherever they are.
 
-## ⚠️ When it does not work
+<span id="️-when-it-does-not-work"></span>
+
+## ⚠️ Troubleshooting
 
 - **`Unsupported feature: 'encode br'`.** Brotli is refused by name; use
   `encode zstd gzip`.
 - **`Unknown directive 'file_server: …'`.** The option does not exist, and
   `validate` names the refused spelling instead of ignoring it.
-- **A directory listing instead of the page.** The directory has no `index.html`,
-  which is either what you want or a missing file.
+- **A directory listing instead of the page.** The directory has no `index.html`.
+  Add an index file if a listing is not intended.
 - **`404` for a route the application handles.** The single-page fallback is
   missing: `try_files {path} /index.html`.
 - **A change does not appear after a reload.** Files are read per request, so
@@ -181,7 +180,7 @@ site; the `file_server { hide … }` option hides paths wherever they are.
 
 ## 🧭 Next steps
 
-- [Reverse proxy an application](/guides/reverse-proxy/): the other half of the
-  server.
+- [Reverse proxy an application](/guides/reverse-proxy/): serve requests through an
+  application upstream.
 - [`file_server`](/reference/directives/#file_server): the directive reference.
 - [Pingclairfile](/reference/pingclairfile/): matchers and route order.

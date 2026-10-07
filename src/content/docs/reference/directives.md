@@ -7,7 +7,7 @@ description: Syntax, defaults, context, refusals, and Caddy differences for the 
 📌 TLS examples below use `./certs/` in the working directory. Supply your own certificate, matching private key, or client CA file there; validation reads these files too.
 
 Each entry opens with a fixed header: the syntax, the default when the
-directive is absent, and where the directive may appear. It then says what the
+directive is absent, and where the directive may appear. It then describes what the
 directive does, what it refuses, and where it differs from Caddy.
 
 📌 This page describes **v0.2.0**. Behavior that changed from the 0.1.x line
@@ -155,7 +155,7 @@ Context:  site block
 ```
 
 Compresses responses. Formats are listed in preference order: when a client
-accepts several with the same quality, the first one listed wins. The supported
+accepts several with the same quality, the first listed format is selected. The supported
 formats are `zstd` and `gzip`, and a bare `encode` means `gzip`. `encode off`
 turns compression off for the site.
 
@@ -171,7 +171,7 @@ What compression does to a response:
 - Responses on a site with `encode` carry `Vary: Accept-Encoding`, including
   the ones sent uncompressed. Compression adds `Accept-Encoding` to an existing
   `Vary` field instead of replacing it.
-- A proxied response with a strong `ETag` gets a weak one when it is
+- A proxied response with a strong `ETag` receives a weak validator when it is
   re-encoded, because the encoded bytes differ from the origin's.
 - `Cache-Control: no-transform` on the request or on the response disables
   compression for that response.
@@ -189,14 +189,14 @@ rather than appending plaintext.
 Refusals:
 
 - `encode br` is refused at load time. The proxy has no streaming Brotli
-  encoder, so the server will not silently fall back to gzip:
+  encoder, and the server does not automatically substitute gzip:
   `` `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``.
 - An unknown format, or an unknown setting inside the block, is refused.
 - `encode off` with a block is refused.
 - A path or named matcher is refused, because compression is set per site, not
   per route. The `*` matcher, which matches everything, is accepted.
 
-**Changed in 0.2.0:** a site compresses only where `encode` asks, as in Caddy.
+**Changed in 0.2.0:** a site compresses responses only when `encode` is configured, as in Caddy.
 A site that relied on the earlier gzip default must add `encode gzip` or
 `encode zstd gzip`. The block settings take effect; earlier releases compiled
 every block as plain gzip.
@@ -248,16 +248,16 @@ the site root set by `root`, or from a root given to this directive alone.
   served only when this option is present.
 - `hide` keeps the named paths from being served or listed. A pattern without
   a `/` hides any path component of that name (`.git` hides `/a/.git/b`); a
-  pattern with a `/` is a path under the root. Repeated lines add up.
+  pattern with a `/` is a path under the root. Repeated lines are combined.
 - `status` answers every file with this status, for a maintenance page.
-- `pass_thru` hands a missing file to the next handler instead of answering
+- `pass_thru` passes a missing file request to the next handler instead of answering
   `404`.
 - `disable_canonical_uris` stops the redirect that adds a trailing slash to a
   directory.
 
 Conditional requests follow RFC 9110: a matching `If-None-Match` or a current
-`If-Modified-Since` gets `304`, a failed `If-Match` or `If-Unmodified-Since`
-gets `412`, and a `Range` with an `If-Range` that no longer matches gets the
+`If-Modified-Since` receives `304`, a failed `If-Match` or `If-Unmodified-Since`
+receives `412`, and a `Range` with an `If-Range` that no longer matches receives the
 whole file with `200`. Methods other than `GET` and `HEAD` are answered `405`
 with `Allow: GET, HEAD`. Static responses carry `Vary: Accept-Encoding` whether
 or not the site compresses.
@@ -388,7 +388,7 @@ over the `request_body` limit (`413`), and a body that stops arriving (`408`).
 - `root` inside the block sets the error route's own document root; it may
   appear anywhere in the block. A matcher-scoped `root @name …` is refused.
 - A `file_server` inside the block serves from the error route's
-  configuration. The page goes out with the error's status, and the failed
+  configuration. The page is returned with the error status, and the failed
   request's `Range` and validators are ignored, so an error never becomes a
   `206` or a `304`.
 - An error raised inside an error route is answered directly instead of
@@ -397,7 +397,7 @@ over the `request_body` limit (`413`), and a body that stops arriving (`408`).
 **Changed in 0.2.0:** gateway and body-size errors reach `handle_errors`, and a
 `file_server` in an error route serves its page instead of the error text. A
 catch-all `handle_errors { … }` therefore also answers `502`, `504`, and `413`;
-give it status codes to keep it to the errors it was written for. Its gateway
+Specify status codes to restrict the errors handled. Its gateway
 answers carry no `Proxy-Status` field, which the built-in gateway error does.
 
 ```caddyfile
@@ -469,7 +469,7 @@ Refusals:
 
 - A directive that has both arguments and a block is refused.
 - `header X-Name` with no value is refused. Caddy would set an empty value, but
-  an empty response header is almost always a mistyped removal.
+  an empty response header is ambiguous with an intended header removal.
 - A field value containing CR, LF, or NUL, or a field name that is not a valid
   token, is refused at load (RFC 9110 §5.5).
 - A `match` block inside `handle_response { header { … } }` is refused.
@@ -595,7 +595,7 @@ Writes an access log. The site-level forms mean different things:
 In the global options block, an unnamed `log { … }` configures the server's
 own process log instead: `output file <path>`, `output stdout`,
 `output stderr`, `format json|text`, and `level`. A file sink is created with
-mode `0600` if it is missing. `RUST_LOG` still outranks a configured `level`,
+mode `0600` if it is missing. `RUST_LOG` takes precedence over a configured `level`,
 and the startup banner stays on standard output.
 
 Block options include `output` (`stdout`, `stderr`, or `file <path>`), `format`
@@ -628,8 +628,8 @@ Context:  site block, handle, route
 ```
 
 Serves the Prometheus scrape endpoint from a site route, so a scraper can read
-the numbers without access to the Admin API. The route is as open as the site
-it is in; on a public site, put a matcher or `basic_auth` in front of it.
+the numbers without access to the Admin API. The route has the same access restrictions as the site; on a public site,
+restrict it with a matcher or `basic_auth`.
 
 The route serves the numbers only while collection is on, which the global
 `metrics` option controls (see [Global options](#global-options)). With
@@ -672,8 +672,7 @@ paths retain non-UTF-8 filename bytes, and repeated Cookie lines are combined.
 HEAD sends no body, download pacing applies, parameters too large for a FastCGI
 record return `431`, and truncated or malformed bodies abort the response.
 
-⚠️ Chunked and bodyless requests still receive `411`. Do not infer that a
-configuration passing validation proves these request shapes work. See
+⚠️ Chunked and bodyless requests still receive `411`. This runtime limitation is not detected by configuration validation. See
 [Known defects](/project/status/#-known-defects-in-020).
 
 ```caddyfile
@@ -749,11 +748,10 @@ number of successful probes. A `backup` upstream is used only when every
 primary upstream is unavailable. An upstream weight of `0` drains it: it
 receives no requests.
 
-Timeouts live in a `transport http` block: `connect_timeout` (Caddy's
+Configure timeouts in a `transport http` block: `connect_timeout` (Caddy's
 `dial_timeout`), `first_byte_timeout` (Caddy's `response_header_timeout`),
 `read_timeout`, and `write_timeout`. `lb_try_duration` limits how long after the
-request arrived a new attempt may start; it does not cut a response that is
-already running.
+request arrived a new attempt may start; it does not terminate an active response.
 
 A `502` or `504` that Pingclair generates itself carries
 `Proxy-Status: pingclair; error=…`, on the built-in error path. Custom `handle_errors` responses omit it too;
@@ -774,7 +772,7 @@ Refusals:
 
 - The default `lb_policy` is `random`; write `lb_policy round_robin` to keep
   the earlier alternation.
-- `lb_try_duration` no longer cuts a slow answer or a long event stream. Bound
+- `lb_try_duration` no longer terminates a slow response or a long event stream. Bound
   a slow backend with `first_byte_timeout` or `read_timeout` instead.
 - Behind `trusted_proxies`, `{remote_host}` is the connection's peer and
   `{client_ip}` is the client. `header_up X-Real-IP {client_ip}` forwards the
@@ -803,7 +801,7 @@ Refusals:
 }
 ```
 
-The [reverse proxy guide](/guides/reverse-proxy/) walks through each option.
+The [reverse proxy guide](/guides/reverse-proxy/) explains each option.
 
 `request_buffers <size|unlimited>` and `response_buffers <size|unlimited>`
 buffer before forwarding, then stream the remainder after the ceiling. Here
@@ -871,7 +869,7 @@ Context:  site block
 ```
 
 Controls where the site's certificate comes from. Without a `tls` line, a public
-name gets a certificate from Let's Encrypt automatically.
+hostname receives a certificate from Let's Encrypt automatically.
 
 | Form | Behavior |
 | --- | --- |
@@ -897,7 +895,7 @@ port keep it. It does not create or remove the QUIC listener; the global
 ([TLS: what you can tune](/guides/tls-tuning/#-which-protocols-are-served)).
 
 `client_auth` follows the most specific site for the name the client sent, as
-the certificate does: an exact site without `client_auth` asks for no client
+the certificate does: an exact site without `client_auth` does not request a client
 certificate even when a wildcard site on the same port does. A client
 certificate whose usage extensions exclude client authentication is refused.
 
@@ -1002,7 +1000,7 @@ Caddy nests under `servers { … }` are accepted there.
 | `metrics` | `metrics [{ per_host; observe_catchall_hosts }]` | Turns metrics collection on. Without it, nothing is collected and the scrape endpoints answer empty. `per_host` adds a `host` label for the hosts the configuration serves. |
 | `order` | `order <directive> first\|last\|before <d>\|after <d>` | Moves a directive in the directive order. |
 | `servers` | `servers [<address>] { … }` | Listener options: `protocols`, `trusted_proxies static …`, `client_ip_headers`, `listener_wrappers { proxy_protocol }`, and `metrics`. An addressed block applies to that one listener and may set only those options. |
-| `storage` | `storage file_system <path>` | The directory of the TLS store. Outranks `PINGCLAIR_TLS_STORE`. Other storage modules are refused. |
+| `storage` | `storage file_system <path>` | The directory of the TLS store. Takes precedence over `PINGCLAIR_TLS_STORE`. Other storage modules are refused. |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | Peers allowed to state the client address in forwarding headers. Inside `servers { … }`, write Caddy's spelling, `trusted_proxies static <cidr \| private_ranges> ...`. One line per scope. |
 
 Inside `servers`, `client_ip_headers <field> ...` lists the headers that may

@@ -3,13 +3,12 @@ title: Proxy an application
 h1_emoji: '🔀'
 sidebar:
   order: 1
-description: Put Pingclair in front of an application, spread traffic over several instances, and keep serving when one of them dies.
+description: Configure a reverse proxy, distribute traffic across application instances, and maintain service during upstream failures.
 ---
 
-A reverse proxy puts one public address in front of one or more application
-instances, without changing the application. This page starts with a single
-upstream and builds up to a pool with health checks, timeouts, and a backup. It
-ends with what the application sees on the other side.
+A reverse proxy exposes one public address for one or more application
+instances. This page explains single and multiple upstreams, health checks,
+timeouts, backup upstreams, and the headers forwarded to the application.
 
 📌 This page describes **v0.2.0**.
 
@@ -72,13 +71,12 @@ between the two instances:
 | `least_conn` | The upstream with the fewest connections in flight. |
 | `ip_hash` | The same client address always reaches the same upstream. |
 | `first` | The first available upstream. |
-| `header <name>`, `cookie <name>`, `query <name>` | Hash on that field, so a session sticks to one instance. |
+| `header <name>`, `cookie <name>`, `query <name>` | Hash on that field, so requests from the same session use one instance. |
 | `weighted_round_robin <w> …` | One weight per upstream, on the same line. |
 
 A weight of `0` drains an upstream. Weights above `100` and pools whose every primary has weight `0` are refused. `lb_try_duration` limits when a new retry may begin, not how long an active response may run. Once an upstream may have seen the request, automatic retries repeat only idempotent methods.
 
-A weight can also be set on each upstream, which reads better when each instance
-has its own reason:
+Weights can also be configured separately for each upstream:
 
 ```caddyfile
 http://:8080 {
@@ -110,8 +108,8 @@ http://:8080 {
 }
 ```
 
-With both alive, every request goes to `3000`. Stop that process and the next
-request is answered by `3001`.
+With both upstreams available, every request is sent to `3000`. After that
+process stops, the next request is answered by `3001`.
 
 ## 🩺 Health checks
 
@@ -136,9 +134,8 @@ http://:8080 {
 }
 ```
 
-The application needs an endpoint that answers cheaply, here `/health`. Each
-change of state is logged, which is how to find out when an instance left
-rotation:
+The application needs a health endpoint with low processing overhead, such as
+`/health`. State-change logs identify when an instance leaves rotation:
 
 ```text
 INFO pingclair_proxy::health_check: 🩺 Active upstream health changed backend=Inet(127.0.0.1:3001) healthy=false
@@ -146,15 +143,14 @@ INFO pingclair_proxy::health_check: 🩺 Active upstream health changed backend=
 ```
 
 Measured on this configuration: with the second instance stopped, all traffic
-went to the first; when it came back, it rejoined after `consecutive_success`
+went to the first; when it recovered, it rejoined after `consecutive_success`
 successful probes. Caddy's flat spelling (`health_uri`, `health_interval`,
 `health_timeout`, `health_status`, `health_fails`, `health_passes`) configures
 the same check.
 
 ## ⏱️ Timeouts
 
-Timeouts live in a `transport http` block inside `reverse_proxy`, not directly
-under it:
+Configure timeouts in a `transport http` block inside `reverse_proxy`:
 
 ```caddyfile
 http://:8080 {
@@ -171,10 +167,11 @@ http://:8080 {
 }
 ```
 
-Measured: with `127.0.0.1:3099` accepting nothing, `connect_timeout 1s` costs one
-second and the request is retried against the second upstream, which answers
+Measured: with no connections accepted at `127.0.0.1:3099`, the
+`connect_timeout 1s` deadline expires after one second. The request is then
+retried against the second upstream, which returns
 `200`. An application that accepts the connection and then waits 3 seconds for a
-body gets `first_byte_timeout 1s` applied instead, and the client receives
+body is subject to `first_byte_timeout 1s` instead, and the client receives
 `504`.
 
 `dial_timeout` is not a `reverse_proxy` option; written there, `validate` refuses
@@ -182,8 +179,8 @@ the file with `Unknown directive 'reverse_proxy: dial_timeout'`. Inside `transpo
 
 ## 🔁 Hostname upstreams
 
-An upstream can be a hostname instead of an address. That is what a container
-that restarts on a new IP address needs:
+A hostname upstream supports applications whose IP address may change, such as
+containers recreated with a new address:
 
 ```caddyfile
 {
@@ -227,14 +224,16 @@ Behind another proxy, the address in those headers is that proxy's unless it is
 listed in `trusted_proxies`; the [Cloudflare Tunnel
 guide](/guides/cloudflare-tunnel/) covers that case.
 
-## ⚠️ When it does not work
+<span id="️-when-it-does-not-work"></span>
+
+## ⚠️ Troubleshooting
 
 - **`502` from the proxy.** No upstream answered. Check that the application is
   listening (`sudo ss -ltnp | grep :3000`) and that the address matches.
   A built-in `502` or `504` that Pingclair generated carries
   `Proxy-Status: pingclair; error=…`; a custom `handle_errors` response omits it too, so absence alone does not
   identify the application.
-- **`504` after a pause.** A timeout fired: `first_byte_timeout` for a slow
+- **`504` after a pause.** A timeout expired: `first_byte_timeout` for a slow
   backend, `read_timeout` for a slow body, `connect_timeout` for a host that
   never accepts.
 - **`Unknown directive 'reverse_proxy: …'`.** The option belongs to a nested
@@ -243,8 +242,9 @@ guide](/guides/cloudflare-tunnel/) covers that case.
 - **A configuration change does not take effect.** A reload cannot add or move
   a listener. When the new file does, the unit's status line names the
   addresses that changed, and `sudo pc service restart` applies them. See [Run it as a service](/start/service/#-what-a-reload-means).
-- **Every request lands on one instance.** It is the only healthy one. The
-  health check log says when the others left rotation, and why (`ConnectRefused`,
+- **Every request is sent to one instance.** Check whether it is the only
+  healthy upstream. Health-check logs identify when other instances left
+  rotation and the reason (`ConnectRefused`,
   `failure_statuses`, and so on).
 
 ## 🧭 Next steps
