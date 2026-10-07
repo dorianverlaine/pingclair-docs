@@ -12,7 +12,7 @@ pingclair <command> [<args…>]
 
 角括號代表必填的值，方括號代表選填的值，`…` 代表可以重複的值。每個命令都支援 `--help`，`pingclair help <command>` 會印出相同的內容。不帶命令執行二進位檔，會印出命令清單。
 
-📌 本頁描述的是最新公開的發行版 **v0.2.0-rc.3**。只存在於伺服器 `main` 分支上的變動，以 **下一版** 標示。
+📌 本頁描述 **v0.2.0**。
 
 安裝程式也會把二進位檔連結為 `pc`，所以下面每個命令都有兩個字母的簡寫：`pc validate`、`pc service reload` 等等。兩者是同一個程式：`pc` 是符號連結，不是第二個二進位檔。
 
@@ -51,30 +51,32 @@ pingclair <command> [<args…>]
 | `version` | 印出版本。 |
 | `service` | 控制已安裝的 systemd unit。 |
 
-**下一版**：新增 `storage export` 與 `storage import`，作為 Caddy 對 `storage-export` 與 `storage-import` 的寫法。帶連字號的名稱仍然可以使用。
+**0.2.0 變更**：新增 `storage export` 與 `storage import`，作為 Caddy 對 `storage-export` 與 `storage-import` 的寫法。帶連字號的名稱仍然可以使用。
 
 ## pingclair run
 
 以一份設定文件在前景執行伺服器。日誌輸出到標準輸出與標準錯誤，按 `Ctrl-C` 會關閉伺服器。
 
 ```bash
-pingclair run [OPTIONS] [CONFIG]
+pingclair run [OPTIONS] [PATH]
 ```
 
 | 參數 | 預設值 | 作用 |
 | --- | --- | --- |
-| `CONFIG` | `./Pingclairfile`，其次 `./Caddyfile` | 要載入的設定檔或目錄。 |
+| `PATH` | `./Pingclairfile`，其次 `./Caddyfile` | 要載入的設定檔或目錄。 |
 
 | 旗標 | 作用 |
 | --- | --- |
-| `-r`、`--resume` | 載入 Admin API 最後自動儲存的設定，而不是檔案，與 `caddy run --resume` 相同。兩者同時存在時，覆寫 `CONFIG`。 |
+| `-c`、`--config <CONFIG>` | 指定設定檔，不可同時提供位置參數路徑；`-c -` 一律讀取標準輸入。 |
+| `--adapter caddyfile\|json` | 覆寫副檔名推斷；JSON 是 Pingclair 的結構。明確 adapter 只接受單一檔案。 |
+| `-r`、`--resume` | 載入 Admin API 最後自動儲存的設定，而不是檔案，與 `caddy run --resume` 相同。兩者同時存在時，覆寫 `PATH`。 |
 | `-w`、`--watch` | 每秒檢查一次設定檔的修改時間，每次變更後重新載入。供本機開發使用。 |
 
 ```bash
 pingclair run --watch
 ```
 
-沒有 `CONFIG`，兩個預設檔案也都不存在時，`run` 會以狀態碼 1 結束。Caddy 在這種情況下會啟動一個空的伺服器；Pingclair 則拒絕，所以在錯誤目錄下輸入的 `run` 會明顯地失敗。
+沒有路徑且兩個預設檔案都不存在時，`run` 會只啟動 `127.0.0.1:2019` 的 Admin API。Unix 上第一次 `/load` 可加入明文 HTTP 監聽器；TLS 與 H3 必須從檔案啟動。明確指定不存在的路徑仍會失敗。沒有檔案來源時 `SIGUSR1` 只回報無法從檔案重載，`SIGHUP` 會被忽略。
 
 若要讓伺服器在終端機關閉後繼續執行，請使用已安裝的 unit（[以服務方式執行](/zh-TW/start/service/)）。
 
@@ -147,7 +149,7 @@ pingclair environ
 
 列出編譯進這個二進位檔的模組。`--json` 會以 JSON 印出同一份清單，供腳本使用。
 
-**下一版**：接受 `--versions`、`--packages` 與 `-s`／`--skip-standard`，所以為 `caddy list-modules` 寫的腳本可以不經修改直接執行。
+**0.2.0 變更**：接受 `--versions`、`--packages` 與 `-s`／`--skip-standard`，每個模組皆為 standard，`--skip-standard` 因此輸出空白。
 
 ```bash
 pingclair list-modules [--json]
@@ -184,7 +186,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
 
 從 `storage-export` 寫出的封存檔還原儲存區。`-i -` 會從標準輸入讀取封存檔。
 
-**下一版**：兩個命令都接受 `-c`／`--config <file>`，該檔案中的全域 `storage file_system <path>` 選項會指定儲存區。什麼都不會還原的匯入會被拒絕。
+**0.2.0 變更**：兩個命令都接受 `-c`／`--config <file>`，該檔案中的全域 `storage file_system <path>` 選項會指定儲存區。什麼都不會還原的匯入會被拒絕。
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
@@ -200,6 +202,8 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair tru
 ```
 
 [HTTPS](/zh-TW/start/https/) 頁面說明了何時需要這麼做，以及如何確認它生效。
+
+📌 內部根憑證位於 `<store>/pki/authorities/local/root.crt`。舊 `internal/` 目錄不遷移，升級後須重新執行 `pingclair trust`。
 
 ## pingclair untrust
 
@@ -283,12 +287,14 @@ pingclair file-server --root ./public --browse --listen :8080
 編譯設定並回報找到的第一個問題，不會啟動任何東西。設定被拒絕時結束碼不為零，所以這個命令可以當作部署腳本中的關卡。
 
 ```bash
-pingclair validate [/etc/Pingclair/Pingclairfile]
+pingclair validate [OPTIONS] [PATH]
 ```
 
 | 參數 | 預設值 | 作用 |
 | --- | --- | --- |
-| `CONFIG` | `./Pingclairfile`，其次 `./Caddyfile` | 要檢查的設定檔或目錄。 |
+| `PATH` | `./Pingclairfile`，其次 `./Caddyfile` | 要檢查的設定檔或目錄。 |
+
+`validate` 同樣接受 `-c`／`--config` 與 `--adapter caddyfile|json`，但沒有輸入時會失敗。它會讀取、解析每個手動憑證與金鑰，確認兩者配對，不開啟監聽器。
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
@@ -298,9 +304,9 @@ sudo pingclair validate /etc/Pingclair/Pingclairfile
 
 印出 Pingclairfile 編譯後的 JSON 文件。這是 Pingclair 自己的 schema，也就是 `validate`、`run` 與 Admin API 的 `/load` 接受的格式。與 `caddy adapt` 不同，輸出不是 Caddy 的 `{"apps": …}` 形式，Caddy 也無法載入它。
 
-`--pretty` 會為 JSON 加上縮排。`--validate` 還會執行 `validate` 做的檢查，例如憑證檔案是否存在。
+`--pretty` 會為 JSON 加上縮排。`adapt` 一律先驗證，`--validate` 仍被接受但不改變行為。匯出格式的匹配器改用標記表示法，`handle` 容器稱為 `pipeline`，重試政策為單一 predicate；舊格式仍可載入。
 
-**下一版**：`adapt` 在印出之前一律會驗證，所以結束碼 0 代表這個建置能載入結果。`--validate` 仍會被接受，但不會改變任何事。
+**0.2.0 變更**：`adapt` 在印出之前一律會驗證，所以結束碼 0 代表這個建置能載入結果。`--validate` 仍會被接受，但不會改變任何事。
 
 ```bash
 pingclair adapt [OPTIONS]
@@ -310,7 +316,7 @@ pingclair adapt [OPTIONS]
 | --- | --- | --- |
 | `-c`、`--config <CONFIG>` | `./Pingclairfile`，其次 `./Caddyfile` | 要讀取的設定檔。 |
 | `-p`、`--pretty` | 關閉 | 為 JSON 加上縮排。 |
-| `--validate` | 關閉 | 也執行 `validate` 做的檢查。 |
+| `--validate` | 關閉 | 相容旗標；一律先驗證。 |
 
 ```bash
 pingclair adapt --pretty --validate
@@ -320,7 +326,7 @@ pingclair adapt --pretty --validate
 
 格式化 Pingclairfile 並印出結果。沒有路徑時讀取 `./Pingclairfile`；`-` 則讀取標準輸入。
 
-**下一版**：輸入原本沒有格式化時，`fmt` 會以狀態碼 1 結束，所以它能像 `caddy fmt` 一樣擋下 commit；`--overwrite` 仍以 0 結束。`--config <path>` 與 `-w` 作為 Caddy 的寫法被接受，縮排也從兩個空白改為每層一個 tab。
+**0.2.0 變更**：輸入原本沒有格式化時，`fmt` 會以狀態碼 1 結束，所以它能像 `caddy fmt` 一樣擋下 commit；`--overwrite` 仍以 0 結束。`--config <path>` 與 `-w` 作為 Caddy 的寫法被接受，縮排也從兩個空白改為每層一個 tab。
 
 ```bash
 pingclair fmt [OPTIONS] [PATH]
@@ -328,7 +334,7 @@ pingclair fmt [OPTIONS] [PATH]
 
 | 旗標 | 作用 |
 | --- | --- |
-| `-o`、`--overwrite` | 把格式化後的內容寫回檔案，而不是印出來。 |
+| `-o`、`-w`、`--overwrite` | 把格式化後的內容寫回檔案，而不是印出來。 |
 | `-d`、`--diff` | 印出視覺化的差異，而不是格式化後的檔案。 |
 
 ```bash
@@ -362,7 +368,7 @@ pingclair hash-password --algorithm argon2id
 
 ## pingclair version
 
-印出版本，例如 release candidate 會印出 `v0.2.0-rc.3`。
+發行版印出自己的標記，例如 `v0.2.0`。`main` 建置印出 `v0.0.0-dev+<commit>`，沒有 git checkout 時為 `v0.0.0-dev`。`build-info` 與 `list-modules --versions` 使用相同字串。
 
 ```bash
 pingclair version

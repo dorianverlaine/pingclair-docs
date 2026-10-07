@@ -16,8 +16,8 @@ a value that can be repeated. Every command answers `--help`, and
 `pingclair help <command>` prints the same text. Running the binary with no
 command prints the list of commands.
 
-📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
-that exist only on the server's `main` branch are marked **Next release**.
+📌 This page describes **v0.2.0**. Behavior that changed from the 0.1.x line and
+the 0.2.0 release candidates is marked **Changed in 0.2.0**.
 
 The installer also links the binary as `pc`, so every command below has a
 two-letter spelling: `pc validate`, `pc service reload`, and so on. The two are
@@ -44,8 +44,8 @@ the same program: `pc` is a symbolic link, not a second binary.
 | `list-modules` | List the modules compiled into this binary. |
 | `build-info` | Print build metadata, including the toolchain. |
 | `manpage` | Write man pages into a directory. |
-| `storage-export` | Write the certificate store into a tar archive. |
-| `storage-import` | Restore a certificate store from that tarball. |
+| `storage export`, `storage-export` | Write the certificate store into a tar archive. |
+| `storage import`, `storage-import` | Restore a certificate store from that tarball. |
 | `trust` | Install the internal CA root into the system trust store. |
 | `untrust` | Remove it again. |
 | `respond` | Serve a fixed response, for development. |
@@ -58,9 +58,8 @@ the same program: `pc` is a symbolic link, not a second binary.
 | `version` | Print the version. |
 | `service` | Control the installed systemd unit. |
 
-**Next release:** `storage export` and `storage import` are added as Caddy's
-spellings of `storage-export` and `storage-import`. The hyphenated names keep
-working.
+`storage export` and `storage import` are Caddy's spellings of
+`storage-export` and `storage-import`; both spellings run the same command.
 
 ## pingclair run
 
@@ -68,25 +67,31 @@ Runs the server in the foreground with one configuration document. Logs go to
 standard output and standard error, and `Ctrl-C` shuts the server down.
 
 ```bash
-pingclair run [OPTIONS] [CONFIG]
+pingclair run [OPTIONS] [PATH]
 ```
 
 | Argument | Default | What it does |
 | --- | --- | --- |
-| `CONFIG` | `./Pingclairfile`, then `./Caddyfile` | Configuration file or directory to load. |
+| `PATH` | `./Pingclairfile`, then `./Caddyfile` | Configuration file or directory to load. |
 
 | Flag | What it does |
 | --- | --- |
-| `-r`, `--resume` | Load the configuration the Admin API last autosaved instead of the file, the way `caddy run --resume` does. Overrides `CONFIG` when both are present. |
+| `-c`, `--config <CONFIG>` | The configuration file, as an alternative to `PATH`. Giving both is refused. `-c -` reads standard input. |
+| `--adapter <ADAPTER>` | `caddyfile` or `json`. Overrides the format the filename extension implies. JSON uses Pingclair's own schema, not Caddy's. |
+| `-r`, `--resume` | Load the configuration the Admin API last autosaved instead of the file, the way `caddy run --resume` does. Overrides `PATH` when both are present. |
 | `-w`, `--watch` | Check the configuration file's modification time once a second, and reload after every change. Intended for local development. |
 
 ```bash
 pingclair run --watch
 ```
 
-With no `CONFIG` and neither default file present, `run` exits with status 1.
-Caddy starts an empty server in that case; Pingclair refuses, so a `run` typed
-in the wrong directory fails visibly.
+**Changed in 0.2.0:** with no path and neither default file present, `run`
+starts with no sites and only the Admin API at `127.0.0.1:2019`, as `caddy run`
+does. On Unix, that empty process accepts its first plaintext HTTP
+configuration through `POST /load`; TLS and HTTP/3 listeners need a file at
+startup. An explicit path that does not exist still fails, so give the path
+when a missing file must stop the process. `SIGUSR1` has no file to read in
+this mode, so reload through the Admin API instead.
 
 For a server that outlives the terminal, use the installed unit
 ([Run it as a service](/start/service/)).
@@ -173,13 +178,12 @@ pingclair environ
 ## pingclair list-modules
 
 Lists the modules compiled into this binary. `--json` prints the same list as
-JSON, for scripts.
-
-**Next release:** `--versions`, `--packages`, and `-s`/`--skip-standard` are
-accepted, so scripts written for `caddy list-modules` run unchanged.
+JSON, for scripts. `--versions`, `--packages`, and `-s`/`--skip-standard` are
+accepted, so scripts written for `caddy list-modules` run unchanged; every
+module in this build is standard, so `--skip-standard` prints nothing.
 
 ```bash
-pingclair list-modules [--json]
+pingclair list-modules [--json] [--versions]
 ```
 
 ## pingclair build-info
@@ -203,8 +207,9 @@ pingclair manpage --directory /usr/local/share/man/man1
 ## pingclair storage-export
 
 Writes the certificate store into a tar archive. The store is the one named by
-`PINGCLAIR_TLS_STORE`, or else the data directory of the user running the
-command. The prefix in the example points a root shell at the service account's
+the `storage file_system <path>` option of the file given with
+`-c`/`--config`, else by `PINGCLAIR_TLS_STORE`, or else the data directory of
+the user running the command. The prefix in the example points a root shell at the service account's
 store instead of root's own. `-o -` writes the archive to standard output.
 
 ```bash
@@ -219,11 +224,8 @@ encrypted media rather than in a backup that ships to a bucket. The
 ## pingclair storage-import
 
 Restores a store from an archive written by `storage-export`. `-i -` reads the
-archive from standard input.
-
-**Next release:** both commands take `-c`/`--config <file>`, and a global
-`storage file_system <path>` option in that file names the store. An import
-that would restore nothing is refused.
+archive from standard input, and `-c`/`--config <file>` names the store the
+same way as for the export. An import that would restore nothing is refused.
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
@@ -234,8 +236,12 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair \
 
 Installs the root certificate of the internal authority (`tls internal`) into
 the system trust store. Afterwards, clients that use that store accept the
-certificates the authority issues. The root is read from the store named by
-`PINGCLAIR_TLS_STORE`.
+certificates the authority issues. The root is read from
+`pki/authorities/local/root.crt` in the store named by `PINGCLAIR_TLS_STORE`.
+
+**Changed in 0.2.0:** the authority moved to that path and is not migrated from
+the old `internal/` directory. After upgrading from an earlier release, run
+`pingclair trust` again on every client that trusted the old root.
 
 ```bash
 sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust
@@ -336,12 +342,23 @@ starting anything. The exit status is non-zero when the configuration is
 refused, so the command works as a gate in a deployment script.
 
 ```bash
-pingclair validate [/etc/Pingclair/Pingclairfile]
+pingclair validate [OPTIONS] [PATH]
 ```
 
 | Argument | Default | What it does |
 | --- | --- | --- |
-| `CONFIG` | `./Pingclairfile`, then `./Caddyfile` | Configuration file or directory to check. |
+| `PATH` | `./Pingclairfile`, then `./Caddyfile` | Configuration file or directory to check. |
+
+| Flag | What it does |
+| --- | --- |
+| `-c`, `--config <CONFIG>` | The configuration file, as an alternative to `PATH`. `-c -` reads standard input. |
+| `--adapter <ADAPTER>` | `caddyfile` or `json`, overriding the filename extension. |
+
+`validate` reads every certificate and key file the configuration names, parses
+them, and checks that each key belongs to its certificate, without opening any
+listener. A malformed file or a mismatched pair fails validation instead of the
+first handshake. Unlike `run`, `validate` with no file and no standard input
+fails.
 
 ```bash
 sudo pingclair validate /etc/Pingclair/Pingclairfile
@@ -354,12 +371,13 @@ schema, the one `validate`, `run`, and the Admin API's `/load` accept. Unlike
 `caddy adapt`, the output is not Caddy's `{"apps": …}` shape, and Caddy cannot
 load it.
 
-`--pretty` indents the JSON. `--validate` also runs the checks that
-`validate` runs, such as whether certificate files exist.
+`--pretty` indents the JSON. `adapt` runs the same validation as `validate`
+before printing, so exit status 0 means this build can load the result.
+`--validate` is still accepted and changes nothing.
 
-**Next release:** `adapt` always validates before printing, so exit status 0
-means this build can load the result. `--validate` is still accepted and
-changes nothing.
+The exported form changed in 0.2.0: route matchers use a tagged
+representation, the `handle` container is spelled `pipeline`, and the retry
+policy is printed as one predicate. Documents in the older shapes still load.
 
 ```bash
 pingclair adapt [OPTIONS]
@@ -369,7 +387,7 @@ pingclair adapt [OPTIONS]
 | --- | --- | --- |
 | `-c`, `--config <CONFIG>` | `./Pingclairfile`, then `./Caddyfile` | Configuration file to read. |
 | `-p`, `--pretty` | off | Indent the JSON. |
-| `--validate` | off | Also run the checks `validate` runs. |
+| `--validate` | off | Accepted for compatibility; `adapt` always validates. |
 
 ```bash
 pingclair adapt --pretty --validate
@@ -378,12 +396,15 @@ pingclair adapt --pretty --validate
 ## pingclair fmt
 
 Formats a Pingclairfile and prints the result. With no path, it reads
-`./Pingclairfile`; `-` reads standard input.
+`./Pingclairfile`; `-` reads standard input. The canonical form indents with
+one tab per level.
 
-**Next release:** `fmt` exits with status 1 when the input was not already
-formatted, so it can gate a commit the way `caddy fmt` does; `--overwrite`
-still exits 0. `--config <path>` and `-w` are accepted as Caddy's spellings,
-and the indent becomes one tab per level instead of two spaces.
+`fmt` exits with status 1 when the input was not already formatted, so it can
+gate a commit the way `caddy fmt` does; `--overwrite` rewrites the file and
+exits 0.
+
+**Changed in 0.2.0:** the indent is one tab per level instead of two spaces, so
+a file formatted by an earlier release shows a whole-file difference once.
 
 ```bash
 pingclair fmt [OPTIONS] [PATH]
@@ -391,7 +412,8 @@ pingclair fmt [OPTIONS] [PATH]
 
 | Flag | What it does |
 | --- | --- |
-| `-o`, `--overwrite` | Write the formatted text back to the file instead of printing it. |
+| `--config <PATH>` | The file to format; Caddy's spelling of `PATH`. |
+| `-o`, `-w`, `--overwrite` | Write the formatted text back to the file instead of printing it. |
 | `-d`, `--diff` | Print a visual diff rather than the formatted file. |
 
 ```bash
@@ -429,7 +451,10 @@ syntax.
 
 ## pingclair version
 
-Prints the version, as `v0.2.0-rc.3` does for a release candidate.
+Prints the version. A release binary prints its tag, such as `v0.2.0`. A
+binary built from `main` prints `v0.0.0-dev+<commit>`, or `v0.0.0-dev` when it
+was built without a git checkout; `build-info` and `list-modules --versions`
+report the same string.
 
 ```bash
 pingclair version
