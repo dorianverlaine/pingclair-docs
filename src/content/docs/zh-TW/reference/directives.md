@@ -346,6 +346,8 @@ Context:  site block, handle, route
 
 ⚠️ 沒有 `set` 關鍵字。區塊中的 `set X-Name value` 這一行，會被解讀成對一個名為 `set` 的標頭進行正規表示式取代。
 
+與 Caddy 的差異：單寫欄位名稱會取代回應已有的值，而 Caddy 的 `header X-Name value` 在不加 `defer` 時會在其旁新增一行欄位。因此上游以 `X-Name: from-upstream` 回應時，Caddy 會保留該行，這裡則不會。要同時保留兩行請寫 `+X-Name`；只在回應沒有該欄位時設定，請寫 `?X-Name`。
+
 `Strict-Transport-Security` 只會在加密的回應上送出，並依 RFC 6797 的要求從每個明文回應中移除。開啟 HSTS 的方法是寫 `header Strict-Transport-Security "max-age=…"`。
 
 ```caddyfile

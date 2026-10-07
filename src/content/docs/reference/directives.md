@@ -487,6 +487,13 @@ Refusals:
 ⚠️ There is no `set` keyword. A block line `set X-Name value` is read as a
 regular-expression replace on a header named `set`.
 
+Differences from Caddy: a bare field name replaces the value the response
+already carries, while Caddy's `header X-Name value` without `defer` adds a
+field line beside it. An upstream that answered with `X-Name: from-upstream`
+therefore keeps that line under Caddy and loses it here. Write `+X-Name` to
+keep both field lines, or `?X-Name` to set the value only when the response
+has none.
+
 `Strict-Transport-Security` is sent only on encrypted responses and is removed
 from every plaintext one, as RFC 6797 requires. Writing
 `header Strict-Transport-Security "max-age=…"` is the way to turn HSTS on.
