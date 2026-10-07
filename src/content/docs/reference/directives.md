@@ -70,6 +70,11 @@ without brackets and is bracketed in the listener: `bind ::1` listens on
 The automatic HTTP redirect listener of an HTTPS site also listens on the
 `bind` host, so it is not reachable through other interfaces.
 
+Two site blocks may share a port when each binds a different interface. The
+bound interface is part of what makes a site distinct, so
+`http://:8080 { bind 127.0.0.1 }` and `http://:8080 { bind [::1] }` are two
+sites, each reachable only on its own interface.
+
 Refusals:
 
 - More than one address is refused:
