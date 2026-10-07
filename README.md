@@ -33,7 +33,6 @@ src/content/docs/concepts/    How Pingclair works
 src/content/docs/reference/   Configuration language and directives
 src/content/docs/project/     Release status, limitations, benchmarks
 src/content/docs/zh-TW/       Traditional Chinese mirror of the above
-src/content/docs/zh-CN/       Simplified Chinese mirror of the above
 src/styles/theme.css          Typography, colour, and layout tokens
 src/assets/logo.png           Navigation logo, trimmed from the server repository
 src/components/PageTitle.astro  Page title plus the "Copy page" action
@@ -43,11 +42,11 @@ astro.config.mjs              Site metadata and sidebar structure
 
 ## Locales
 
-The English pages are the root locale. Chinese pages live under `zh-TW/` and
-`zh-CN/`, which are Starlight's built-in locale codes, so their interface
-strings come from Starlight rather than from this repository.
+The English pages are the root locale. Traditional Chinese pages live under
+`zh-TW/`, a built-in Starlight locale code, so their interface strings come
+from Starlight rather than from this repository.
 
-Two details are easy to break:
+Three details are easy to break:
 
 - **The default locale is configured as `root`, not `en`.** With an `en` entry
   instead, Starlight looks for English pages in an `en/` directory and the
@@ -57,7 +56,7 @@ Two details are easy to break:
   Without it, `zh-TW/` becomes `/zh-tw/` and Starlight can no longer match the
   locale, which silently sets `<html lang>` to the default locale.
 - **Links between localized pages are absolute and prefixed.** A link from a
-  Chinese page to another Chinese page is written `/zh-TW/...` or `/zh-CN/...`;
+  Traditional Chinese page to another is written `/zh-TW/...`;
   Starlight does not rewrite in-content links.
 
 ## Raw Markdown and "Copy page"
