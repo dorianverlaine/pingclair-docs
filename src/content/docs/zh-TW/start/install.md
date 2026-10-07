@@ -6,7 +6,7 @@ sidebar:
 description: 用發行版二進位檔、Docker 或原始碼把 Pingclair 裝到 Linux 主機上，並確認服務有回應。
 ---
 
-Pingclair 以單一 Linux 二進位檔發布。本頁帶你安裝它、看看安裝程式留下了什麼，並確認伺服器有回應。目前的發行版是 **v0.2.0-rc.3**，屬於 release candidate，本站每一頁描述的都是這個版本。
+Pingclair 以單一 Linux 二進位檔發布。本頁帶你安裝它、看看安裝程式留下了什麼，並確認伺服器有回應。本頁以 **v0.2.0** 為安裝目標。以下保留候選版本的歷史實測輸出；0.2.0 的安裝程式與容器下載尚未在新主機重跑。發行標記可用後再安裝，並以 `pingclair version` 確認版本。
 
 ## 🧾 你需要準備的
 
@@ -134,7 +134,7 @@ server: Pingclair
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.0-rc.3
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.0
     restart: unless-stopped
     ports:
       - "80:80"

@@ -6,6 +6,8 @@ sidebar:
 description: 為公開網域名稱取得憑證、發布內部憑證，或使用你自己的憑證，並確認伺服器實際提供的是什麼。
 ---
 
+📌 下方 TLS 範例使用目前工作目錄的 `./certs/`；請放入自己的憑證、配對金鑰或用戶端 CA 檔案。驗證也會讀取這些檔案。
+
 位址是公開網域名稱的網站區塊，不寫 `tls` 指令也會有 HTTPS：Pingclair 會透過 ACME 向 Let's Encrypt 申請憑證，在 80 連接埠回應 HTTP-01 驗證，把結果存起來，並在背景自動續期。另外三種取得憑證的方式——DNS-01、本機憑證授權單位，以及你自己提供的檔案——在下面分別說明，連同各自的前提條件。
 
 ## 🧾 開始之前
@@ -76,7 +78,7 @@ notAfter=Dec 21 02:35:02 2026 GMT
 
 DNS-01 以發布一筆 TXT 記錄來證明你掌控某個名稱，而不是在 80 連接埠上回應。萬用字元憑證必須用它，80 連接埠關閉的主機也一樣。
 
-⚠️ **DNS-01 在 v0.2.0-rc.3 中無法完成。**該版本在 TXT 記錄裡發布了錯誤的值，所以每一張訂單最後都是 `Invalid`。修正以及下面說明的單一萬用字元憑證都在 `main` 上，尚未發行。若現在就要使用 DNS-01，請用安裝程式的 `--main` 旗標安裝 `main`（[安裝](/zh-TW/start/install/#-從發行版二進位檔安裝)）。本節的輸出顯示的是該建置的行為。
+📌 **0.2.0 的 DNS-01 可使用 Cloudflare。**伺服器發布 ACME TXT 摘要，並保留同名的其他 TXT 記錄。以下是修正後建置的歷史實測輸出；本次文件更新未重新進行公開 CA 簽發。
 
 設定需要 provider 區塊：
 
@@ -136,15 +138,7 @@ https://internal.test {
 }
 ```
 
-網站會以 `CN=Pingclair Local Authority` 簽發、效期十年的憑證回應，根憑證則發布在儲存區中：
-
-```bash
-sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
-```
-
-```text
--rw------- 1 pingclair pingclair 652 Sep 22 03:40 root.crt
-```
+內部憑證授權單位包含根憑證與簽發 90 天葉憑證的中繼憑證。根憑證位於 `<store>/pki/authorities/local/root.crt`。
 
 用戶端目前還不信任它，所以不加 `-k` 的請求會失敗。把根憑證安裝到系統的信任儲存區：
 
@@ -156,8 +150,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair tru
 ✅ Internal CA root installed into the system trust store
 ```
 
-`PINGCLAIR_TLS_STORE` 前綴很重要：`pingclair trust` 會去找執行它的使用者的儲存區，對 root 而言是 `/root/.local/share/pingclair`，但服務用的是 `/var/lib/pingclair/.local/share/pingclair`。少了這個前綴，它會回答 `No
-internal CA root at /root/.local/share/pingclair/internal/root.crt`。
+`PINGCLAIR_TLS_STORE` 前綴很重要：`pingclair trust` 會去找執行它的使用者的儲存區，對 root 而言是 `/root/.local/share/pingclair`，但服務用的是 `/var/lib/pingclair/.local/share/pingclair`。少了這個前綴就會查找 root 自己的儲存區，無法找到服務的根憑證。
 
 信任根憑證之後，同一個請求不加 `-k` 也會成功：
 
@@ -171,7 +164,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
 
 `pingclair untrust` 可以再把它移除，同樣要加上儲存區前綴。
 
-📌 **下一版**。下一版會照 Caddy 的方式存放內部憑證授權單位：放在儲存區的 `pki/authorities/local/` 底下，並由一張中繼憑證簽發葉憑證。舊的 `internal/` 目錄不會被遷移：升級後伺服器會建立新的根憑證，每個用戶端都必須再用 `pingclair trust` 信任一次。
+📌 **升級注意。**舊的 `internal/` 目錄不會遷移；0.2.0 會建立新的憑證授權單位。每個用戶端都必須重新信任根憑證。
 
 ## 📜 你自己提供的憑證
 
@@ -180,14 +173,14 @@ curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
 ```caddyfile
 https://byo.test {
     tls {
-        cert /etc/pingclair/certs/byo.crt
-        key /etc/pingclair/certs/byo.key
+        cert ./certs/byo.crt
+        key ./certs/byo.key
     }
     file_server /var/lib/pingclair/html
 }
 ```
 
-這些檔案必須讓 `pingclair` 使用者讀得到，因為服務是以該使用者身分執行的。`validate` 會直接拒絕不存在的路徑，而不是等到第一次交握才失敗：
+這些檔案必須讓 `pingclair` 使用者讀得到，因為服務是以該使用者身分執行的。`validate` 會讀取並解析憑證與金鑰，檢查兩者配對，不開啟監聽器。不存在的路徑會直接被拒絕：
 
 ```text
 ❌ TLS certificate file does not exist: /etc/pingclair/certs/missing.crt
@@ -196,7 +189,7 @@ https://byo.test {
 ## ⚠️ HTTPS 起不來時
 
 - **`contact email has forbidden domain "example.com"`。**Let's Encrypt 不接受保留的範例網域作為帳號聯絡人。請在 `email` 選項裡填入真實的信箱。
-- **日誌中出現 `NO_CERTIFICATE_SET`。**交握時提出的名稱，伺服器沒有對應的憑證。請看它上方的日誌：沒有 `auto` 的 `tls` 區塊永遠不會開始簽發，而 DNS-01 在這個發行版裡無法完成。
+- **日誌中出現 `NO_CERTIFICATE_SET`。**交握時提出的名稱，伺服器沒有對應的憑證。請看它上方的日誌：沒有 `auto` 的 `tls` 區塊永遠不會開始簽發，並確認 DNS challenge 設定。
 - **驗證回應從未被提供。**80 連接埠被防火牆擋住，或被其他程式佔用。憑證授權單位必須能從網際網路連到 `http://your-name/.well-known/acme-challenge/`。
 - **名稱沒有解析到這台主機。**`dig +short A your-name` 會顯示憑證授權單位將連到哪裡，剛改過設定時，結果不一定是你預期的。
 - **反覆失敗。**Let's Encrypt 會依主機名稱限制驗證失敗的次數。重試前先修好原因，否則重試本身就會變成錯誤。

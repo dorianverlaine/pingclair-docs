@@ -3,148 +3,109 @@ title: Upgrading and removing
 h1_emoji: '🧹'
 sidebar:
   order: 5
-description: Re-run the installer to upgrade, pin a container tag, roll back to an older release, and remove Pingclair while preserving its configuration and data.
+description: Prepare a 0.1.x or 0.2.0 release-candidate configuration for 0.2.0, preserve the certificate store, check the new binary, and plan rollback.
 ---
 
-An upgrade replaces two things — the binary and the service unit — and preserves
-the configuration and certificates. This page explains that behavior, the
-equivalent container procedure, how to roll back to an earlier release, and how
-to remove the installation.
+Version **0.2.0** changes how existing configurations route, bind, compress,
+and identify clients. These changes also apply when upgrading from
+**0.2.0-rc.N**. Read the complete
+[Before you upgrade list](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)
+and its linked entries before replacing a binary. The summary below covers the
+changes most likely to affect a deployment.
 
-## 🧾 Files preserved during an upgrade
+## ⚠️ What changes in 0.2.0
 
-| Path | An upgrade |
+| Review | What to change or expect |
 | --- | --- |
-| `/etc/Pingclair/Pingclairfile` | Kept. The installer only writes it when it is missing. |
-| `/etc/Pingclair/Pingclairfile.example` | Replaced with the current example. |
-| `/var/lib/pingclair/.local/share/pingclair` | Kept. Issued certificates and ACME state stay in place. |
-| `/var/lib/pingclair/html` | Kept. |
-| `/usr/local/bin/pingclair` and `pc` | Replaced with the new release. |
-| `/etc/systemd/system/pingclair.service` | Rewritten, then the service is restarted. |
+| Routing | Directive order decides the first matching route. A catch-all `redir`, `route`, or `handle` can precede a specific `respond`. Use exclusive `handle` blocks or explicit `route` order. |
+| Paths | ASCII case is ignored and escapes are decoded once. `handle_path` and URI stripping also ignore case. Braces are literal; use `path_regexp` for captures and case-sensitive routing. Equal-length sibling paths retain file order. |
+| Block matchers | `handle`, `handle_path`, and `route` accept only `*`, `/path`, or `@name`. Replace `handle *.php` with a named `path *.php` matcher. |
+| Listeners | `bind` applies even with explicit addresses and ports, including the automatic redirect. `listen` retains its IP address. `bind` and `default_bind` allow one address. Sites on one port share a listener; a bind-restricted site beside a wildcard listener is refused. |
+| Addresses | A named site with a port and no scheme uses HTTPS. Write `http://` for plaintext. Scheme-only addresses use global ports. `[::1]` names a site, and `0.0.0.0` with `[::]` on one port folds to IPv6. |
+| Client identity | In `servers`, write `trusted_proxies static …` once per scope. List `CF-Connecting-IP` in `client_ip_headers` when needed. Use `client_ip` and `{client_ip}` for the forwarded client; `remote_ip` and `{remote_host}` mean the peer. `{remote_ip}` is refused. |
+| Request limits | There is no default body-size ceiling. Set `request_body { max_size … }` if needed. Header completion and pauses between body reads default to 60 seconds; quiet uploads may need a longer `limits { body_timeout … }`. |
+| Error pages | `handle_errors` now handles gateway, timeout, and `413` errors too. Its `root` and `file_server` serve the page with the error status. Restrict a catch-all block by status if appropriate. |
+| Encoding | No compression without `encode`. Blocks, gzip levels (default 5), response matchers, and minimum length take effect. `encode off` cannot have a block. Static responses always vary by encoding; proxy responses do so on encode sites. Re-encoding weakens proxy ETags; static and sidecar validators change. `no-transform` disables encoding. |
+| Response cache | Freshness includes upstream age. All caching routes must agree on `max_size`; reload applies budget changes. `flush_interval -1` bypasses admission. Every `Vary` line participates in variants; invalid `Vary` and `Vary: *` prevent storage. |
+| Admin API | Missing config reads return `200 null`. Reads mask secrets, so restore them before loading an export. Config writes honor path-qualified `If-Match`; after `412`, read the path and its ETag again. Reads remain available through reload. |
+| Metrics | Add global `metrics` to collect. Scrapes are empty without it. Update dashboards to the [renamed `caddy_*` families](/reference/admin-api/#-metrics). |
+| CLI | Use `--config`/`-c` and `--adapter caddyfile\|json`; do not also supply a positional path. With no default file, `run` starts admin-only. Give an explicit path if absence must fail. `validate` now parses TLS files and checks key pairs. |
+| TLS | The internal CA moves to `pki/authorities/local/` without migration: trust the new root again. Exact names no longer inherit wildcard `client_auth`; add an explicit block if required. Manual TLS requires a named site. |
+| Upstreams | Weight 0 drains, weights above 100 and all-zero primary pools fail validation. `lb_try_duration` bounds new attempts, not an active response. Retries after delivery are limited to idempotent methods. |
+| Protocols | CONNECT gets `405` and closes H1; a target without a usable port gets `400`. Malformed HTTP/1 targets and chunked bodies get `400` and close. FastCGI HEAD has no body, oversized parameters get `431`, and broken bodies abort. |
+| Lifecycle | Taken HTTP, admin, and H3 UDP ports stop startup. SIGTERM drains within `grace_period`. Restart still has a connection gap; reload is preferable for policy changes. |
 
-## ⬆️ Upgrade with the installer
+The [known release defects](/project/status/#-known-defects-in-020) still apply.
+A `502` or `504` generated by the built-in proxy error path carries
+`Proxy-Status`; a custom `handle_errors` response does not. A missed keepalive
+reuse is logged at `DEBUG` rather than `ERROR`.
+
+## 📦 Preserve the previous installation
+
+Back up the configuration, the current binary, and the entire TLS store before
+upgrading. Preserve their ownership and protect backups containing private
+keys. The installer keeps `/etc/Pingclair/Pingclairfile`, the certificate store
+at `/var/lib/pingclair/.local/share/pingclair`, and the site's files. It replaces
+the binary, example configuration, and systemd unit, then restarts the service.
+A configured `storage file_system` path takes precedence over the usual store.
+
+Keep the old store backup for rollback: trusting the new internal root does not
+make old clients trust it, and rolling back only the binary does not restore the
+old root or configuration shape.
+
+## 🛡️ Check before switching
+
+Run the **new** binary's `validate` against the production configuration while
+it is still staged, before replacing the running binary. It opens no listeners,
+but its user must be able to read every certificate and key the file names.
+Then test the affected routes, case variants, forwarded client identity, error
+pages, uploads, compression, and metrics in a staging deployment.
+
+A source build of `main` reports `v0.0.0-dev+<sha>` (or `v0.0.0-dev` without a
+checkout); a release binary reports its tag, such as `v0.2.0`. Check the tag and
+published checksum when installing. A dev version string is not evidence that
+the stable release is installed.
+
+## ⬆️ Install the stable release
+
+After the 0.2.0 release is published, the installer selects the stable channel:
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash
-```
-
-The script finds the newest release on the release channel, prints its tag,
-verifies the archive's SHA-256, replaces the binary and the unit, and restarts
-the service. When the channel host cannot be reached, it asks the GitHub
-releases API instead; the run below took that path, which is why it prints
-`Fetching latest release`.
-A configuration file that already exists is not touched, which is what makes
-this an upgrade rather than a reset:
-
-```text
-Detected architecture: x86_64
-Fetching latest release from dorianverlaine/pingclair...
-Installing v0.2.0-rc.3 — a release candidate, not a final release.
-pingclair-linux-x86_64.tar.gz: OK
-✅ Installation Complete!
-Config: /etc/Pingclair/Pingclairfile
-```
-
-Confirm the new version and that the old configuration still serves:
-
-```bash
 pingclair version
 pc service status
-curl -i http://localhost/
 ```
 
-```text
-v0.2.0-rc.3
-```
+This update was checked against the release-candidate source and local binary.
+The published 0.2.0 installer, Ubuntu/Fedora service upgrade, public certificate
+issuance, and container pull have not been rerun for this page. Verify the
+installed tag and your own routes before treating the upgrade as complete.
 
-The installer always installs the newest release. There is no flag for
-installing a specific version; that is what the rollback below is for.
-
-## ⚠️ Read the upgrade notes before 0.2.0
-
-The next release changes behavior that an unchanged configuration can notice:
-which route answers a request, whether a site without `encode` compresses, the
-default request-body limit, what `remote_ip` matches, and where the internal
-authority keeps its root. [Project status](/project/status/#-what-changes-in-the-next-release)
-summarizes them, and the
-[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
-gives each one an upgrade note. Validate your configuration with the new binary
-before you restart the service on it.
-
-## 🐳 Upgrade a container
-
-Nothing is installed on the host, so an upgrade is a tag change and a pull.
-Pin the new release in the compose file:
+The installer has no version-pinning flag. For containers, pin the intended tag:
 
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.0-rc.3
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.0
 ```
 
 ```bash
 docker compose pull
 docker compose up -d
-docker logs pingclair 2>&1 | head -3
+docker compose logs pingclair
 ```
 
-```text
-🚀 Starting Pingclair with config: /etc/pingclair/Pingclairfile
-🚀 Starting Pingclair v0.2.0-rc.3
-📄 Loaded configuration from: /etc/pingclair/Pingclairfile
-```
+Keep the configuration and TLS store volumes. `latest` follows stable releases;
+alpha previews do not advance it. Host ports must be free before startup.
 
-The configuration and the certificate store live in the volumes, so the new
-container finds them where the old one left them. Account for two constraints:
+## ⏪ Roll back
 
-- **A container that maps port 80 cannot start while the systemd service is
-  running.** Stop one of them: `sudo pc service stop`, or change the published
-  port on the container side.
-- **`latest` follows the newest release.** Pin a version in production, so an
-  upgrade is a decision rather than a side effect of a pull.
+Stop the new service, restore the backed-up binary, configuration, and TLS
+store with their original ownership, then validate with the restored binary
+before starting. A configuration written by 0.2.0 may not load in an earlier
+version. Do not overwrite a running certificate store with a partial backup.
 
-## ⏪ Roll back to an older release
-
-To replace a problematic release with an earlier version, fetch the previous
-release from the release host, verify it against its published digest, and
-replace the installed binary:
-
-```bash
-mkdir -p /tmp/rollback && cd /tmp/rollback
-version=0.2.0-rc.2
-base="https://releases.pingclair.com/pingclair/releases/$version"
-curl -fsSL "$base/release.json" -o release.json
-tarball=pingclair-linux-x86_64.tar.gz
-expected="$(jq -r ".assets[] | select(.name == \"$tarball\") | .digest" release.json | sed 's/^sha256://')"
-curl -fsSLO "$base/$tarball"
-printf '%s  %s\n' "$expected" "$tarball" | sha256sum -c -
-mkdir -p extract && tar -xzf "$tarball" -C extract
-```
-
-```text
-pingclair-linux-x86_64.tar.gz: OK
-```
-
-```bash
-sudo systemctl stop pingclair
-sudo install -m 0755 extract/pingclair /usr/local/bin/pingclair
-sudo systemctl start pingclair
-pingclair version
-```
-
-```text
-v0.2.0-rc.2
-```
-
-Then validate the configuration against the version you rolled back to, because
-a directive the older release does not implement is refused by name rather than
-ignored:
-
-```bash
-sudo pingclair validate /etc/Pingclair/Pingclairfile
-```
-
-## 🧹 Remove it
+## 🧹 Remove the installation
 
 ```bash
 sudo pc service stop
@@ -154,47 +115,12 @@ sudo systemctl daemon-reload
 sudo rm /usr/local/bin/pingclair /usr/local/bin/pc
 ```
 
-After that, `systemctl status pingclair` answers `Unit pingclair.service could
-not be found`, the command is gone, and nothing listens on port 80. The removal
-procedure intentionally preserves the following data:
-
-```text
-/etc/Pingclair/Pingclairfile      the configuration, still valid
-/var/lib/pingclair/.local/share/pingclair          issued certificates and ACME state
-/var/lib/pingclair/html           the placeholder site
-/var/log/pingclair                a log sink's directory
-```
-
-Keep `/var/lib/pingclair/.local/share/pingclair` if you plan to reinstall: the certificates and
-the internal root survive, and clients that trust that root stay working. Delete
-everything, including the service account, when the host is finished with
-Pingclair:
-
-```bash
-sudo rm -rf /etc/Pingclair /var/lib/pingclair /var/log/pingclair
-sudo userdel pingclair
-```
-
-## ⚠️ When it goes wrong
-
-- **The installer installed a version you did not expect.** It always takes the
-  newest release tag. Check with `pingclair version` and use the rollback above
-  if you needed a specific one.
-- **The service will not start after an upgrade.** Read
-  `sudo pingclair validate /etc/Pingclair/Pingclairfile`. A directive that the
-  new release refuses fails closed with its name and the alternative, so the
-  journal names the line to change.
-- **A container exits immediately.** `docker logs <container>` shows why. The
-  common causes are a missing `/etc/pingclair/Pingclairfile` in the mounted
-  configuration directory, or a port already in use on the host.
-- **Clients reject the certificate after a rebuild of the store.** If the
-  internal authority was regenerated, the old root no longer signs anything.
-  Install the new one with
-  `sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair trust`.
+These commands preserve `/etc/Pingclair`, `/var/lib/pingclair`, and
+`/var/log/pingclair`, including certificates and site files. Delete retained
+data only when it is no longer needed for reinstall or rollback.
 
 ## 🧭 Next steps
 
-- [Install](/start/install/): the layout this page keeps or removes.
-- [Run it as a service](/start/service/): the unit that an upgrade rewrites.
-- [Project status](/project/status/): what the current release supports and what
-  it refuses.
+- [Install](/start/install/): installation layout and prerequisites.
+- [Run it as a service](/start/service/): reload, restart, and logs.
+- [Project status](/project/status/): remaining release limitations.

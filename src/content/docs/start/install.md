@@ -7,9 +7,7 @@ description: Put Pingclair on a Linux host from a release binary, with Docker, o
 ---
 
 Pingclair ships as a single Linux binary. This page installs it, shows what the
-installer left behind, and verifies that the server answers. The current release
-is **v0.2.0-rc.3**, a release candidate, and every page on this site describes
-that release.
+installer left behind, and verifies that the server answers. This page targets **v0.2.0**. The transcripts below retain their historical release-candidate output. The 0.2.0 installer and container downloads have not been rerun on fresh hosts; install after the release tag is available and confirm it with `pingclair version`.
 
 ## 🧾 What you need
 
@@ -163,7 +161,7 @@ default command is `run /etc/pingclair/Pingclairfile`. The image declares
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.0-rc.3
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.0
     restart: unless-stopped
     ports:
       - "80:80"

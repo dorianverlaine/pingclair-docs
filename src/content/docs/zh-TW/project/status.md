@@ -1,14 +1,14 @@
 ---
 title: 專案狀態
 h1_emoji: '📌'
-description: 目前的發行版支援什麼、刻意拒絕什麼、有哪些已知的限制與缺陷，以及下一版會有哪些變動。
+description: 目前的發行版支援什麼、刻意拒絕什麼、有哪些已知的限制與缺陷，以及升級時需要檢查的變更。
 ---
 
-部署之前，本頁只回答一個問題：目前的發行版能不能做到你要的事，它的界線又在哪裡。本頁描述的是 **v0.2.0-rc.3**，也就是最新公開的發行版。
+部署之前，本頁只回答一個問題：目前的發行版能不能做到你要的事，它的界線又在哪裡。本頁描述的是 **v0.2.0**，也就是0.2.0 發行版。
 
-## 📌 目前的發行版是 release candidate
+## 📌 0.2.0 發行版
 
-目前的發行版是 **v0.2.0-rc.3**。它的[發行說明](https://github.com/dorianverlaine/pingclair/releases/tag/v0.2.0-rc.3)列出了變更內容，以及標記版本時已知的缺陷。
+目前的發行版是 **v0.2.0**。它的[發行說明](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)列出了變更內容，以及標記版本時已知的缺陷。
 
 `v0.1.x` 系列已停止維護：沒有修正、沒有回溯移植，也不會發布安全公告。請升級離開它：`v0.1.x` 會解析 Admin API 的 `api_key` 欄位，卻從來不讀取，所以它的 Admin API 實際上沒有驗證任何人。
 
@@ -31,7 +31,7 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。伺服器無法兌�
 會在載入檔案時被拒絕，錯誤訊息會指出缺少的是哪一項功能；
 含有這類名稱的設定無法啟動。
 
-以下完整清單來自 `main` 上的登錄表，列出 Pingclair 能辨識為 Caddy 語法、
+以下完整清單來自 0.2.0 中的登錄表，列出 Pingclair 能辨識為 Caddy 語法、
 但尚未在該上下文中實作的名稱。
 
 **指令：**
@@ -61,39 +61,41 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。伺服器無法兌�
   必須寫在 `handle_response` 裡。
 - DNS-01 支援 Cloudflare。其他 provider 名稱會被拒絕，不會退回另一種驗證方式。
 - `encode br` 會被拒絕，因為代理回應沒有串流式 Brotli 實作。請使用 `zstd` 或 `gzip`。
-- `storage file_system <path>`、`ocsp_stapling off` 與 `handle_errors` 已在 `main`
+- `storage file_system <path>`、`ocsp_stapling off` 與 `handle_errors` 已在 0.2.0
   上實作；仍把它們列為不支援的舊文件已經過時。
 
 ## ⚠️ 已知限制
 
-- **憑證儲存只在本機。**多個執行個體無法共用同一個憑證儲存區，因為它就是磁碟上的一個目錄。
-- **DNS-01 在這個發行版裡無法完成。**`tls { dns cloudflare <token> }` 與全域的 `acme_dns` 選項接受 Cloudflare，其他 provider 則會被指名拒絕。但在 v0.2.0-rc.3 中，每一張 DNS-01 訂單最後都是 `Invalid`，因為 TXT 記錄放的值是錯的。修正已在 `main` 上（[HTTPS](/zh-TW/start/https/#-dns-01-與萬用字元憑證)）。
-- **沒有任何協定轉送 trailers，也沒有任何協定建立 tunnel。**宣告了 request trailers 的請求在每種協定上都會被拒絕，HTTP/3 則會重設 `CONNECT`（[架構](/zh-TW/concepts/architecture/#-各協定的差異)）。
-- **負載下 WebSocket 升級會間歇性失敗**，在忙碌的機器上大約 10–15%。原因是上游 `pingora-proxy` crate 中的一個競態條件（[cloudflare/pingora#946](https://github.com/cloudflare/pingora/issues/946)），閒置的機器上很少重現。
+憑證儲存區僅支援本機目錄，不支援共用儲存後端、第四層代理、外掛或 Caddy 原生 JSON 結構。0.2.0 的 DNS-01 可使用 Cloudflare。`CONNECT` 與 `TRACE` 會得到附帶 `Allow` 的 `405`；格式錯誤的 CONNECT 目標得到 `400`。宣告的 request trailers 不會轉送，宣告 `Trailer` 的上游回應會得到 `502`。
 
-## 🔁 下一版有哪些變動
+## 🐛 0.2.0 的已知缺陷
 
-以下變動已在 `main` 上，但不在 v0.2.0-rc.3 裡。其中有幾項會在升級時改變行為；[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md) 在 Unreleased 底下逐一列出，並附有升級說明。
+[CHANGELOG 的已知缺陷章節](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#-known-defect--websocket-upgrades-under-load)記錄了以下限制。設定驗證不會偵測這些執行期缺陷。
 
-- **路由順序跟隨 Caddy。**決定由哪一條路由回應的是指令順序，而不是最具體的路徑（[設定模型](/zh-TW/concepts/configuration/#-哪一條路由回應請求)）。
-- **只有 `encode` 要求的地方才壓縮。**沒有 `encode` 的網站會以未壓縮的形式提供檔案。
-- **不再有預設的請求本文上限。**原本 1 MiB 的預設值移除了；如果你依賴它，請設定 `request_body { max_size … }`。
-- **`remote_ip` 與 `client_ip` 有所區別。**`remote_ip` 匹配連線的對端，`client_ip` 匹配經過 `trusted_proxies` 之後的用戶端。要在 Pingclairfile 裡封鎖用戶端，請匹配 `client_ip` 並使用 `abort`；`blocked_ips` 只存在於 JSON 設定。
-- **`CONNECT` 與 `TRACE` 會得到 `405`**，並在每種協定上附帶 `Allow` 標頭。
-- **HSTS 跟著連線走。**`Strict-Transport-Security` 只會出現在加密的回應上；在 Pingclairfile 中以 `header Strict-Transport-Security "max-age=…"` 開啟。
-- **停止是優雅的。**`SIGTERM` 會讓進行中的請求在 `grace_period`（預設 30 秒）內完成。
-- **管理或 HTTP/3 連接埠被佔用時會中止啟動**，而不是只記一筆日誌。
-- **閘道錯誤會標明是誰產生的。**由 Pingclair 自己產生的 `502` 或 `504` 會帶有 `Proxy-Status` 標頭。
-- **DNS-01 可以運作**，萬用字元網站只會申請一張萬用字元憑證。
-- **接受 `storage file_system <path>` 與 `ocsp_stapling off`。**
-- **內部憑證授權單位搬到 Caddy 的目錄配置。**舊的不會被遷移：會建立新的根憑證，用戶端必須重新信任它。
+- **負載下的 WebSocket 升級：**忙碌機器上約 10–15% 失敗，`101` 之後立即 EOF，沒有可避免此競態的設定。
+- **帶有 Content-Length 的 HTTP/1.1 回應：**本文結束後才送出。事件串流請使用 chunked framing；H2 與 H3 不受影響。
+- **代理 gzip：**HTTP/2 上游未宣告的 trailers 可能讓壓縮本文提早結束。
+- **已宣告的上游 trailers：**代理回應 `502`。
+- **HTTP/1.0 代理回應：**上游未提供長度時，用戶端可能收到 chunked framing。
+- **升級連線的半關閉：**用戶端半關閉會結束 tunnel，遺失後端尚未送完的位元組。
+- **上游第一個本文位元組之前的失敗：**H2 用戶端可能收到重設而非 `502`。
+- **被動健康檢查：**每次都截斷回應的後端仍留在輪替中；尚未實作 `max_fails` 與 `fail_duration`。
+- **設定的 ETag：**宣告的標頭不參與重新驗證。
+- **重複路徑分隔符：**轉送前會合併 `/a//b` 的空路徑片段。
+- **FastCGI：**`php_fastcgi` 對 chunked 或沒有本文的請求回應 `411`。
+- **HTTP/3 傳輸參數：**77 項 h3spec 檢查中有 18 項失敗。
+- **手動萬用字元憑證：**萬用字元網站的手動憑證不會在 TCP 上提供給涵蓋的名稱；`tls internal` 不受影響。
+
+## 🔁 升級至 0.2.0
+
+[升級指南](/zh-TW/start/upgrade/)整理最可能影響 0.1.x 與候選版本設定的變動。[Before you upgrade 清單](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)是完整的發行檢查表。
 
 ## 🐛 回報缺陷
 
-缺陷與文件錯誤請回報到 [issue tracker](https://github.com/dorianverlaine/pingclair/issues)。附私密回報管道的安全政策尚未發布。
+請在 [Pingclair 問題追蹤器](https://github.com/dorianverlaine/pingclair/issues)回報缺陷與文件錯誤。
 
 ## 📚 相關頁面
 
-- [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)：各發行版之間的變更。
-- [效能基準測試](/zh-TW/project/benchmarks/)：量測條件與結果。
-- [架構](/zh-TW/concepts/architecture/)：組成元件與請求路徑。
+- [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)：發行變動與已知缺陷。
+- [效能測量](/zh-TW/project/benchmarks/)：歷史測量條件。
+- [架構](/zh-TW/concepts/architecture/)：元件與請求處理。

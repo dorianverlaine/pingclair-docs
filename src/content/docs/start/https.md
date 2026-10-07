@@ -6,6 +6,8 @@ sidebar:
 description: Get a certificate for a public name, issue one from the internal authority, or supply your own files, and verify what the server serves.
 ---
 
+📌 TLS examples below use `./certs/` in the working directory. Supply your own certificate, matching private key, or client CA file there; validation reads these files too.
+
 A site block whose address is a public name gets HTTPS without a `tls`
 directive: Pingclair obtains a certificate from Let's Encrypt over ACME, answers
 the HTTP-01 challenge on port 80, stores the result, and renews it in the
@@ -94,12 +96,7 @@ DNS-01 proves control of a name by publishing a TXT record instead of answering
 on port 80. A wildcard certificate requires it, and so does a host whose port 80
 is closed.
 
-⚠️ **DNS-01 does not complete in v0.2.0-rc.3.** That release publishes the
-wrong value in the TXT record, so every order ends `Invalid`. The fix, and the
-single wildcard certificate described below, are on `main` and not yet
-released. To use DNS-01 today, install `main` with the installer's `--main`
-flag ([Install](/start/install/#-install-from-a-release-binary)). The output
-in this section shows the behavior of that build.
+📌 **DNS-01 works with Cloudflare in 0.2.0.** The server publishes the ACME TXT digest and preserves other TXT records at the challenge name. The output below is historical verification from the corrected build; public CA issuance was not rerun for this documentation update.
 
 The configuration needs the provider block:
 
@@ -169,16 +166,7 @@ https://internal.test {
 }
 ```
 
-The site answers with a certificate issued by `CN=Pingclair Local Authority` for
-ten years, and the root is published in the store:
-
-```bash
-sudo ls -l /var/lib/pingclair/.local/share/pingclair/internal/
-```
-
-```text
--rw------- 1 pingclair pingclair 652 Sep 22 03:40 root.crt
-```
+The internal authority has a root and an intermediate that signs 90-day leaves. The root is at `<store>/pki/authorities/local/root.crt`.
 
 Clients do not trust it yet, so a request without `-k` fails. Install the root
 into the system trust store:
@@ -194,8 +182,7 @@ sudo PINGCLAIR_TLS_STORE=/var/lib/pingclair/.local/share/pingclair pingclair tru
 The `PINGCLAIR_TLS_STORE` prefix is required because `pingclair trust` looks in
 the store of the user who runs it. For root, that is
 `/root/.local/share/pingclair`, not the service account's store at
-`/var/lib/pingclair/.local/share/pingclair`. Without the prefix, the command
-answers `No internal CA root at /root/.local/share/pingclair/internal/root.crt`.
+`/var/lib/pingclair/.local/share/pingclair`. Without the prefix, the command searches root’s own store instead of the service store.
 
 After trusting the root, the same request succeeds without `-k`:
 
@@ -209,11 +196,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://internal.test/
 
 `pingclair untrust` removes it again, with the same store prefix.
 
-📌 **Next release.** The next release files the internal authority the way Caddy
-does, under `pki/authorities/local/` in the store, with an intermediate that
-signs the leaves. The old `internal/` directory is not migrated: after the
-upgrade the server creates a new root, and every client must trust it again
-with `pingclair trust`.
+📌 **Upgrade note.** The old `internal/` directory is not migrated. Version 0.2.0 creates a new authority, and every client must trust its root again.
 
 ## 📜 Certificates you supply
 
@@ -222,16 +205,15 @@ When another system issues your certificates, point `tls` at the files:
 ```caddyfile
 https://byo.test {
     tls {
-        cert /etc/pingclair/certs/byo.crt
-        key /etc/pingclair/certs/byo.key
+        cert ./certs/byo.crt
+        key ./certs/byo.key
     }
     file_server /var/lib/pingclair/html
 }
 ```
 
 The files must be readable by the `pingclair` user, because the service runs as
-that user. `validate` refuses a path that does not exist rather than failing at
-the first handshake:
+that user. `validate` reads and parses the files and checks that the private key matches the certificate, without opening listeners. A missing file is refused:
 
 ```text
 ❌ TLS certificate file does not exist: /etc/pingclair/certs/missing.crt
@@ -244,7 +226,7 @@ the first handshake:
   `email` option.
 - **`NO_CERTIFICATE_SET` in the log.** The handshake presented a name the server
   has no certificate for. Read the log above it: a `tls` block without `auto`
-  never starts issuance, and DNS-01 does not complete in this release.
+  never starts issuance, and verify the DNS challenge settings.
 - **The challenge is never served.** Port 80 is blocked by a firewall, or
   something else holds the port. The authority has to reach
   `http://your-name/.well-known/acme-challenge/` from the internet.

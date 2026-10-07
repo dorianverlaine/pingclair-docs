@@ -6,6 +6,8 @@ sidebar:
 description: 已安裝的 systemd unit 做了什麼、如何啟動、停止與重載它、日誌寫到哪裡，以及設定出錯時從外部看起來是什麼樣子。
 ---
 
+📌 以下實測輸出保留原始版本；其版本號與效能數字不代表重新驗證了 0.2.0。
+
 安裝程式會留下一個已啟用且正在執行的 `systemd` unit。本頁逐行解讀這個 unit、說明如何操作它，並描述兩種失敗的外觀：伺服器起不來，以及執行中的伺服器拒絕了新設定。
 
 ## 🧾 unit 做了什麼
@@ -121,13 +123,11 @@ $ systemctl status pingclair --no-pager | grep Status
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-執行中的行程無法吸收的變更屬於例外。全域選項區塊的任何變更（例如 `trusted_proxies`）都會被重載拒絕，必須重啟才會生效：`sudo pc service restart`。新增或搬移監聽器的設定也一樣——狀態列會列出新增與移除的位址——因為重載只更新政策，不換監聽 socket。
+執行中的行程無法吸收的變更屬於例外。啟動時固定的全域政策（例如 `trusted_proxies`）變更會被重載拒絕，必須重啟；行程日誌設定可重載。請使用`sudo pc service restart`。新增或搬移監聽器的設定也一樣——狀態列會列出新增與移除的位址——因為重載只更新政策，不換監聽 socket。
 
 ## 🛑 停止意味著什麼
 
-`systemctl stop` 送出 `SIGTERM`。在 v0.2.0-rc.3 中，不論 `grace_period` 設了什麼，行程都會在大約四分之一秒後結束，那一刻仍在進行的請求會被直接切斷。只有在能接受短暫中斷時才停止或重啟；單純改網站設定，優先用重載。
-
-📌 **下一版**。在 `main` 上，停止會先排空：`/ready` 回應 `503`、監聽器關閉、進行中的請求完成，最後一個請求結束或 `grace_period`（預設 30 秒）到期時，行程才結束。
+`systemctl stop` 送出 `SIGTERM`。伺服器先讓 `/ready` 回應 `503`，停止接受新請求，再等待執行中的請求完成，最長為 `grace_period`（預設 30 秒）。期限到達時關閉仍存活的 QUIC 連線。重啟在兩個行程之間會有連線空窗；只改網站政策時優先重載。
 
 ## 📜 日誌
 

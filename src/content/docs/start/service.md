@@ -6,6 +6,8 @@ sidebar:
 description: What the installed systemd unit does, how to start, stop, and reload it, where the logs go, and what a failing configuration looks like from the outside.
 ---
 
+📌 The recorded output below retains its original version. Its version strings and measurements are not new 0.2.0 verification.
+
 The installer leaves a `systemd` unit enabled and running. This page reads that
 unit line by line, shows how to drive it, and describes what the two failure
 shapes look like from the outside: a server that will not start and a
@@ -164,24 +166,15 @@ one running, so the site keeps answering. Validate first:
 sudo pingclair validate /etc/Pingclair/Pingclairfile
 ```
 
-Changes that a running process cannot absorb are the exception. Any change to
-the global options block, such as `trusted_proxies`, is refused by a reload and
-only takes effect after a restart:
+Changes that a running process cannot absorb are the exception. Changes to startup-fixed global policies, such as `trusted_proxies`, are refused
+by reload and take effect after a restart. Process-log settings can reload. Use
 `sudo pc service restart`. A configuration that adds or moves a listener is
 refused the same way — the status line names the addresses that were added and
 removed — because reload applies policy, not a new listening socket.
 
 ## 🛑 What a stop means
 
-`systemctl stop` sends `SIGTERM`. In v0.2.0-rc.3 the process exits about a
-quarter of a second later, whatever `grace_period` says, so a request still
-running at that moment is cut without a response. Stop or restart when a short
-interruption is acceptable, and prefer a reload when only the site
-configuration changed.
-
-📌 **Next release.** On `main`, a stop drains first: `/ready` answers `503`, the
-listeners close, running requests finish, and the process exits when the last
-one is done or when `grace_period` (30 seconds by default) has passed.
+`systemctl stop` sends `SIGTERM`. The server makes `/ready` return `503`, stops accepting new requests, and lets active requests finish within `grace_period` (30 seconds by default). Remaining QUIC connections close when the drain ends. A restart has a connection gap between processes; prefer reload for site policy changes.
 
 ## 📜 Logs
 

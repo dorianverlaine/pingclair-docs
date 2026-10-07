@@ -6,6 +6,8 @@ sidebar:
 description: Write a first Pingclairfile, validate it, run it in the foreground or the background, and serve a real directory.
 ---
 
+📌 The recorded output below retains its original version. Its version strings and measurements are not new 0.2.0 verification.
+
 This page walks from an installed host to a running server: write a
 configuration, validate it, start the server, and verify that it answers. It
 assumes the [installation](/start/install/) is done.

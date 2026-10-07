@@ -1,17 +1,17 @@
 ---
 title: Project status
 h1_emoji: '📌'
-description: What the current release supports, what it refuses by design, which limitations and defects are known, and what changes in the next release.
+description: What the current release supports, what it refuses by design, which limitations and defects are known, and how to prepare for an upgrade.
 ---
 
 This page explains whether the current release meets a deployment's
 requirements and identifies its current limitations. It describes
-**v0.2.0-rc.3**, the latest published release.
+**v0.2.0**.
 
-## 📌 The current release is a release candidate
+## 📌 The 0.2.0 release
 
-The current release is **v0.2.0-rc.3**. Its
-[release notes](https://github.com/dorianverlaine/pingclair/releases/tag/v0.2.0-rc.3)
+The current release is **v0.2.0**. Its
+[release notes](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
 list what changed and the defects known when it was tagged.
 
 The `v0.1.x` line is unmaintained. It receives no fixes, no backports, and no
@@ -37,7 +37,7 @@ The Caddyfile format defines more names than Pingclair implements. A name the
 server cannot honor is refused when the file is loaded, with a message that
 names the missing feature. A configuration that contains one does not start.
 
-The following complete lists are derived from the registries on `main`. They
+The following complete lists are derived from the registries in 0.2.0. They
 describe names Pingclair recognizes as Caddy syntax but does not implement in
 that context.
 
@@ -71,67 +71,58 @@ subdirectives; they are refused only when written as standalone directives.
 - `encode br` is refused because proxied responses do not have a streaming
   Brotli implementation. Use `zstd` or `gzip`.
 - `storage file_system <path>`, `ocsp_stapling off`, and `handle_errors` are
-  implemented on `main`; older documentation that lists them as unsupported is
+  implemented in 0.2.0; older documentation that lists them as unsupported is
   obsolete.
 
 ## ⚠️ Known limitations
 
-- **Certificate storage is local.** Several instances cannot share one
-  certificate store, because the store is a directory on disk.
-- **DNS-01 does not complete in this release.** `tls { dns cloudflare <token> }`
-  and the global `acme_dns` option are accepted for Cloudflare, and any other
-  provider is refused by name. In v0.2.0-rc.3, however, every DNS-01 order ends
-  `Invalid`, because the TXT record carries the wrong value. The fix is on
-  `main` ([HTTPS](/start/https/#-dns-01-and-wildcards)).
-- **No protocol forwards trailers, and none opens tunnels.** Declared request
-  trailers are refused on every protocol, and HTTP/3 resets `CONNECT`
-  ([Architecture](/concepts/architecture/#-where-the-protocols-differ)).
-- **WebSocket upgrades fail intermittently under load**, roughly 10-15% on a
-  busy machine. The cause is a race in the upstream `pingora-proxy` crate
-  ([cloudflare/pingora#946](https://github.com/cloudflare/pingora/issues/946)),
-  and an idle machine rarely reproduces it.
+Certificate storage is local; a shared storage backend, layer-4 proxying,
+plugins, and Caddy's native JSON schema are not supported. DNS-01 works with
+Cloudflare in 0.2.0. `CONNECT` and `TRACE` are refused with `405` and `Allow`;
+malformed CONNECT authorities receive `400`. Declared request trailers are
+not forwarded, and an upstream response that announces `Trailer` receives `502`.
 
-## 🔁 What changes in the next release
+## 🐛 Known defects in 0.2.0
 
-The changes below are on `main` and are not in v0.2.0-rc.3. Several change
-behavior on upgrade; the
-[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
-lists every one under Unreleased, with upgrade notes.
+The [CHANGELOG's known-defect sections](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#-known-defect--websocket-upgrades-under-load)
+record these release limitations. Configuration validation does not detect them.
 
-- **Route order follows Caddy.** The directive order, not the most specific
-  path, decides which route answers
-  ([Configuration model](/concepts/configuration/#-which-route-answers-a-request)).
-- **Compression happens only where `encode` asks.** A site without `encode`
-  serves files uncompressed.
-- **No default request-body limit.** The 1 MiB default is gone; set
-  `request_body { max_size … }` if you relied on it.
-- **`remote_ip` and `client_ip` differ.** `remote_ip` matches the connection's
-  peer, and `client_ip` matches the client after `trusted_proxies`. To block
-  clients in a Pingclairfile, match `client_ip` and `abort`; `blocked_ips`
-  exists only in JSON configuration.
-- **`CONNECT` and `TRACE` get `405`** with an `Allow` header on every protocol.
-- **HSTS follows the connection.** `Strict-Transport-Security` is sent only on
-  encrypted responses, and a Pingclairfile turns it on with
-  `header Strict-Transport-Security "max-age=…"`.
-- **A stop is graceful.** `SIGTERM` lets running requests finish within
-  `grace_period` (30 seconds by default).
-- **A taken admin or HTTP/3 port stops startup** instead of being logged.
-- **Gateway errors say who wrote them.** A `502` or `504` that Pingclair
-  generated carries a `Proxy-Status` header.
-- **DNS-01 works**, and a wildcard site orders one wildcard certificate.
-- **`storage file_system <path>` and `ocsp_stapling off` are accepted.**
-- **The internal authority moves** to Caddy's layout. The old one is not
-  migrated: a new root is created, and clients must trust it again.
+- **WebSocket upgrades under load:** roughly 10–15% fail on a busy machine,
+  with EOF immediately after `101`. No configuration avoids the race.
+- **HTTP/1.1 responses with Content-Length:** the response is held until its
+  body ends. Use chunked framing for event streams; H2 and H3 are unaffected.
+- **Proxy gzip:** unannounced trailers from an HTTP/2 upstream may end the
+  compressed body early.
+- **Announced upstream trailers:** the proxy returns `502`.
+- **HTTP/1.0 proxy responses:** an upstream with no length may produce chunked
+  framing for the client.
+- **Upgrade half-close:** a client half-close ends the tunnel and loses any
+  backend bytes still pending.
+- **Failure before the first upstream body byte:** an H2 client may receive a
+  reset instead of `502`.
+- **Passive health checks:** a backend that truncates every response stays in
+  rotation; `max_fails` and `fail_duration` are not implemented.
+- **Configured ETag:** the advertised header is not used for revalidation.
+- **Repeated path separators:** `/a//b` is collapsed before forwarding.
+- **FastCGI:** `php_fastcgi` answers `411` to chunked or bodyless requests.
+- **HTTP/3 transport parameters:** 18 of 77 h3spec checks fail.
+- **Manual wildcard certificates:** a wildcard site's manual certificate is
+  not served for covered names over TCP; `tls internal` is unaffected.
+
+## 🔁 Upgrading to 0.2.0
+
+[Upgrading](/start/upgrade/) summarizes the changes most likely to affect
+0.1.x and release-candidate configurations. The
+[Before you upgrade list](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)
+is the complete release checklist.
 
 ## 🐛 Reporting a defect
 
 Report defects and documentation errors on the
-[issue tracker](https://github.com/dorianverlaine/pingclair/issues). A security
-policy with a private reporting channel has not been published yet.
+[Pingclair issue tracker](https://github.com/dorianverlaine/pingclair/issues).
 
 ## 📚 Related pages
 
-- [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md):
-  what changed between releases.
-- [Benchmarks](/project/benchmarks/): measurement conditions and results.
-- [Architecture](/concepts/architecture/): components and request path.
+- [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md): release changes and known defects.
+- [Benchmarks](/project/benchmarks/): historical measurement conditions.
+- [Architecture](/concepts/architecture/): components and request handling.

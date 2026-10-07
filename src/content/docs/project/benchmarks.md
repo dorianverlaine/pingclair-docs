@@ -4,6 +4,8 @@ h1_emoji: '📊'
 description: How Pingclair compares with nginx and Caddy on one controlled workload, the conditions of that measurement, and what the numbers do not show.
 ---
 
+📌 The recorded output below retains its original version. Its version strings and measurements are not new 0.2.0 verification.
+
 A throughput number means something only next to the conditions that produced
 it. This page gives the latest comparison and, beside it, every condition that
 limits what it shows.
