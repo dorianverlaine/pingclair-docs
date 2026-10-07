@@ -703,6 +703,7 @@ Context:  site block
 
 拒絕條件：
 
+- 裸的 `tls`——沒有參數也沒有區塊——會被拒絕，Caddy 也拒絕它：它什麼都沒有指名，而帶主機名稱的站台位址本來就會自動取得 HTTPS。請寫 `tls internal`、`tls <cert> <key>`、`tls <email>` 或 `tls { … }` 區塊。
 - `dns` 只接受 `cloudflare`。其他供應商都會被拒絕：``DNS provider `route53` is not implemented; this build ships `cloudflare` only``。
 - `protocols`、`ciphers`、`curves`、`alpn`、`on_demand`、`key_type`、`issuer`，以及上面沒有列出的其他 Caddy 選項，都會被指名拒絕。
 - `tls internal` 不能與 `auto`、ACME 電子郵件或憑證檔一起使用。
@@ -751,6 +752,8 @@ Context:  site block, handle, route
 ```
 
 修改請求路徑。移除前綴與後綴忽略 ASCII 大小寫，與路徑路由及 `handle_path` 相同。運算前先展開運算元佔位符；正規表示式取代以 `$1` 引用擷取群組。`${1}` 會被視為佔位符 `{1}`，無法保留擷取值。未知操作、錯誤參數數量、區塊與無效正規表示式會被拒絕。
+
+兩個 Caddy 運算會被指名拒絕，而不是勉強近似：`replace` 取代路徑中的子字串，而這裡的 `rewrite` 取代整條路徑；`query` 編輯查詢字串，這裡目前沒有任何東西會改寫它。訊息會指名運算與原因，因此拒絕不會被讀成打錯字。
 
 ```caddyfile
 http://:8080 {

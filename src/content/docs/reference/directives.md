@@ -198,6 +198,9 @@ Refusals:
   `` `encode br`: Brotli is not implemented for proxied responses; use `encode zstd gzip` ``.
 - An unknown format, or an unknown setting inside the block, is refused.
 - `encode off` with a block is refused.
+- A matcher is refused: `encode` is configured per server here, not per route,
+  so `encode @compressed gzip` has no meaning to honour. Move those paths into
+  their own site block, or drop the matcher.
 - A path or named matcher is refused, because compression is set per site, not
   per route. The `*` matcher, which matches everything, is accepted.
 
@@ -992,6 +995,10 @@ files and rescanned on reload; other verifier modules are refused.
 
 Refusals:
 
+- A bare `tls` — no argument and no block — is refused, as Caddy refuses it: it
+  names nothing, and a site address with a hostname already gets automatic
+  HTTPS. Write `tls internal`, `tls <cert> <key>`, `tls <email>` or a
+  `tls { … }` block.
 - `dns` accepts only `cloudflare`. Any other provider is refused:
   ``DNS provider `route53` is not implemented; this build ships `cloudflare` only``.
 - `protocols`, `ciphers`, `curves`, `alpn`, `on_demand`, `key_type`, `issuer`,
@@ -1055,6 +1062,12 @@ the operation; regular-expression replacements use `$1` for a capture.
 `${1}` is read as the placeholder `{1}`, so it does not preserve the capture.
 Unknown operations, wrong argument counts, blocks, and invalid regular
 expressions are refused.
+
+Two Caddy operations are refused by name rather than approximated: `replace`
+substitutes a substring of the path while the `rewrite` here replaces the whole
+path, and `query` edits the query string, which nothing here rewrites yet. The
+message names the operation and the reason, so the refusal is not read as a
+typo.
 
 ```caddyfile
 http://:8080 {
