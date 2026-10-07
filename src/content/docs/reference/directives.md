@@ -243,6 +243,14 @@ Serves files from disk. It detects the MIME type, answers byte-range and
 conditional requests, and sends `ETag` and `Last-Modified`. The files come from
 the site root set by `root`, or from a root given to this directive alone.
 
+The `ETag` is Caddy's: `"<mtime in base36>-<size in base36>"`, from the file's
+nanosecond modification time and its size, so a site moved between the two
+servers keeps the validators its clients and CDN already hold. Each
+representation carries its own tag — a gzip sidecar's ends `-sidecar-gzip`, a
+live-compressed body's `-gzip-<level>` — because their bytes differ. A file
+with an `.etag` sidecar (see `etag_file_extensions` in the file-server options)
+is validated by that value instead.
+
 - `index` names the files tried for a directory; the default is `index.html`.
   An index must be a relative filename.
 - `browse` renders a listing for a directory that has no index file.
