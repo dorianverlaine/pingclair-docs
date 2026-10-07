@@ -797,6 +797,14 @@ A hostname upstream is resolved again on the interval set by the global
 `dns_refresh`, so a backend that restarts on a new address is followed without
 a reload. A failed lookup keeps the previous address in rotation.
 
+`header_up` and `header_down` edit the request on its way to the upstream and
+the response on its way back. Both take the same four shapes as the `header`
+directive, with the same meaning: `X-Name value` sets, `+X-Name value` appends,
+`-X-Name` removes, `?X-Name value` sets only when the field is absent, and
+`>X-Name find replacement` rewrites an existing value by regular expression.
+Values are templates, so `header_up X-Real-IP {client_ip}` forwards the address
+the trusted-proxy policy resolved.
+
 The origin's own `Server` field line reaches the client unchanged: Caddy sets
 its own before the handler chain and the proxy's copy of the upstream headers
 replaces it, and this server follows that rule, adding `Server: Pingclair`
