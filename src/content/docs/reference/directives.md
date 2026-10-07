@@ -423,6 +423,12 @@ field that was too large. `error_page <status> …` still supplies that body.
   `206` or a `304`.
 - An error raised inside an error route is answered directly instead of
   running the error routes again.
+- A `reverse_proxy` inside the block is refused at load. The upstream exchange
+  runs outside the handler chain here, so the handler would compile and then
+  answer nothing; proxy in the site route and render its errors here with
+  `respond` or `file_server`. Everything else in the block is an ordinary route
+  body: directives run in Caddy's order, `@name` matchers work, and `rewrite`
+  uses the block's own compiled patterns.
 
 **Changed in 0.2.0:** gateway and body-size errors reach `handle_errors`, and a
 `file_server` in an error route serves its page instead of the error text. A
