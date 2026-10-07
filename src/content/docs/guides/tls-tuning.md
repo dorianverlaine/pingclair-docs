@@ -6,13 +6,14 @@ sidebar:
 description: Which TLS and protocol settings Pingclair honors, which it refuses by name, and how to require client certificates or move a certificate store between hosts.
 ---
 
+📌 TLS examples below use `./certs/` in the working directory. Supply your own certificate, matching private key, or client CA file there; validation reads these files too.
+
 Pingclair intentionally exposes few TLS settings: a name gets a certificate
 automatically, and the settings on this page decide how. Any other TLS setting
 Caddy accepts is refused by name rather than ignored, so a configuration never
 quietly does less than it says. Each result below was measured on a real host.
 
-📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
-that exist only on the server's `main` branch are marked **Next release**.
+📌 This page describes **v0.2.0**.
 
 ## 🧾 Before you start
 
@@ -45,7 +46,7 @@ negotiated HTTP/2. The only thing the server reads from the list is whether `h3`
 is in it, so no setting disables HTTP/2. Without a `protocols` line, HTTP/3 is
 on.
 
-Per site, `http3 off` is meant to take one name out of HTTP/3 while the QUIC
+Per site, `http3 off` takes one name out of HTTP/3 while the QUIC
 listener keeps serving the others:
 
 ```caddyfile
@@ -58,8 +59,7 @@ https://internal.test {
 }
 ```
 
-⚠️ In v0.2.0-rc.3 this option is accepted and has no effect. **Next release:**
-it takes effect, and the site stops advertising HTTP/3 in `Alt-Svc`.
+`http3 off` refuses this site's QUIC handshake and removes its HTTP/3 advertisement from `Alt-Svc`. Other sites on the port may continue to use QUIC.
 
 ## 🏛️ Certificate sources
 
@@ -86,7 +86,7 @@ https://internal.test {
         internal
         client_auth {
             mode require_and_verify
-            trusted_ca_cert_file /etc/pingclair/client-ca.crt
+            trusted_ca_cert_file ./certs/client-ca.crt
         }
     }
     file_server /srv/site
@@ -105,6 +105,8 @@ and `trusted_ca_cert_file` takes a path. Giving a path to the first compiles,
 then fails at startup with `trusted_ca_cert is not a certificate: not valid base64: Invalid symbol 45`
 — the `-` of `-----BEGIN`. The file also has to be readable by the `pingclair`
 user.
+
+An exact site's `client_auth` policy takes precedence over a wildcard on the same port. An exact site with no block requires no client certificate; add its own block if it must require one. Certificates whose usage extensions exclude client authentication are refused.
 
 ## 📦 Moving the certificate store
 
@@ -134,7 +136,7 @@ written with mode `600`, so reading it back needs root. The import restores the
 ownership recorded in the archive. And the store holds `autosave.json`, the
 configuration the Admin API last applied, so an import restores that too.
 
-**Next release:** the internal authority is filed the way Caddy files it, under
+📌 **0.2.0:** the internal authority is filed the way Caddy files it, under
 `pki/authorities/local/`. The old `internal/` directory is not migrated: the
 server creates a new authority, and every client must trust the new root
 again (`pingclair trust`). A global `storage file_system <path>` option can also

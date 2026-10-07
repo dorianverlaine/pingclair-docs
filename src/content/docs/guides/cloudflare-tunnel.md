@@ -12,7 +12,7 @@ listens on a public port, the edge terminates TLS, and the origin receives plain
 HTTP on loopback. This page configures the tunnel, then configures the origin to
 record the actual client address instead of `127.0.0.1`.
 
-📌 This page describes Pingclair **v0.2.0-rc.3**, the latest published release.
+📌 This page describes **v0.2.0**.
 
 ## 🧾 Before you start
 
@@ -126,7 +126,10 @@ whole list:
 ```caddyfile
 {
     admin 127.0.0.1:2019
-    trusted_proxies 127.0.0.1/32
+    servers {
+        trusted_proxies static 127.0.0.1/32
+        client_ip_headers CF-Connecting-IP
+    }
 }
 
 http://:80 {
@@ -147,9 +150,7 @@ matcher see the real client behind a tunnel. It is read at startup, so a change
 needs a restart rather than a reload
 ([what a reload means](/start/service/#-what-a-reload-means)).
 
-**Next release:** the `remote_ip` matcher matches the connection's own peer,
-which behind a tunnel is always the connector. Use `client_ip` to match
-clients; in v0.2.0-rc.3 both matchers see the forwarded client.
+`client_ip` and `{client_ip}` use the client from the listed headers; `remote_ip` and `{remote_host}` remain the connector address. Only trusted peers may supply these headers. `CF-Connecting-IP` must be listed explicitly in `client_ip_headers`.
 
 ## ⚠️ When it does not work
 

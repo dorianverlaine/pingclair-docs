@@ -6,9 +6,11 @@ sidebar:
 description: Pingclair 遵循哪些 TLS 與協定設定、指名拒絕哪些，以及如何要求用戶端憑證或在主機之間搬移憑證儲存區。
 ---
 
+📌 下方 TLS 範例使用目前工作目錄的 `./certs/`；請放入自己的憑證、配對金鑰或用戶端 CA 檔案。驗證也會讀取這些檔案。
+
 Pingclair 的 TLS 設定刻意很少：名稱會自動取得憑證，本頁的設定只決定取得的方式。Caddy 接受的其他 TLS 設定都會被指名拒絕，而不是被忽略，所以設定永遠不會悄悄做得比寫的少。下面每一項結果都是在真實主機上量測的。
 
-📌 本頁描述的是最新公開的發行版 **v0.2.0-rc.3**。只存在於伺服器 `main` 分支上的變動，以 **下一版** 標示。
+📌 本頁描述 **v0.2.0**。
 
 ## 🧾 開始之前
 
@@ -48,7 +50,7 @@ https://internal.test {
 }
 ```
 
-⚠️ 在 v0.2.0-rc.3 中，這個選項會被接受，但沒有任何效果。**下一版**：它會生效，而且該網站不再於 `Alt-Svc` 中宣告 HTTP/3。
+`http3 off` 會拒絕該網站的 QUIC 握手，並停止在 `Alt-Svc` 宣告 HTTP/3。同一連接埠的其他網站仍可使用 QUIC。
 
 ## 🏛️ 憑證來源
 
@@ -72,7 +74,7 @@ https://internal.test {
         internal
         client_auth {
             mode require_and_verify
-            trusted_ca_cert_file /etc/pingclair/client-ca.crt
+            trusted_ca_cert_file ./certs/client-ca.crt
         }
     }
     file_server /srv/site
@@ -84,6 +86,8 @@ https://internal.test {
 模式有 `request`、`require`、`verify_if_given` 與 `require_and_verify`。拼錯的模式會被拒絕，並附上完整清單 `(expected request, require, verify_if_given or require_and_verify)`。
 
 ⚠️ `trusted_ca_cert` 接受的是憑證本身，以 base64 編碼寫成一行；`trusted_ca_cert_file` 接受的則是路徑。把路徑傳給前者可以通過編譯，但會在啟動時以 `trusted_ca_cert is not a certificate: not valid base64: Invalid symbol 45` 失敗——45 就是 `-----BEGIN` 裡的 `-`。這個檔案也必須讓 `pingclair` 使用者讀得到。
+
+精確名稱網站的 `client_auth` 優先於萬用字元網站；精確網站沒有此區塊時，不要求用戶端憑證。若仍需要驗證，請在精確網站明確加入 `client_auth`。憑證用途擴充欄位若排除用戶端驗證，握手會被拒絕。
 
 ## 📦 搬移憑證儲存區
 
@@ -105,7 +109,7 @@ sudo systemctl start pingclair
 
 這次執行中有三個細節。不論檔名是什麼，封存檔都是**單純的 tar**，以 `600` 權限寫入，所以要讀回來需要 root。匯入會還原封存檔中記錄的擁有者。此外，儲存區裡還有 `autosave.json`，也就是 Admin API 最後套用的設定，所以匯入也會把它還原。
 
-**下一版**：內部憑證授權單位會照 Caddy 的方式存放在 `pki/authorities/local/` 底下。舊的 `internal/` 目錄不會被遷移：伺服器會建立新的憑證授權單位，每個用戶端都必須再次信任新的根憑證（`pingclair trust`）。全域的 `storage file_system <path>` 選項也能在設定中指定儲存區的位置。
+📌 **0.2.0**: 內部憑證授權單位會照 Caddy 的方式存放在 `pki/authorities/local/` 底下。舊的 `internal/` 目錄不會被遷移：伺服器會建立新的憑證授權單位，每個用戶端都必須再次信任新的根憑證（`pingclair trust`）。全域的 `storage file_system <path>` 選項也能在設定中指定儲存區的位置。
 
 如果之後服務以 `Internal CA I/O error: Permission denied` 拒絕啟動，代表服務帳號無法寫入儲存區的檔案；執行 `sudo chown -R pingclair:pingclair /var/lib/pingclair/.local/share/pingclair` 即可修正，網站也會恢復回應。
 

@@ -11,8 +11,7 @@ instances, without changing the application. This page starts with a single
 upstream and builds up to a pool with health checks, timeouts, and a backup. It
 ends with what the application sees on the other side.
 
-📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
-that exist only on the server's `main` branch are marked **Next release**.
+📌 This page describes **v0.2.0**.
 
 ## 🧾 Before you start
 
@@ -68,17 +67,15 @@ between the two instances:
 
 | `lb_policy` | Behavior |
 | --- | --- |
-| `round_robin` | One request per upstream, in order. The default in v0.2.0-rc.3. |
-| `random` | Any upstream, chosen at random. |
+| `round_robin` | Select upstreams in rotation. |
+| `random` | Select an upstream at random; the default. |
 | `least_conn` | The upstream with the fewest connections in flight. |
 | `ip_hash` | The same client address always reaches the same upstream. |
-| `first` | Intended to pick the first available upstream. In v0.2.0-rc.3 it behaves like `round_robin`. |
+| `first` | The first available upstream. |
 | `header <name>`, `cookie <name>`, `query <name>` | Hash on that field, so a session sticks to one instance. |
 | `weighted_round_robin <w> …` | One weight per upstream, on the same line. |
 
-**Next release:** with no `lb_policy`, an upstream is picked at random, which
-is Caddy's default; write `lb_policy round_robin` to keep the alternation. And
-`first` really does pin to the first available upstream.
+A weight of `0` drains an upstream. Weights above `100` and pools whose every primary has weight `0` are refused. `lb_try_duration` limits when a new retry may begin, not how long an active response may run. Once an upstream may have seen the request, automatic retries repeat only idempotent methods.
 
 A weight can also be set on each upstream, which reads better when each instance
 has its own reason:
@@ -181,8 +178,7 @@ body gets `first_byte_timeout 1s` applied instead, and the client receives
 `504`.
 
 `dial_timeout` is not a `reverse_proxy` option; written there, `validate` refuses
-the file with `Unknown directive 'reverse_proxy: dial_timeout'`. The name inside
-`transport http` is `connect_timeout`.
+the file with `Unknown directive 'reverse_proxy: dial_timeout'`. Inside `transport http`, both `dial_timeout` and `connect_timeout` are accepted.
 
 ## 🔁 Hostname upstreams
 
@@ -235,9 +231,9 @@ guide](/guides/cloudflare-tunnel/) covers that case.
 
 - **`502` from the proxy.** No upstream answered. Check that the application is
   listening (`sudo ss -ltnp | grep :3000`) and that the address matches.
-  **Next release:** a `502` or `504` that Pingclair generated carries
-  `Proxy-Status: pingclair; error=…`; one without that field came from the
-  application.
+  A built-in `502` or `504` that Pingclair generated carries
+  `Proxy-Status: pingclair; error=…`; a custom `handle_errors` response omits it too, so absence alone does not
+  identify the application.
 - **`504` after a pause.** A timeout fired: `first_byte_timeout` for a slow
   backend, `read_timeout` for a slow body, `connect_timeout` for a host that
   never accepts.
@@ -258,3 +254,5 @@ guide](/guides/cloudflare-tunnel/) covers that case.
 - [`reverse_proxy`](/reference/directives/#reverse_proxy): the directive
   reference.
 - [Run it as a service](/start/service/): reloads, restarts, and logs.
+
+📌 A backend that truncates responses currently stays in rotation; `max_fails` and `fail_duration` are not implemented. [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).

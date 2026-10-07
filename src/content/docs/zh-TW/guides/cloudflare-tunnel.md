@@ -8,7 +8,7 @@ description: 透過 Cloudflare Tunnel 發布網站，讓源站不需要開放任
 
 Cloudflare Tunnel 讓源站主動向外連線：`cloudflared` 撥號到 Cloudflare，Cloudflare 再沿著這條連線把請求送回來。沒有任何東西在公開連接埠上監聽，TLS 由邊緣終結，源站在 loopback 上收到的是明文 HTTP。本頁會把這套架構建立起來，再解決每個人遇到的第一個問題：每個請求都被記錄成來自 `127.0.0.1`。
 
-📌 本頁描述的是 Pingclair 最新公開的發行版 **v0.2.0-rc.3**。
+📌 本頁描述 **v0.2.0**。
 
 ## 🧾 開始之前
 
@@ -109,7 +109,10 @@ server: cloudflare
 ```caddyfile
 {
     admin 127.0.0.1:2019
-    trusted_proxies 127.0.0.1/32
+    servers {
+        trusted_proxies static 127.0.0.1/32
+        client_ip_headers CF-Connecting-IP
+    }
 }
 
 http://:80 {
@@ -127,7 +130,7 @@ remote_ip=16.162.199.171     # after: the client that started the request
 
 依用戶端的速率限制與 `client_ip` 匹配器，也是靠這個設定才能在 tunnel 後方看見真正的用戶端。它在啟動時讀取，所以變更後需要重啟，而不是重載（[重載意味著什麼](/zh-TW/start/service/#-重載意味著什麼)）。
 
-**下一版**：`remote_ip` 匹配器匹配的是連線本身的對端，在 tunnel 後方永遠是 connector。要匹配用戶端，請用 `client_ip`；在 v0.2.0-rc.3 中，兩個匹配器看到的都是轉送過來的用戶端。
+`client_ip` 與 `{client_ip}` 使用所列標頭中的用戶端；`remote_ip` 與 `{remote_host}` 仍是 connector 的位址。只有受信任的對端能提供這些標頭。`CF-Connecting-IP` 必須明確列入 `client_ip_headers`。
 
 ## ⚠️ 無法運作時
 

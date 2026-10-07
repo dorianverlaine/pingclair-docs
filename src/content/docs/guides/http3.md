@@ -11,8 +11,7 @@ the global protocol list leaves `h3` out. The part that needs care is proving a
 client really used it, because a client that silently falls back to HTTP/2 looks
 exactly like success.
 
-📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
-that exist only on the server's `main` branch are marked **Next release**.
+📌 This page describes **v0.2.0**.
 
 ## 🧾 Before you start
 
@@ -67,10 +66,7 @@ example.com {
 }
 ```
 
-⚠️ In v0.2.0-rc.3, `http3 off` is accepted and has no effect: the site is still
-served over QUIC. **Next release:** it keeps that site off QUIC while the
-listener serves the other sites, and its responses stop advertising HTTP/3 in
-`Alt-Svc`.
+`http3 off` refuses this site's QUIC handshake and removes its HTTP/3 advertisement from `Alt-Svc`. Other sites on the port may continue to use QUIC.
 
 ## ✅ Prove a client used it
 
@@ -131,7 +127,7 @@ differences are where HTTP/3 cannot carry something:
 | --- | --- |
 | Declared request trailers | Not forwarded, as on every protocol: `501` before the response is committed; on HTTP/3 the stream is reset after that. |
 | Upstream response trailers | `502`, as on every protocol. |
-| `CONNECT` | Pingclair opens no tunnels. A standard `CONNECT` is reset as malformed, and one that also carries `:scheme` and `:path` is answered `501`. **Next release:** `405` with `Allow`, the same answer as on HTTP/1.1 and HTTP/2. |
+| `CONNECT` | Pingclair opens no tunnels. A usable `host:port` target gets `405` with `Allow`; a target without a usable port gets `400`. HTTP/1.1 closes the connection after refusal. |
 
 A CDN in front of the origin terminates HTTP/3 itself and talks HTTP/1.1 or
 HTTP/2 to the origin. The listener here then says nothing about what the
@@ -149,9 +145,6 @@ visitor's browser used; check the CDN's own HTTP/3 setting instead.
 - **HTTP/3 works locally and not from outside.** The client's network blocks UDP
   443, which is common on corporate and hotel networks; browsers fall back
   silently.
-- **A site with `http3 off` still answers over HTTP/3.** In v0.2.0-rc.3 the
-  option has no effect; remove `h3` from the global list if no site may use
-  HTTP/3.
 
 ## 🧭 Next steps
 

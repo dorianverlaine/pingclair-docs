@@ -8,7 +8,7 @@ description: 以壓縮、快取標頭、位元組範圍、單頁應用程式的�
 
 本頁提供一個檔案目錄：從 `root` 與 `file_server` 開始，再加上壓縮、快取標頭、range 請求，以及單頁應用程式需要的後備路由。每一步都附上伺服器在真實主機上的回應。
 
-📌 本頁描述的是最新公開的發行版 **v0.2.0-rc.3**。只存在於伺服器 `main` 分支上的變動，以 **下一版** 標示。
+📌 本頁描述 **v0.2.0**。
 
 ## 🧾 開始之前
 
@@ -67,11 +67,11 @@ Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`:
 
 訊息會指出替代方案。要求伺服器做不到的事的設定，根本不會執行。
 
-在 v0.2.0-rc.3 中，沒有 `encode` 這一行的網站仍會用 gzip 壓縮；若要原樣提供磁碟上的位元組，請寫 `encode off`。**下一版**：網站只在 `encode` 要求的地方壓縮，與 Caddy 相同，所以升級時請保留 `encode` 這一行。
+網站只在 `encode` 要求時壓縮。`gzip` 預設等級為 5，可在區塊中指定 1–9；`minimum_length` 預設為 512 位元組。靜態回應一律帶有 `Vary: Accept-Encoding`。每種編碼有自己的 ETag，gzip ETag 也包含等級；預先壓縮的 sidecar 使用自己的大小與修改時間產生驗證值，並優先於即時壓縮快取。
 
 ## ⏳ 快取標頭
 
-`file_server` 會送出 `ETag` 與 `Last-Modified`，但在 v0.2.0-rc.3 中不會評估 `If-None-Match` 或 `If-Modified-Since`：重新驗證的用戶端會再下載一次整個檔案。**下一版**：條件式請求會以 `304 Not Modified` 或 `412 Precondition Failed` 回應。
+`file_server` 依序評估 `If-Match`、`If-Unmodified-Since`、`If-None-Match` 與 `If-Modified-Since`，回應 `304` 或 `412`。`If-Range` 不符時回傳完整檔案及 `200`。設定的 `ETag` 標頭目前不參與重新驗證，請使用檔案衍生的驗證值。範圍回應使用 identity 編碼並以有界區塊串流傳送；目錄重新導向保留查詢字串並清理路徑。
 
 用戶端可以保留一個檔案多久，是網站要做的決定，而且應該只設定在確實成立的路徑上：
 

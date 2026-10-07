@@ -9,7 +9,7 @@ protocol grows its own copy of the rules, or one protocol quietly misses a rule
 the others follow. Pingclair avoids both by giving each transport only the job
 of moving bytes, and sending every request through one shared policy layer.
 This page describes the components, the path a request takes, and the few
-places where the protocols still differ. It describes **v0.2.0-rc.3**.
+places where the protocols still differ. It describes **v0.2.0**.
 
 ## 🧱 The server is one binary built from a few crates
 
@@ -57,10 +57,10 @@ pooling, upstream TLS, and timeouts are shared as well.
 
 ## 🌊 What holds for every request
 
-- **Bodies are streamed.** Request and response bodies move through the server
-  in bounded chunks. Compression and proxying do not collect a complete body
-  first, so a large upload or a slow reader does not cost memory in proportion
-  to the body size.
+- **Bodies use bounded memory.** Proxy bodies stream by default. Explicit
+  request or response buffering delays forwarding up to its configured ceiling,
+  then streams the remainder; `unlimited` still caps memory at 8 MiB.
+  Static live compression is bounded as well. See the [known streaming defects](/project/status/).
 - **Upstream connections are reused.** Keepalive connections to backends are
   pooled. A hostname upstream is resolved again on the interval set by
   `dns_refresh`, so a backend container that restarts on a new address is
@@ -74,17 +74,13 @@ pooling, upstream TLS, and timeouts are shared as well.
 A few behaviors differ by protocol. They are listed here so that operators can
 account for them before deployment.
 
-| Area | Behavior in v0.2.0-rc.3 |
+| Area | Behavior in v0.2.0 |
 | --- | --- |
 | Trailers | Request trailers are not forwarded on any protocol. A request that declares them is answered `501` before the response starts; an HTTP/3 stream whose response has already started is reset instead. An upstream response that advertises trailers is answered `502`. |
-| `CONNECT` | Pingclair opens no tunnels. HTTP/1.1 and HTTP/2 answer `405`. HTTP/3 resets a standard `CONNECT` request as malformed, and answers `501` to one that also carries `:scheme` and `:path`. |
+| `CONNECT` | A usable `host:port` target gets `405` with `Allow`; a target without a usable port gets `400`. HTTP/1.1 closes after refusal. |
 | FastCGI | `php_fastcgi` works on every protocol, HTTP/3 included. |
 
-📌 **Next release.** On `main`, `CONNECT` is answered `405` with an `Allow` header
-on every protocol, and `TRACE` is answered the same way. These changes are not
-in v0.2.0-rc.3; the
-[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
-records them under Unreleased.
+📌 `TRACE` also receives `405` with `Allow`. Malformed HTTP/1 chunked bodies, raw whitespace or controls in request targets, and HTTP/1.1 requests without Host receive `400` and close.
 
 ## ⚠️ WebSocket upgrades fail intermittently under load
 
@@ -93,11 +89,12 @@ machine is busy. From the outside, a failed upgrade is a connection closed
 immediately after the `101 Switching Protocols` response. The cause is a race
 in the upstream `pingora-proxy` crate, not in Pingclair's upgrade handling, and
 no configuration avoids it. An idle developer machine rarely reproduces it,
-which is why it is stated here. Upstream issue:
-[cloudflare/pingora#946](https://github.com/cloudflare/pingora/issues/946).
+which is why it is stated here. [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).
 
 ## 🧭 Related pages
 
 - [Configuration model](/concepts/configuration/): how a Pingclairfile becomes
   the snapshot described above.
 - [Project status](/project/status/): what the release supports and refuses.
+
+📌 See [Project status](/project/status/) for the remaining streaming and protocol defects. Cancelling an HTTP/3 request releases an idle upstream exchange while other streams on the connection remain usable.

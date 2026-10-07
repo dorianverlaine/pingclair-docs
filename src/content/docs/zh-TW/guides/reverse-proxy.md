@@ -8,7 +8,7 @@ description: 把 Pingclair 放在應用程式前面、把流量分散到多個�
 
 反向代理會在一個或多個應用程式執行個體前面放上一個公開位址，而且不必修改應用程式。本頁從單一上游開始，逐步建立一個具備健康檢查、逾時與備援的上游池，最後說明應用程式那一端看到的是什麼。
 
-📌 本頁描述的是最新公開的發行版 **v0.2.0-rc.3**。只存在於伺服器 `main` 分支上的變動，以 **下一版** 標示。
+📌 本頁描述 **v0.2.0**。
 
 ## 🧾 開始之前
 
@@ -59,15 +59,15 @@ http://:8080 {
 
 | `lb_policy` | 行為 |
 | --- | --- |
-| `round_robin` | 依序每個上游一個請求。v0.2.0-rc.3 的預設值。 |
-| `random` | 隨機挑選任一個上游。 |
+| `round_robin` | 依序輪流選擇上游。 |
+| `random` | 隨機選擇上游，預設策略。 |
 | `least_conn` | 進行中連線最少的上游。 |
 | `ip_hash` | 同一個用戶端位址永遠連到同一個上游。 |
-| `first` | 原意是挑第一個可用的上游。在 v0.2.0-rc.3 中，它的行為與 `round_robin` 相同。 |
+| `first` | 第一個可用的上游。 |
 | `header <name>`、`cookie <name>`、`query <name>` | 依該欄位雜湊，讓同一個工作階段固定在一個執行個體上。 |
 | `weighted_round_robin <w> …` | 每個上游一個權重，寫在同一行。 |
 
-**下一版**：沒有 `lb_policy` 時，會隨機挑選上游，這也是 Caddy 的預設值；若要維持輪流，請寫 `lb_policy round_robin`。而 `first` 會真的固定在第一個可用的上游。
+權重 `0` 會排空該上游；大於 `100` 的權重及所有主要上游權重皆為 `0` 的集區會被拒絕。`lb_try_duration` 只限制新重試開始的時間，不截斷已開始的回應。上游可能已收到請求後，自動重試只重複冪等方法。
 
 權重也可以設定在每個上游上，當每個執行個體各有理由時，這樣寫比較好讀：
 
@@ -150,7 +150,7 @@ http://:8080 {
 
 實測：`127.0.0.1:3099` 不接受任何連線時，`connect_timeout 1s` 會花掉一秒，接著請求改送到第二個上游重試，得到 `200`。若應用程式接受了連線，卻等 3 秒才送出本文，則改由 `first_byte_timeout 1s` 生效，用戶端會收到 `504`。
 
-`dial_timeout` 不是 `reverse_proxy` 的選項；寫在那裡的話，`validate` 會以 `Unknown directive 'reverse_proxy: dial_timeout'` 拒絕這個檔案。`transport http` 裡對應的名稱是 `connect_timeout`。
+`dial_timeout` 不是 `reverse_proxy` 的選項；寫在那裡的話，`validate` 會以 `Unknown directive 'reverse_proxy: dial_timeout'` 拒絕這個檔案。`transport http` 接受 `dial_timeout` 與 `connect_timeout`。
 
 ## 🔁 以主機名稱指定上游
 
@@ -194,7 +194,7 @@ INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_st
 
 ## ⚠️ 無法運作時
 
-- **代理回傳 `502`。**沒有任何上游回應。請確認應用程式正在監聽（`sudo ss -ltnp | grep :3000`），而且位址相符。**下一版**：由 Pingclair 產生的 `502` 或 `504` 會帶有 `Proxy-Status: pingclair; error=…`；沒有這個欄位的，是應用程式自己回的。
+- **代理回傳 `502`。**沒有任何上游回應。請確認應用程式正在監聽（`sudo ss -ltnp | grep :3000`），而且位址相符。由 Pingclair 產生的 `502` 或 `504` 會帶有 `Proxy-Status: pingclair; error=…`；自訂 `handle_errors` 回應也不帶此欄位，不能只以缺少欄位判定來自應用程式。
 - **停頓一陣子後出現 `504`。**有逾時觸發了：後端太慢是 `first_byte_timeout`，本文太慢是 `read_timeout`，主機始終不接受連線則是 `connect_timeout`。
 - **`Unknown directive 'reverse_proxy: …'`。**這個選項屬於某個巢狀區塊——逾時放在 `transport http` 底下，檢查放在 `health_check` 底下——`validate` 會指出它拒絕的確切寫法。
 - **設定變更沒有生效。**重載無法新增或搬移監聽器。新檔案有這類變更時，unit 的狀態列會列出變動的位址，執行 `sudo pc service restart` 即可套用。請見[以服務方式執行](/zh-TW/start/service/#-重載意味著什麼)。
@@ -205,3 +205,5 @@ INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_st
 - [提供靜態網站](/zh-TW/guides/static-site/)：壓縮、快取，以及單頁應用程式的後備路由。
 - [`reverse_proxy`](/zh-TW/reference/directives/#reverse_proxy)：指令參考。
 - [以服務方式執行](/zh-TW/start/service/)：重載、重啟與日誌。
+
+📌 截斷回應的後端目前不會因 `max_fails` 或 `fail_duration` 被移出輪替。 [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).

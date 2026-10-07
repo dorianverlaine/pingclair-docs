@@ -11,8 +11,7 @@ and adding compression, cache headers, range requests, and the fallback a
 single-page application needs. Each step shows what the server answered on a
 real host.
 
-📌 This page describes **v0.2.0-rc.3**, the latest published release. Changes
-that exist only on the server's `main` branch are marked **Next release**.
+📌 This page describes **v0.2.0**.
 
 ## 🧾 Before you start
 
@@ -76,17 +75,11 @@ Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`:
 The message names the alternative. A configuration that asks for something the
 server cannot do does not run at all.
 
-In v0.2.0-rc.3, a site with no `encode` line still compresses with gzip; write
-`encode off` to serve the bytes on disk. **Next release:** a site compresses
-only where `encode` asks, as in Caddy, so keep the `encode` line when
-upgrading.
+A site compresses only when `encode` asks. Gzip defaults to level 5; a block can select levels 1–9 and a `minimum_length` (512 bytes by default). Static responses always carry `Vary: Accept-Encoding`. Each coding has its own ETag, and gzip tags include the level. Precompressed sidecars use their own size and modification time for validators and take precedence over cached live compression.
 
 ## ⏳ Caching headers
 
-`file_server` sends `ETag` and `Last-Modified`, but in v0.2.0-rc.3 it does not
-evaluate `If-None-Match` or `If-Modified-Since`: a revalidating client downloads
-the whole file again. **Next release:** conditional requests are answered with
-`304 Not Modified` or `412 Precondition Failed`.
+`file_server` evaluates `If-Match`, `If-Unmodified-Since`, `If-None-Match`, and `If-Modified-Since` in that order, returning `304` or `412`. A failed `If-Range` returns the whole file with `200`. A configured `ETag` header is currently not used for revalidation; use the derived file validators. Ranges stream in bounded chunks with identity encoding. Canonical redirects preserve the query string and clean the path.
 
 How long a client may keep a file is a decision for the site, and it belongs
 on the paths where it is true:
