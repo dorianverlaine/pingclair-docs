@@ -181,6 +181,12 @@ JSON, for scripts. `--versions`, `--packages`, and `-s`/`--skip-standard` are
 accepted, so scripts written for `caddy list-modules` run unchanged; every
 module in this build is standard, so `--skip-standard` prints nothing.
 
+The admin API appears under Caddy's own names, and only for the parts that
+answer here: `admin.api.load`, `admin.api.metrics` and
+`admin.api.reverse_proxy`. `admin.api.pki` is deliberately absent, because
+`/pki/` is not served — the listing says what a follow-up request will find,
+which is why it no longer prints a bare `admin-api` tag.
+
 ```bash
 pingclair list-modules [--json] [--versions]
 ```

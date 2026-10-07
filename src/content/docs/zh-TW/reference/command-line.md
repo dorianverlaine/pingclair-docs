@@ -151,6 +151,8 @@ pingclair environ
 
 **0.2.0 變更**：接受 `--versions`、`--packages` 與 `-s`／`--skip-standard`，每個模組皆為 standard，`--skip-standard` 因此輸出空白。
 
+admin API 以 Caddy 自己的名稱列出，而且只列這裡真的會回應的部分：`admin.api.load`、`admin.api.metrics` 與 `admin.api.reverse_proxy`。`admin.api.pki` 刻意不在清單中，因為 `/pki/` 沒有被服務——這份清單要能預告後續請求會得到什麼，所以它不再只印一個 `admin-api` 標籤。
+
 ```bash
 pingclair list-modules [--json]
 ```
