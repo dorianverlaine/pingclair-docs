@@ -66,7 +66,7 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。尚未支援的名�
 
 ## ⚠️ 已知限制
 
-憑證儲存區僅支援本機目錄，不支援共用儲存後端、第四層代理、外掛或 Caddy 原生 JSON 結構。0.2.0 的 DNS-01 可使用 Cloudflare。`CONNECT` 與 `TRACE` 會得到附帶 `Allow` 的 `405`；格式錯誤的 CONNECT 目標得到 `400`。宣告的 request trailers 不會轉送，宣告 `Trailer` 的上游回應會得到 `502`。
+憑證儲存區僅支援本機目錄，不支援共用儲存後端、第四層代理、外掛或 Caddy 原生 JSON 結構。0.2.0 的 DNS-01 可使用 Cloudflare。`CONNECT` 與 `TRACE` 會得到附帶 `Allow` 的 `405`；格式錯誤的 CONNECT 目標得到 `400`。宣告的 request trailers 不會轉送；宣告 `Trailer` 的上游回應會保留其狀態與本文，trailer 欄位則被丟棄。
 
 ## 🐛 0.2.0 的已知缺陷
 
@@ -75,7 +75,7 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。尚未支援的名�
 - **負載下的 WebSocket 升級：** 忙碌機器上約 10–15% 失敗，`101` 之後立即 EOF，沒有可避免此競態的設定。
 - **帶有 Content-Length 的 HTTP/1.1 回應：** 本文結束後才送出。事件串流請使用 chunked framing；H2 與 H3 不受影響。
 - **代理 gzip：** HTTP/2 上游未宣告的 trailers 可能讓壓縮本文提早結束。
-- **已宣告的上游 trailers：** 代理回應 `502`。
+- **已宣告的上游 trailers：** trailer 欄位會被丟棄；回應保留來源的狀態與本文。
 - **HTTP/1.0 代理回應：** 上游未提供長度時，用戶端可能收到 chunked framing。
 - **升級連線的半關閉：** 用戶端半關閉會結束 tunnel，遺失後端尚未送完的位元組。
 - **上游第一個本文位元組之前的失敗：** H2 用戶端可能收到重設而非 `502`。

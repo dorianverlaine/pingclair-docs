@@ -80,7 +80,8 @@ Certificate storage is local; a shared storage backend, layer-4 proxying,
 plugins, and Caddy's native JSON schema are not supported. DNS-01 works with
 Cloudflare in 0.2.0. `CONNECT` and `TRACE` are refused with `405` and `Allow`;
 malformed CONNECT authorities receive `400`. Declared request trailers are
-not forwarded, and an upstream response that announces `Trailer` receives `502`.
+not forwarded; an upstream response that announces `Trailer` keeps its status
+and body, with the trailer fields dropped.
 
 ## 🐛 Known defects in 0.2.0
 
@@ -93,7 +94,8 @@ record these release limitations. Configuration validation does not detect them.
   body ends. Use chunked framing for event streams; H2 and H3 are unaffected.
 - **Proxy gzip:** unannounced trailers from an HTTP/2 upstream may end the
   compressed body early.
-- **Announced upstream trailers:** the proxy returns `502`.
+- **Announced upstream trailers:** the trailer fields are dropped; the
+  response keeps the origin's status and body.
 - **HTTP/1.0 proxy responses:** an upstream with no length may produce chunked
   framing for the client.
 - **Upgrade half-close:** a client half-close ends the tunnel and loses any

@@ -128,8 +128,13 @@ following limitations apply:
 | Area | On HTTP/3 |
 | --- | --- |
 | Declared request trailers | Not forwarded, as on every protocol: `501` before the response is committed; on HTTP/3 the stream is reset after that. |
-| Upstream response trailers | `502`, as on every protocol. |
+| Upstream response trailers | Relayed, as on every protocol: the origin's status and body reach the client, and the trailer fields are dropped. |
 | `CONNECT` | Pingclair opens no tunnels. A usable `host:port` target receives `405` with `Allow`; a target without a usable port receives `400`. HTTP/1.1 closes the connection after refusal. |
+
+Trailer fields are the deliberate divergence in that table: Caddy and nginx
+relay an origin's trailer fields to the client, while this proxy forwards the
+`Trailer:` announcement and drops the fields behind it — a client that reads
+the announcement waits for fields that never arrive (#273).
 
 A CDN in front of the origin terminates HTTP/3 itself and uses HTTP/1.1 or
 HTTP/2 to reach the origin. The origin listener does not identify the protocol

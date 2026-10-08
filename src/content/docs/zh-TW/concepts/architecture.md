@@ -57,7 +57,7 @@ upstream or disk
 
 | 領域 | v0.2.0 的行為 |
 | --- | --- |
-| Trailers | 任何協定都不轉送 request trailers。宣告了 trailers 的請求，會在回應開始前得到 `501`；若 HTTP/3 stream 的回應已經開始，則改為重設該 stream。上游回應若宣告了 trailers，會得到 `502`。 |
+| Trailers | 任何協定都不轉送 request trailers。宣告了 trailers 的請求，會在回應開始前得到 `501`；若 HTTP/3 stream 的回應已經開始，則改為重設該 stream。上游回應若宣告了 trailers，會保留其狀態與本文，trailer 欄位則被丟棄。 |
 | `CONNECT` | 可用的 `host:port` 目標得到附帶 `Allow` 的 `405`，沒有可用連接埠的目標得到 `400`；HTTP/1.1 拒絕後關閉連線。 |
 | FastCGI | `php_fastcgi` 在每種協定上都能運作，包括 HTTP/3。 |
 
