@@ -12,7 +12,7 @@ Pingclair obtains certificates for site names automatically. This page covers
 certificate sources, HTTP/3, and client certificate authentication. Unsupported
 TLS options are rejected when the configuration loads.
 
-📌 This page describes **v0.2.0**.
+📌 This page describes **v0.2.2**.
 
 ## 🧾 Before you start
 

@@ -12,7 +12,7 @@ pingclair <command> [<args…>]
 
 角括號代表必填的值，方括號代表選填的值，`…` 代表可以重複的值。每個命令都支援 `--help`，`pingclair help <command>` 會印出相同的內容。不帶命令執行二進位檔，會印出命令清單。
 
-📌 本頁描述 **v0.2.0**。
+📌 本頁描述 **v0.2.2**。
 
 安裝程式也會把二進位檔連結為 `pc`，所以下面每個命令都有兩個字母的簡寫：`pc validate`、`pc service reload` 等等。兩者是同一個程式：`pc` 是符號連結，不是第二個二進位檔。
 
@@ -370,7 +370,7 @@ pingclair hash-password --algorithm argon2id
 
 ## pingclair version
 
-發行版印出自己的標記，例如 `v0.2.0`。`main` 建置印出 `v0.0.0-dev+<commit>`，沒有 git checkout 時為 `v0.0.0-dev`。`build-info` 與 `list-modules --versions` 使用相同字串。
+發行版印出自己的標記，例如 `v0.2.2`。`main` 建置印出 `v0.0.0-dev+<commit>`，沒有 git checkout 時為 `v0.0.0-dev`。`build-info` 與 `list-modules --versions` 使用相同字串。
 
 ```bash
 pingclair version

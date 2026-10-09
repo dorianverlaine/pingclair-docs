@@ -7,7 +7,7 @@ description: The Admin API endpoints, how requests are authenticated, how config
 The Admin API is an HTTP endpoint on the server process for reading and
 replacing the running configuration, checking readiness, and scraping metrics.
 `pingclair reload` and `pingclair stop` use it. This page describes
-**v0.2.0**.
+**v0.2.2**.
 
 <span id="-turning-it-on"></span>
 

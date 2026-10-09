@@ -10,7 +10,7 @@ A reverse proxy exposes one public address for one or more application
 instances. This page explains single and multiple upstreams, health checks,
 timeouts, backup upstreams, and the headers forwarded to the application.
 
-📌 This page describes **v0.2.0**.
+📌 This page describes **v0.2.2**.
 
 ## 🧾 Before you start
 
@@ -255,4 +255,4 @@ guide](/guides/cloudflare-tunnel/) covers that case.
   reference.
 - [Run it as a service](/start/service/): reloads, restarts, and logs.
 
-📌 A backend that truncates responses currently stays in rotation; `max_fails` and `fail_duration` are not implemented. [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).
+📌 A backend that fails after the connection — a truncated body, a reset before the response ended, a malformed response — counts against its passive health, and Caddy's `max_fails` and `fail_duration` decide how long it stays out of rotation. [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).

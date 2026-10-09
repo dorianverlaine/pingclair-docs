@@ -8,7 +8,7 @@ description: 將 Pingclair 設定為反向代理、分配流量至多個上游�
 
 反向代理會在一個或多個應用程式執行個體前面放上一個公開位址，而且不必修改應用程式。本頁從單一上游開始，逐步建立一個具備健康檢查、逾時與備援的上游池，最後說明應用程式那一端看到的是什麼。
 
-📌 本頁描述 **v0.2.0**。
+📌 本頁描述 **v0.2.2**。
 
 ## 🧾 開始之前
 
@@ -206,4 +206,4 @@ INFO pingclair_proxy::dns: 🔄 Upstream DNS refresh changed=1 adopted=0 kept_st
 - [`reverse_proxy`](/zh-TW/reference/directives/#reverse_proxy)：指令參考。
 - [以服務方式執行](/zh-TW/start/service/)：重載、重啟與日誌。
 
-📌 截斷回應的後端目前不會因 `max_fails` 或 `fail_duration` 被移出輪替。 [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).
+📌 連線建立後才失敗的後端——截斷的本文、回應結束前重設、格式錯誤的回應——會計入被動健康狀態，並依 Caddy 的 `max_fails` 與 `fail_duration` 決定留在輪替外的時間。 [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).

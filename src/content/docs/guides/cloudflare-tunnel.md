@@ -12,7 +12,7 @@ listens on a public port, the edge terminates TLS, and the origin receives plain
 HTTP on loopback. This page configures the tunnel, then configures the origin to
 record the actual client address instead of `127.0.0.1`.
 
-📌 This page describes **v0.2.0**.
+📌 This page describes **v0.2.2**.
 
 ## 🧾 Before you start
 

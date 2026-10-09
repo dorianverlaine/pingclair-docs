@@ -7,7 +7,7 @@ description: Install Pingclair on Linux from a release binary, with Docker, or f
 ---
 
 Pingclair is distributed as a single Linux binary. This page describes
-installation, installed files, and service verification for **v0.2.0**.
+installation, installed files, and service verification for **v0.2.2**.
 
 ## 🧾 What you need
 
@@ -44,7 +44,7 @@ To run an unreleased fix, build `main` on the host instead:
 curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
-`--main` clones and compiles the server on the host. It needs Rust 1.98 or newer
+`--main` clones and compiles the server on the host. It needs Rust 1.99 or newer
 and the C toolchain BoringSSL and jemalloc require: `cmake`, `clang`,
 `libclang-dev`, `g++`, and `git`. The script installs those packages itself on
 both `apt` and `dnf` systems. The first build takes several minutes because
@@ -176,7 +176,7 @@ cd pingclair
 cargo build --release
 ```
 
-Requirements: Rust 1.98.1 (the version CI pins), `cmake`, `clang`,
+Requirements: Rust 1.99.0 (the version CI pins), `cmake`, `clang`,
 `libclang-dev`, `g++`, and `git`. BoringSSL is compiled from source as part of
 the build, so the first build takes several minutes.
 

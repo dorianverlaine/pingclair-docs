@@ -7,7 +7,7 @@ description: How a Pingclairfile is structured, how it is compiled and validated
 Pingclair compiles the Pingclairfile when it loads the configuration. Address
 parsing and matcher compilation are completed before requests are processed,
 and unsupported or invalid settings are rejected at load time. This page
-describes configuration loading and reload behavior in **v0.2.0**.
+describes configuration loading and reload behavior in **v0.2.2**.
 
 ## 🗂️ A file is global options followed by site blocks
 

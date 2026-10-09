@@ -6,7 +6,7 @@ description: Pingclairfile 的詞法、網站位址、匹配器、佔位符、�
 
 Pingclairfile 使用 Caddyfile 語言，由可省略的全域選項區塊與網站區塊組成。只使用支援語法的 Caddyfile 可直接載入。[指令參考](/zh-TW/reference/directives/)說明各指令的作用。
 
-📌 本頁描述 **v0.2.0**。
+📌 本頁描述 **v0.2.2**。
 
 ## 🔤 詞法規則
 

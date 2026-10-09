@@ -16,7 +16,7 @@ a value that can be repeated. Every command accepts `--help`, and
 `pingclair help <command>` prints the same text. Running the binary with no
 command prints the list of commands.
 
-📌 This page describes **v0.2.0**. Behavior that changed from the 0.1.x line and
+📌 This page describes **v0.2.2**. Behavior that changed from the 0.1.x line and
 the 0.2.0 release candidates is marked **Changed in 0.2.0**.
 
 The installer also links the binary as `pc`, so commands can also be invoked as
@@ -456,7 +456,7 @@ syntax.
 
 ## pingclair version
 
-Prints the version. A release binary prints its tag, such as `v0.2.0`. A
+Prints the version. A release binary prints its tag, such as `v0.2.2`. A
 binary built from `main` prints `v0.0.0-dev+<commit>`, or `v0.0.0-dev` when it
 was built without a git checkout; `build-info` and `list-modules --versions`
 report the same string.

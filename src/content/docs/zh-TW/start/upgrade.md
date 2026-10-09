@@ -3,10 +3,10 @@ title: 升級與移除
 h1_emoji: '🧹'
 sidebar:
   order: 5
-description: 將 0.1.x 或 0.2.0 候選版本的設定升級至 0.2.0，保留憑證儲存區、驗證新版本，並準備回復。
+description: 將 0.1.x 或候選版本的設定升級至 0.2 系列，保留憑證儲存區、驗證新版本，並準備回復。
 ---
 
-**0.2.0** 改變既有設定的路由、綁定位址、壓縮與用戶端識別行為。從 **0.2.0-rc.N** 升級也需要檢查。替換二進位檔之前，請閱讀完整的 [Before you upgrade 清單](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)及各項連結。以下整理最可能影響部署的變動。
+**0.2.0** 改變既有設定的路由、綁定位址、壓縮與用戶端識別行為。從 **0.2.0-rc.N** 升級也需要檢查。修補版本 0.2.1 與 0.2.2 不需要調整設定。替換二進位檔之前，請閱讀完整的 [Before you upgrade 清單](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)及各項連結。以下整理最可能影響部署的變動。
 
 ## ⚠️ 0.2.0 的變更
 
@@ -30,7 +30,7 @@ description: 將 0.1.x 或 0.2.0 候選版本的設定升級至 0.2.0，保留�
 | 協定 | CONNECT 得到 `405` 並關閉 H1；沒有可用連接埠的目標得到 `400`。HTTP/1 格式錯誤的目標與 chunked 本文得到 `400` 並關閉連線。FastCGI HEAD 沒有本文、過大參數得到 `431`、損壞本文中止回應。 |
 | 生命週期 | HTTP、管理或 H3 UDP 連接埠被佔用時停止啟動。SIGTERM 在 `grace_period` 內排空。重啟仍有連線空窗，政策變更優先重載。 |
 
-[已知發行缺陷](/zh-TW/project/status/#-020-的已知缺陷)仍然適用。內建代理錯誤產生的 `502` 或 `504` 帶有 `Proxy-Status`，自訂 `handle_errors` 回應不帶此欄位。未能重用 keepalive 的日誌等級由 `ERROR` 改為 `DEBUG`。
+[已知發行缺陷](/zh-TW/project/status/#-022-的已知缺陷)仍然適用。內建代理錯誤產生的 `502` 或 `504` 帶有 `Proxy-Status`，自訂 `handle_errors` 回應不帶此欄位。未能重用 keepalive 的日誌等級由 `ERROR` 改為 `DEBUG`。
 
 ## 📦 保留原有安裝
 
@@ -42,11 +42,11 @@ description: 將 0.1.x 或 0.2.0 候選版本的設定升級至 0.2.0，保留�
 
 使用尚未替換上線版本的 **新** 二進位檔對正式設定執行 `validate`。它不開啟監聽器，但執行者必須讀得到設定所列的每個憑證與金鑰。再於測試部署檢查受影響路由、大小寫變體、轉送用戶端身分、錯誤頁、上傳、壓縮與指標。
 
-`main` 原始碼建置回報 `v0.0.0-dev+<sha>`，沒有 checkout 時為 `v0.0.0-dev`；發行版回報自己的標記，例如 `v0.2.0`。安裝時檢查標記與發布的校驗值。dev 版本字串不代表已安裝穩定版。
+`main` 原始碼建置回報 `v0.0.0-dev+<sha>`，沒有 checkout 時為 `v0.0.0-dev`；發行版回報自己的標記，例如 `v0.2.2`。安裝時檢查標記與發布的校驗值。dev 版本字串不代表已安裝穩定版。
 
 ## ⬆️ 安裝穩定版
 
-0.2.0 發布後，安裝程式會選擇穩定版通道：
+安裝程式會選擇穩定版通道：
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash
@@ -54,14 +54,14 @@ pingclair version
 pc service status
 ```
 
-確認 `pingclair version` 顯示 `v0.2.0`、服務正常執行，並檢查網站路由的回應。
+確認 `pingclair version` 顯示 `v0.2.2`、服務正常執行，並檢查網站路由的回應。
 
 安裝程式沒有指定版本的旗標。容器請固定目標標記：
 
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.0
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.2
 ```
 
 ```bash

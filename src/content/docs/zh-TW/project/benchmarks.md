@@ -8,7 +8,7 @@ description: Pingclair 在一組受控負載下與 nginx、Caddy 的比較、該
 
 ## 🧭 比較方式
 
-- **版本。** Pingclair `v0.2.0-rc.3`（發行版二進位檔）、nginx 1.31.6，以及 Caddy 2.11.4。
+- **版本。** 量測用的 Pingclair 是候選版本 `v0.2.0-rc.3` 的發行二進位檔，另有 nginx 1.31.6 與 Caddy 2.11.4。之後的修補版本不會重新量測。
 - **主機。** 一台執行 OrbStack 的 Apple M2 筆電。
 - **限制。** 每個伺服器都跑在限制兩顆 CPU 的容器裡，worker 數相同，payload 同為 1 KiB。
 - **拓撲。** 反向代理的後端跑在同一個 Docker network 上的獨立容器。
@@ -40,9 +40,8 @@ description: Pingclair 在一組受控負載下與 nginx、Caddy 的比較、該
 
 ## 🧾 來源
 
-這張表就是伺服器儲存庫 README 裡公布的那一張。量測方法、一次執行必須滿足哪些規則數字才算數，以及 harness 本身，也都在伺服器儲存庫中：
+這些數字來自伺服器儲存庫的 benchmark harness 的一次執行結果。量測方法、一次執行必須滿足哪些規則數字才算數，以及 harness 本身，都公布在該儲存庫：
 
 - [基準測試方法](https://github.com/dorianverlaine/pingclair/blob/main/benchmarks/README.md)
-- [公開的比較結果](https://github.com/dorianverlaine/pingclair#-benchmarks)
 
-每次執行的原始紀錄不公開。
+每次執行的原始紀錄留在維護者的 checkout，不公開。

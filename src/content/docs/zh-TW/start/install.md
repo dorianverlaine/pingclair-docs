@@ -6,7 +6,7 @@ sidebar:
 description: 用發行版二進位檔、Docker 或原始碼把 Pingclair 裝到 Linux 主機上，並確認服務有回應。
 ---
 
-Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.2.0** 的安裝步驟、檔案位置與服務檢查方式。
+Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.2.2** 的安裝步驟、檔案位置與服務檢查方式。
 
 ## 🧾 你需要準備的
 
@@ -31,7 +31,7 @@ curl -fsSL https://pingclair.com/install.sh | sudo bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 ```
 
-`--main` 會在主機上 clone 並編譯伺服器。它需要 Rust 1.98 或更新版本，以及 BoringSSL 與 jemalloc 所需的 C 工具鏈：`cmake`、`clang`、`libclang-dev`、`g++` 與 `git`。腳本在 `apt` 與 `dnf` 系統上都會自行安裝這些套件。由於 BoringSSL 要從原始碼編譯，第一次建置需要好幾分鐘。
+`--main` 會在主機上 clone 並編譯伺服器。它需要 Rust 1.99 或更新版本，以及 BoringSSL 與 jemalloc 所需的 C 工具鏈：`cmake`、`clang`、`libclang-dev`、`g++` 與 `git`。腳本在 `apt` 與 `dnf` 系統上都會自行安裝這些套件。由於 BoringSSL 要從原始碼編譯，第一次建置需要好幾分鐘。
 
 ## 🗂️ 安裝程式留下了什麼
 
@@ -141,7 +141,7 @@ cd pingclair
 cargo build --release
 ```
 
-需求：Rust 1.98.1（CI 固定的版本）、`cmake`、`clang`、`libclang-dev`、`g++` 與 `git`。BoringSSL 會在建置過程中從原始碼編譯，所以第一次建置需要好幾分鐘。
+需求：Rust 1.99.0（CI 固定的版本）、`cmake`、`clang`、`libclang-dev`、`g++` 與 `git`。BoringSSL 會在建置過程中從原始碼編譯，所以第一次建置需要好幾分鐘。
 
 ## ⚠️ 安裝失敗時
 

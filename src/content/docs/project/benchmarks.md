@@ -9,8 +9,9 @@ versions, environment, and measurement conditions.
 
 ## 🧭 How the comparison was run
 
-- **Versions.** Pingclair `v0.2.0-rc.3` (the release binary), nginx 1.31.6, and
-  Caddy 2.11.4.
+- **Versions.** Pingclair `v0.2.0-rc.3`, measured from that release candidate's
+  binary, nginx 1.31.6, and Caddy 2.11.4. Later patch releases are not
+  re-measured.
 - **Host.** One Apple M2 laptop running OrbStack.
 - **Limits.** Every server runs in a container capped at two CPUs, with the
   same worker count and the same 1 KiB payload.
@@ -58,11 +59,10 @@ HTTPS/1.1 remain about 8% behind nginx.
 
 ## 🧾 Source
 
-The table is the one published in the server repository's README. The
+The numbers come from one run of the server repository's benchmark harness. The
 methodology, the rules a run must meet before a number counts, and the harness
-are in the server repository as well:
+are published there:
 
 - [Benchmark methodology](https://github.com/dorianverlaine/pingclair/blob/main/benchmarks/README.md)
-- [Published comparison](https://github.com/dorianverlaine/pingclair#-benchmarks)
 
-Raw per-run evidence is not published.
+Raw per-run evidence stays in the maintainer's checkout and is not published.

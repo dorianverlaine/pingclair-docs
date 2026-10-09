@@ -10,7 +10,7 @@ This page explains how to serve a directory with `root` and `file_server`,
 configure compression and cache headers, and support range requests and
 single-page applications.
 
-📌 This page describes **v0.2.0**.
+📌 This page describes **v0.2.2**.
 
 ## 🧾 Before you start
 
@@ -78,7 +78,7 @@ A site compresses responses only when `encode` is configured. Gzip defaults to l
 
 ## ⏳ Caching headers
 
-`file_server` evaluates `If-Match`, `If-Unmodified-Since`, `If-None-Match`, and `If-Modified-Since` in that order, returning `304` or `412`. A failed `If-Range` returns the whole file with `200`. A configured `ETag` header is currently not used for revalidation; use the derived file validators. Ranges stream in bounded chunks with identity encoding. Canonical redirects preserve the query string and clean the path.
+`file_server` evaluates `If-Match`, `If-Unmodified-Since`, `If-None-Match`, and `If-Modified-Since` in that order, returning `304` or `412`. A failed `If-Range` returns the whole file with `200`. A configured `ETag` header is the representation's validator: preconditions compare against the tag the site's own header policy puts on the response, as RFC 9110 §13.1.2 asks. Ranges stream in bounded chunks with identity encoding. Canonical redirects preserve the query string and clean the path.
 
 Set `Cache-Control` for the paths to which each cache lifetime applies:
 

@@ -6,7 +6,7 @@ description: Admin API 的端點、驗證、設定讀寫、重載限制與指標
 
 Admin API 在伺服器行程內提供設定讀取與替換、就緒檢查及指標擷取。`pingclair reload` 與 `pingclair stop` 使用它。
 
-📌 本頁描述 **v0.2.0**。
+📌 本頁描述 **v0.2.2**。
 
 ## 🔌 啟用管理端點
 

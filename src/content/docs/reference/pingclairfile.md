@@ -11,7 +11,7 @@ unchanged. This page describes the language; the
 [directive reference](/reference/directives/) describes what each directive
 does.
 
-📌 This page describes **v0.2.0**.
+📌 This page describes **v0.2.2**.
 
 ## 🔤 Lexical rules
 

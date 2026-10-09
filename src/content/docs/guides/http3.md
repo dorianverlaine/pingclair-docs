@@ -10,7 +10,7 @@ HTTP/3 is enabled by default: an HTTPS site uses a QUIC listener on UDP 443 unle
 the global protocol list excludes `h3`. Check the response protocol: a client
 may use HTTP/2 after an HTTP/3 connection fails.
 
-📌 This page describes **v0.2.0**.
+📌 This page describes **v0.2.2**.
 
 ## 🧾 Before you start
 

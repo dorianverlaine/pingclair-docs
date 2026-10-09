@@ -4,11 +4,11 @@ h1_emoji: '📌'
 description: 目前的發行版支援什麼、刻意拒絕什麼、有哪些已知的限制與缺陷，以及升級時需要檢查的變更。
 ---
 
-本頁列出 **v0.2.0** 的支援功能、設定限制與已知缺陷，方便部署前確認。
+本頁列出 **v0.2.2** 的支援功能、設定限制與已知缺陷，方便部署前確認。
 
-## 📌 0.2.0 發行版
+## 📌 0.2.2 發行版
 
-目前的發行版是 **v0.2.0**。它的[發行說明](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)列出了變更內容，以及標記版本時已知的缺陷。
+目前的發行版是 **v0.2.2**，0.2 系列最新的修補版本。[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)記錄每個發行版的變更，以及標記版本時已知的缺陷。0.2.1 與 0.2.2 不需要調整設定：`handle_path` 與沒有參數的 `handle` 並列時，由符合請求的路由回答；listener 可以允許名稱含底線的請求欄位；重新載入後新增的存取日誌 channel 會收到記錄。0.3 開發線位於 `main`，不屬於這個發行版。
 
 `v0.1.x` 系列已停止維護：沒有修正、沒有回溯移植，也不會發布安全公告。請升級離開它：`v0.1.x` 會解析 Admin API 的 `api_key` 欄位，卻從來不讀取，所以它的 Admin API 實際上沒有驗證任何人。
 
@@ -31,7 +31,7 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。尚未支援的名�
 會在載入檔案時被拒絕，錯誤訊息會指出缺少的是哪一項功能；
 含有這類名稱的設定無法啟動。
 
-以下完整清單來自 0.2.0 中的登錄表，列出 Pingclair 能辨識為 Caddy 語法、
+以下完整清單來自 0.2.2 中的登錄表，列出 Pingclair 能辨識為 Caddy 語法、
 但尚未在該上下文中實作的名稱。
 
 **指令：**
@@ -63,30 +63,25 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。尚未支援的名�
 - `encode br` 會被拒絕，因為代理回應沒有串流式 Brotli 實作。請使用 `zstd` 或 `gzip`。
 - `storage file_system <path>`、`ocsp_stapling off` 與 `handle_errors` 已在 0.2.0
   上實作；仍把它們列為不支援的舊文件已經過時。
+- 請求欄位名稱若含底線會被丟棄（Caddy 也是如此），除非 `servers { expected_underscore_headers … }` 列出該名稱，或以 `*` 結尾的前綴。這個選項在 0.2.2 才實作；在此之前，這類欄位在三個傳輸層都會被丟棄，且無法保留下來。
 
 ## ⚠️ 已知限制
 
-憑證儲存區僅支援本機目錄，不支援共用儲存後端、第四層代理、外掛或 Caddy 原生 JSON 結構。0.2.0 的 DNS-01 可使用 Cloudflare。`CONNECT` 與 `TRACE` 會得到附帶 `Allow` 的 `405`；格式錯誤的 CONNECT 目標得到 `400`。宣告的 request trailers 不會轉送；宣告 `Trailer` 的上游回應會保留其狀態與本文，trailer 欄位則被丟棄。
+憑證儲存區僅支援本機目錄，不支援共用儲存後端、外掛或 Caddy 原生 JSON 結構；第四層代理屬於 0.3 開發線。DNS-01 支援 Cloudflare，其他 provider 名稱會被拒絕，不會退回另一種驗證方式。`CONNECT` 與 `TRACE` 會得到附帶 `Allow` 的 `405`；格式錯誤的 CONNECT 目標得到 `400`。宣告的 request trailers 不會轉送；宣告 `Trailer` 的上游回應會保留其狀態與本文，trailer 欄位則被丟棄。
 
-## 🐛 0.2.0 的已知缺陷
+## 🐛 0.2.2 的已知缺陷
 
-[CHANGELOG 的已知缺陷章節](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#-known-defect--websocket-upgrades-under-load)記錄了以下限制。設定驗證不會偵測這些執行期缺陷。
+[CHANGELOG 的已知缺陷章節](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#-known-defect--websocket-upgrades-under-load)記錄了以下限制，每一項都有對應的未關閉 issue。設定驗證不會偵測這些執行期缺陷。
 
-- **負載下的 WebSocket 升級：** 忙碌機器上約 10–15% 失敗，`101` 之後立即 EOF，沒有可避免此競態的設定。
-- **帶有 Content-Length 的 HTTP/1.1 回應：** 本文結束後才送出。事件串流請使用 chunked framing；H2 與 H3 不受影響。
-- **代理 gzip：** HTTP/2 上游未宣告的 trailers 可能讓壓縮本文提早結束。
-- **已宣告的上游 trailers：** trailer 欄位會被丟棄；回應保留來源的狀態與本文。
-- **HTTP/1.0 代理回應：** 上游未提供長度時，用戶端可能收到 chunked framing。
-- **升級連線的半關閉：** 用戶端半關閉會結束 tunnel，遺失後端尚未送完的位元組。
-- **上游第一個本文位元組之前的失敗：** H2 用戶端可能收到重設而非 `502`。
-- **被動健康檢查：** 每次都截斷回應的後端仍留在輪替中；尚未實作 `max_fails` 與 `fail_duration`。
-- **設定的 ETag：** 宣告的標頭不參與重新驗證。
-- **重複路徑分隔符：** 轉送前會合併 `/a//b` 的空路徑片段。
-- **FastCGI：** `php_fastcgi` 對 chunked 或沒有本文的請求回應 `411`。
-- **HTTP/3 傳輸參數：** 77 項 h3spec 檢查中有 18 項失敗。
-- **手動萬用字元憑證：** 萬用字元網站的手動憑證不會在 TCP 上提供給涵蓋的名稱；`tls internal` 不受影響。
+- **負載下的 WebSocket 升級：** 忙碌機器上約 10–15% 失敗，`101` 之後立即 EOF，沒有可避免此競態的設定；問題出在 `pingora-proxy`（cloudflare/pingora#946）。
+- **帶有 Content-Length 的 HTTP/1.1 回應：** 來源宣告長度的代理本文，會等到本文結束才送出。帶有即時性訊號的回應——`text/event-stream`，或設定 `flush_interval -1` 的路由——已經會串流；HTTP/2 與 HTTP/3 不受影響（#296）。
+- **未宣告的 request trailers：** 在 HTTP/1 上，沒有 `Trailer` 宣告就送出的 trailer 區段會被丟棄，`aws-chunked` 上傳的 checksum 因此不會到達來源，而請求仍正常取得回應（#257）。
+- **升級連線的半關閉：** 用戶端半關閉會結束 tunnel，遺失後端尚未送完的位元組（#274）。
+- **HTTP/3 上的回應快取：** 有 `cache` 區塊的路由，在 HTTP/1.1 與 HTTP/2 由儲存區回答，在 HTTP/3 則回到來源（#297）。
+- **`103 Early Hints`：** 上游的中間回應只會到達 HTTP/1.1 用戶端；HTTP/2 與 HTTP/3 會丟棄（#207）。
+- **HTTP/3 傳輸參數：** 77 項 h3spec 檢查中有 18 項失敗；修正屬於 QUIC 函式庫（#282）。
 
-## 🔁 升級至 0.2.0
+## 🔁 升級至 0.2.2
 
 [升級指南](/zh-TW/start/upgrade/)整理最可能影響 0.1.x 與候選版本設定的變動。[Before you upgrade 清單](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)是完整的發行檢查表。
 

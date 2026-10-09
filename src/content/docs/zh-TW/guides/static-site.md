@@ -8,7 +8,7 @@ description: 以壓縮、快取標頭、位元組範圍、單頁應用程式的�
 
 本頁提供一個檔案目錄：從 `root` 與 `file_server` 開始，再加上壓縮、快取標頭、range 請求，以及單頁應用程式需要的後備路由。每一步都附上伺服器在真實主機上的回應。
 
-📌 本頁描述 **v0.2.0**。
+📌 本頁描述 **v0.2.2**。
 
 ## 🧾 開始之前
 
@@ -71,7 +71,7 @@ Error: ❌ Configuration Error: Compile error: Unsupported feature: `encode br`:
 
 ## ⏳ 快取標頭
 
-`file_server` 依序評估 `If-Match`、`If-Unmodified-Since`、`If-None-Match` 與 `If-Modified-Since`，回應 `304` 或 `412`。`If-Range` 不符時回傳完整檔案及 `200`。設定的 `ETag` 標頭目前不參與重新驗證，請使用檔案衍生的驗證值。範圍回應使用 identity 編碼並以有界區塊串流傳送；目錄重新導向保留查詢字串並清理路徑。
+`file_server` 依序評估 `If-Match`、`If-Unmodified-Since`、`If-None-Match` 與 `If-Modified-Since`，回應 `304` 或 `412`。`If-Range` 不符時回傳完整檔案及 `200`。設定的 `ETag` 標頭就是這份表示的驗證器：前置條件會比對網站標頭政策實際送出的標籤，符合 RFC 9110 §13.1.2。範圍回應使用 identity 編碼並以有界區塊串流傳送；目錄重新導向保留查詢字串並清理路徑。
 
 用戶端可以保留一個檔案多久，是網站要做的決定，而且應該只設定在確實成立的路徑上：
 

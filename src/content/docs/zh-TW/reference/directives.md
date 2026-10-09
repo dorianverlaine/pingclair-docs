@@ -8,7 +8,7 @@ description: 本參考涵蓋的 Pingclairfile 指令與全域選項：語法、�
 
 每個條目都以固定的表頭開始：語法、沒寫這個指令時的預設值，以及它可以出現的位置。接著說明指令做什麼、拒絕什麼，以及與 Caddy 的不同之處。
 
-📌 本頁描述的是 **v0.2.0**。與 0.1.x 系列及 0.2.0 候選版不同的行為，會以 **0.2.0 變更** 標示；[升級](/zh-TW/start/upgrade/#️-020-的變更) 把這些變更集中在同一處。
+📌 本頁描述的是 **v0.2.2**。與 0.1.x 系列及 0.2.0 候選版不同的行為，會以 **0.2.0 變更** 標示；[升級](/zh-TW/start/upgrade/#️-020-的變更) 把這些變更集中在同一處。
 
 📖 本頁只涵蓋語言的一部分。沒有列在這裡的指令仍會由 `pingclair validate` 檢查，而伺服器沒有實作的指令會被指名拒絕，而不是接受後忽略。
 
@@ -203,7 +203,7 @@ localhost:8080 {
 }
 ```
 
-預先壓縮 sidecar 使用自身的大小與修改時間產生 ETag，優先於即時壓縮快取；gzip 驗證值包含等級。範圍回應使用 identity 編碼並以有界區塊串流傳送。靜態本文快取共用位元組容量與 16,384 項上限，包含空檔案。標準重新導向清理路徑、跳脫反斜線並保留查詢字串，避免變成其他主機的參照。設定的 `ETag` 標頭目前不參與重新驗證。
+預先壓縮 sidecar 使用自身的大小與修改時間產生 ETag，優先於即時壓縮快取；gzip 驗證值包含等級。範圍回應使用 identity 編碼並以有界區塊串流傳送。靜態本文快取共用位元組容量與 16,384 項上限，包含空檔案。標準重新導向清理路徑、跳脫反斜線並保留查詢字串，避免變成其他主機的參照。設定的 `ETag` 標頭就是重新驗證時比對的驗證器。
 
 ## forward_auth
 
@@ -525,7 +525,7 @@ Context:  site block, handle, route
 
 將檔案匹配與重寫展開為 FastCGI 代理，上游可為 PHP-FPM。也接受已支援的反向代理選項。請求本文緩衝政策會到達 FastCGI 傳輸層；腳本路徑保留非 UTF-8 檔名字元的原始位元組，多行 Cookie 會合併。HEAD 不傳本文，下載速率限制會生效；參數超過 FastCGI record 容量回應 `431`，截斷或格式錯誤的本文會中止回應。
 
-⚠️ chunked 或沒有本文的請求仍得到 `411`。設定驗證通過不代表這些請求形態可運作。請見[已知缺陷](/zh-TW/project/status/#-020-的已知缺陷)。
+沒有宣告本文長度的請求——chunked 上傳，或沒有本文的 `POST`——會在這裡讀取並量測長度，上限為路由的 `request_buffers`；路由未設定時，則以本伺服器的緩衝上限為準。超過上限的無長度本文會得到 `413`。
 
 ```caddyfile
 http://:8080 {
@@ -786,7 +786,7 @@ http://:8080 {
 | `log` | `log [<name>] { … }` | 未命名的區塊設定程序日誌；具名區塊宣告一個存取日誌通道（[`log`](#log)）。 |
 | `metrics` | `metrics [{ per_host; observe_catchall_hosts }]` | 開啟指標收集。沒有它就不收集任何指標，抓取端點會回應空的內容。`per_host` 為設定中提供服務的主機加上 `host` 標籤。 |
 | `order` | `order <directive> first\|last\|before <d>\|after <d>` | 調整某個指令在指令順序中的位置。 |
-| `servers` | `servers [<address>] { … }` | 監聽器選項：`protocols`、`trusted_proxies static …`、`client_ip_headers`、`listener_wrappers { proxy_protocol }` 與 `metrics`。指定位址的區塊只套用到那一個監聽器，且只能設定這些選項。 |
+| `servers` | `servers [<address>] { … }` | 監聽器選項：`protocols`、`trusted_proxies static …`、`client_ip_headers`、`expected_underscore_headers`、`listener_wrappers { proxy_protocol }` 與 `metrics`。指定位址的區塊只套用到那一個監聽器，且只能設定這些選項。 |
 | `storage` | `storage file_system <path>` | TLS 儲存區的目錄。優先於 `PINGCLAIR_TLS_STORE`。其他儲存模組會被拒絕。 |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | 可以在轉送標頭中陳述用戶端位址的對端。在 `servers { … }` 內請使用 Caddy 的寫法 `trusted_proxies static <cidr \| private_ranges> ...`。每個範圍只能寫一行。 |
 
@@ -800,6 +800,8 @@ http://:8080 {
 - 只有設定 `metrics` 才會收集指標。
 - `servers` 內的 `trusted_proxies` 必須寫出 `static` 模組名稱，同一範圍內的第二行 `trusted_proxies` 會被拒絕。
 - 有多個位址的 `bind` 與 `default_bind` 會被拒絕。
+
+在 `servers` 內，`expected_underscore_headers <name> ...` 允許名稱含底線的請求欄位，結尾的 `*` 代表前綴比對。沒有這個選項時，任何含底線的欄位都不會到達處理常式，這也是 Caddy 的預設行為。指定位址的 `servers <address> { … }` 區塊會以該監聽器的清單取代未指定位址的清單。
 
 ```caddyfile
 {

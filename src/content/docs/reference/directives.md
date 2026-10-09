@@ -10,7 +10,7 @@ Each entry opens with a fixed header: the syntax, the default when the
 directive is absent, and where the directive may appear. It then describes what the
 directive does, what it refuses, and where it differs from Caddy.
 
-📌 This page describes **v0.2.0**. Behavior that changed from the 0.1.x line
+📌 This page describes **v0.2.2**. Behavior that changed from the 0.1.x line
 and the 0.2.0 release candidates is marked **Changed in 0.2.0**;
 [Upgrading](/start/upgrade/#️-what-changes-in-020) collects those changes in one
 place.
@@ -313,8 +313,8 @@ take precedence over cached live compression; gzip validators include quality.
 Ranges stream in bounded identity chunks. Static body caches share byte budgets
 and a 16,384-entry ceiling, including empty files. Canonical redirects clean
 the path, escape backslashes, and preserve the query rather than forming a
-reference to another host. A configured `ETag` header is currently not used for
-revalidation.
+reference to another host. A configured `ETag` header is the validator
+revalidation compares against.
 
 ## forward_auth
 
@@ -751,8 +751,10 @@ paths retain non-UTF-8 filename bytes, and repeated Cookie lines are combined.
 HEAD sends no body, download pacing applies, parameters too large for a FastCGI
 record return `431`, and truncated or malformed bodies abort the response.
 
-⚠️ Chunked and bodyless requests still receive `411`. This runtime limitation is not detected by configuration validation. See
-[Known defects](/project/status/#-known-defects-in-020).
+A request that declares no body length — a chunked upload, or a bodyless `POST`
+— is read and measured here, up to the route's `request_buffers` and this
+server's own buffering ceiling when the route set none; a lengthless body above
+that ceiling receives `413`.
 
 ```caddyfile
 http://:8080 {
@@ -1113,13 +1115,19 @@ Caddy nests under `servers { … }` are accepted there.
 | `log` | `log [<name>] { … }` | An unnamed block configures the process log; a named block declares an access-log channel ([`log`](#log)). |
 | `metrics` | `metrics [{ per_host; observe_catchall_hosts }]` | Turns metrics collection on. Without it, nothing is collected and the scrape endpoints answer empty. `per_host` adds a `host` label for the hosts the configuration serves. |
 | `order` | `order <directive> first\|last\|before <d>\|after <d>` | Moves a directive in the directive order. |
-| `servers` | `servers [<address>] { … }` | Listener options: `protocols`, `trusted_proxies static …`, `client_ip_headers`, `listener_wrappers { proxy_protocol }`, and `metrics`. An addressed block applies to that one listener and may set only those options. |
+| `servers` | `servers [<address>] { … }` | Listener options: `protocols`, `trusted_proxies static …`, `client_ip_headers`, `expected_underscore_headers`, `listener_wrappers { proxy_protocol }`, and `metrics`. An addressed block applies to that one listener and may set only those options. |
 | `storage` | `storage file_system <path>` | The directory of the TLS store. Takes precedence over `PINGCLAIR_TLS_STORE`. Other storage modules are refused. |
 | `trusted_proxies` | `trusted_proxies <cidr> ...` | Peers allowed to state the client address in forwarding headers. Inside `servers { … }`, write Caddy's spelling, `trusted_proxies static <cidr \| private_ranges> ...`. One line per scope. |
 
 Inside `servers`, `client_ip_headers <field> ...` lists the headers that may
 name the client, in order. Without it, the client comes from `X-Forwarded-For`
 and `Forwarded`, with `X-Real-IP` when neither was sent.
+
+Inside `servers`, `expected_underscore_headers <name> ...` allowlists request
+fields whose names contain an underscore; a trailing `*` matches a prefix.
+Without the option, nothing with an underscore reaches a handler, which is
+Caddy's default. An addressed `servers <address> { … }` block replaces the
+unnamed list for that one listener.
 
 A few of Caddy's global options are refused by name rather than accepted and
 ignored: `acme_ca` and `acme_ca_root` (a custom ACME directory and the CA that

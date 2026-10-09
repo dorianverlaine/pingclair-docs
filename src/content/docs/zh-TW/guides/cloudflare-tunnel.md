@@ -8,7 +8,7 @@ description: 透過 Cloudflare Tunnel 發布網站，讓源站不需要開放任
 
 Cloudflare Tunnel 由源站上的 `cloudflared` 主動連線至 Cloudflare，再透過該連線接收請求。源站不需要開放公開連接埠；TLS 在 Cloudflare 邊緣終結，源站透過 loopback 接收明文 HTTP。本頁說明 Tunnel 設定，以及如何記錄實際用戶端位址。
 
-📌 本頁描述 **v0.2.0**。
+📌 本頁描述 **v0.2.2**。
 
 ## 🧾 開始之前
 

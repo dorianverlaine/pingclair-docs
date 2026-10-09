@@ -7,7 +7,7 @@ description: The crates that make up the server, the path a request takes throug
 Pingclair supports HTTP/1.1, HTTP/2, and HTTP/3. Each transport handles protocol
 I/O, while a shared policy layer applies routing, header rules, rate limits,
 and access logging. This page describes the components, the request path, and
-protocol differences in **v0.2.0**.
+protocol differences in **v0.2.2**.
 
 ## 🧱 The server is one binary built from a few crates
 
