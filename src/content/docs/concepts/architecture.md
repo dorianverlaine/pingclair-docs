@@ -72,7 +72,7 @@ pooling, upstream TLS, and timeouts are shared as well.
 A few behaviors differ by protocol. They are listed here so that operators can
 account for them before deployment.
 
-| Area | Behavior in v0.2.0 |
+| Area | Behavior in v0.2.2 |
 | --- | --- |
 | Trailers | Request trailers are not forwarded on any protocol. A request that declares them is answered `501` before the response starts; an HTTP/3 stream whose response has already started is reset instead. An upstream response that advertises trailers keeps its status and body; the trailer fields are dropped. |
 | `CONNECT` | A usable `host:port` target receives `405` with `Allow`; a target without a usable port receives `400`. HTTP/1.1 closes after refusal. |

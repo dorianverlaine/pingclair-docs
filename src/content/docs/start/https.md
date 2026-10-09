@@ -96,7 +96,7 @@ DNS-01 proves control of a name by publishing a TXT record instead of answering
 on port 80. A wildcard certificate requires it, and so does a host whose port 80
 is closed.
 
-📌 **DNS-01 works with Cloudflare in 0.2.0.** The server publishes the ACME TXT digest and preserves other TXT records at the challenge name.
+📌 **DNS-01 supports Cloudflare; other provider names are refused.** The server publishes the ACME TXT digest and preserves other TXT records at the challenge name.
 
 The configuration needs the provider block:
 

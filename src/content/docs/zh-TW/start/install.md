@@ -68,7 +68,7 @@ curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 pingclair version
 ```
 
-0.2.0 發行版會顯示 `v0.2.0`。`pc version` 會顯示相同版本。接著檢查服務狀態：
+0.2.2 發行版會顯示 `v0.2.2`。`pc version` 會顯示相同版本。接著檢查服務狀態：
 
 ```bash
 pc service status
@@ -102,7 +102,7 @@ curl -i http://localhost/
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.0
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.2
     restart: unless-stopped
     ports:
       - "80:80"

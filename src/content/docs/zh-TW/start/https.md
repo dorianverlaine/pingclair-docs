@@ -78,7 +78,7 @@ notAfter=Dec 21 02:35:02 2026 GMT
 
 DNS-01 以發布一筆 TXT 記錄來證明你掌控某個名稱，而不是在 80 連接埠上回應。萬用字元憑證必須用它，80 連接埠關閉的主機也一樣。
 
-📌 **0.2.0 的 DNS-01 可使用 Cloudflare。** 伺服器發布 ACME TXT 摘要，並保留同名的其他 TXT 記錄。
+📌 **DNS-01 支援 Cloudflare，其他 provider 名稱會被拒絕。** 伺服器發布 ACME TXT 摘要，並保留同名的其他 TXT 記錄。
 
 設定需要 provider 區塊：
 

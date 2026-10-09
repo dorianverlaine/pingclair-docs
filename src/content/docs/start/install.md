@@ -90,7 +90,7 @@ Check the installed version:
 pingclair version
 ```
 
-For the 0.2.0 release, the version is `v0.2.0`. `pc version` reports the same
+For the 0.2.2 release, the version is `v0.2.2`. `pc version` reports the same
 version. Check the service status next:
 
 ```bash
@@ -129,7 +129,7 @@ default command is `run /etc/pingclair/Pingclairfile`. The image declares
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.0
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.2
     restart: unless-stopped
     ports:
       - "80:80"
