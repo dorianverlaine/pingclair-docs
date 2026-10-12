@@ -1,0 +1,81 @@
+# 📦 Builds the site and publishes it as one tarball for the Paris node.
+#
+# pingclair.com is served from a small FreeBSD host (2 vCPU, under 1 GiB of
+# memory). An Astro build peaks near 800 MB, so building there would compete
+# with the server it is meant to feed. The build runs here instead, and the
+# host pulls the result: its sync job reads `site.json` from the rolling
+# `site-latest` release every few minutes and switches to a new bundle when the
+# commit changes. The host needs no credentials, because the release is public.
+#
+# 🧭 Cloudflare Workers Builds still deploys the same `dist` to the Worker for
+# cf.pingclair.com; this workflow does not replace it.
+name: Site bundle
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 🔁 Only the newest commit matters: a newer push cancels an older bundle.
+concurrency:
+  group: site-bundle
+  cancel-in-progress: true
+
+jobs:
+  bundle:
+    name: Build and publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      # 📌 The pnpm version the lockfile was written with.
+      - name: Install pnpm
+        run: npm install -g pnpm@12.3.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # 🛡️ A stale Expressive Code cache once shipped pages whose stylesheet
+      # link pointed at a file the build no longer emitted. Refuse to publish a
+      # bundle like that, and one that is missing the pages every visitor and
+      # agent starts from.
+      - name: Check the bundle
+        run: |
+          for f in index.html 404.html index.md llms.txt sitemap-index.xml; do
+            test -f "dist/$f" || { echo "missing dist/$f"; exit 1; }
+          done
+          for f in $(grep -o '_astro/[A-Za-z0-9._-]*\.css' dist/index.html | sort -u); do
+            test -f "dist/$f" || { echo "missing dist/$f"; exit 1; }
+          done
+
+      # 📦 `site.json` is written after the tarball and uploaded after it, so a
+      # host that reads a new `site.json` finds its tarball already in place.
+      - name: Package
+        run: |
+          tar -C dist -czf site.tar.gz .
+          printf '{"commit":"%s","sha256":"%s","built_at":"%s"}\n' \
+            "$GITHUB_SHA" "$(sha256sum site.tar.gz | cut -d' ' -f1)" \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > site.json
+          cat site.json
+
+      - name: Publish to the site-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view site-latest > /dev/null 2>&1; then
+            gh release create site-latest --prerelease --latest=false \
+              --title "Site bundle (rolling)" \
+              --notes "The newest build of main, pulled by the pingclair.com host. Replaced on every push; not a versioned release."
+          fi
+          gh release upload site-latest site.tar.gz --clobber
+          gh release upload site-latest site.json --clobber
