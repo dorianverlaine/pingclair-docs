@@ -5,18 +5,26 @@ name = "pingclair-docs"
 main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
-# 🔀 The hostname the site moved away from stays bound so the Worker can answer
-# every old link with a permanent redirect rather than letting the retired
-# address go dark. `pingclair.com` is deliberately absent: since October 2026
-# the apex is served straight from the Paris node, and a custom-domain route on
-# a name that no longer points at Cloudflare makes every deploy fail at the
-# route step — after the assets have already uploaded, so the check reports red
-# on a deployment that in fact went live. (`cf.pingclair.com`, the Worker's own
-# hostname, is bound in the dashboard.) Deploying with the route below requires
-# its zone to live in the same Cloudflare account: Wrangler creates the DNS
-# record and the certificate for the hostname. Top-level, not inside [assets]:
-# TOML tables swallow every key that follows them.
+# 🔀 Every hostname the Worker answers on is listed here, because `wrangler
+# deploy` makes the Worker's custom domains match this list: a domain bound only
+# in the dashboard is detached, DNS record and all, by the next deploy.
+#
+# - `cf.pingclair.com` is the Worker's own hostname. The Paris node proxies
+#   `pingclair.com/mcp` and `/a2a` to it. 🤡 It was bound only in the dashboard,
+#   so the deploy of 46edcd8 (2026-10-12 01:12 +0800) removed it, and those two
+#   endpoints answered nothing until it was listed here.
+# - `pingclair.aqeo.dev`, the hostname the site moved away from, stays bound so
+#   the Worker answers every old link with a permanent redirect.
+#
+# `pingclair.com` is deliberately absent: since October 2026 the apex is served
+# straight from the Paris node, and a custom-domain route on a name that does
+# not point at Cloudflare makes every deploy fail at the route step — after the
+# assets have already uploaded, so the check reports red on a deployment that in
+# fact went live. Each route's zone must live in the same Cloudflare account:
+# Wrangler creates the DNS record and the certificate for the hostname.
+# Top-level, not inside [assets]: TOML tables swallow every key that follows.
 routes = [
+	{ pattern = "cf.pingclair.com", custom_domain = true },
 	{ pattern = "pingclair.aqeo.dev", custom_domain = true },
 ]
 
