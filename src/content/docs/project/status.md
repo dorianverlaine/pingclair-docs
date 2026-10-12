@@ -6,17 +6,18 @@ description: What the current release supports, what it refuses by design, which
 
 This page explains whether the current release meets a deployment's
 requirements and identifies its current limitations. It describes
-**v0.2.2**.
+**v0.2.3**.
 
-## 📌 The 0.2.2 release
+## 📌 The 0.2.3 release
 
-The current release is **v0.2.2**, the newest patch on the 0.2 line. The
+The current release is **v0.2.3**, the newest patch on the 0.2 line. The
 [changelog](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)
 records what each release changed and the defects known when it was tagged.
-0.2.1 and 0.2.2 need no configuration change: a `handle_path` beside a bare
-`handle` now answers the requests it matches, a listener can allowlist
-underscore-named request fields, and a newly declared access-log channel
-receives records after a reload. The 0.3 development line lives on `main` and
+0.2.1, 0.2.2 and 0.2.3 need no configuration change: a `handle_path` beside a
+bare `handle` now answers the requests it matches, a listener can allowlist
+underscore-named request fields, a newly declared access-log channel receives
+records after a reload, and each `reverse_proxy` in a `route` block now
+reaches its own upstream instead of the first block's (0.2.3). The 0.3 development line lives on `main` and
 is not part of this release.
 
 The `v0.1.x` line is unmaintained. It receives no fixes, no backports, and no
@@ -42,7 +43,7 @@ The Caddyfile format defines more names than Pingclair implements. An unsupporte
 name is rejected when the file is loaded, with a message that
 names the missing feature. A configuration that contains one does not start.
 
-The following complete lists are derived from the registries in 0.2.2. They
+The following complete lists are derived from the registries in 0.2.3. They
 describe names Pingclair recognizes as Caddy syntax but does not implement in
 that context.
 
@@ -93,7 +94,7 @@ refused with `405` and `Allow`; malformed CONNECT authorities receive `400`.
 Declared request trailers are not forwarded; an upstream response that
 announces `Trailer` keeps its status and body, with the trailer fields dropped.
 
-## 🐛 Known defects in 0.2.2
+## 🐛 Known defects in 0.2.3
 
 The [changelog's known-defect sections](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#-known-defect--websocket-upgrades-under-load)
 record these release limitations, and each carries an open issue.
@@ -120,7 +121,7 @@ Configuration validation does not detect them.
 - **HTTP/3 transport parameters:** 18 of 77 h3spec checks fail; the fix belongs
   in the QUIC library (#282).
 
-## 🔁 Upgrading to 0.2.2
+## 🔁 Upgrading to 0.2.3
 
 [Upgrading](/start/upgrade/) summarizes the changes most likely to affect
 0.1.x and release-candidate configurations. The

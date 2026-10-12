@@ -7,7 +7,7 @@ description: The crates that make up the server, the path a request takes throug
 Pingclair supports HTTP/1.1, HTTP/2, and HTTP/3. Each transport handles protocol
 I/O, while a shared policy layer applies routing, header rules, rate limits,
 and access logging. This page describes the components, the request path, and
-protocol differences in **v0.2.2**.
+protocol differences in **v0.2.3**.
 
 ## 🧱 The server is one binary built from a few crates
 
@@ -72,7 +72,7 @@ pooling, upstream TLS, and timeouts are shared as well.
 A few behaviors differ by protocol. They are listed here so that operators can
 account for them before deployment.
 
-| Area | Behavior in v0.2.2 |
+| Area | Behavior in v0.2.3 |
 | --- | --- |
 | Trailers | Request trailers are not forwarded on any protocol. A request that declares them is answered `501` before the response starts; an HTTP/3 stream whose response has already started is reset instead. An upstream response that advertises trailers keeps its status and body; the trailer fields are dropped. |
 | `CONNECT` | A usable `host:port` target receives `405` with `Allow`; a target without a usable port receives `400`. HTTP/1.1 closes after refusal. |

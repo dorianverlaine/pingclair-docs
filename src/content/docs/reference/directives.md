@@ -10,7 +10,7 @@ Each entry opens with a fixed header: the syntax, the default when the
 directive is absent, and where the directive may appear. It then describes what the
 directive does, what it refuses, and where it differs from Caddy.
 
-📌 This page describes **v0.2.2**. Behavior that changed from the 0.1.x line
+📌 This page describes **v0.2.3**. Behavior that changed from the 0.1.x line
 and the 0.2.0 release candidates is marked **Changed in 0.2.0**;
 [Upgrading](/start/upgrade/#️-what-changes-in-020) collects those changes in one
 place.
@@ -962,6 +962,14 @@ example.com {
     }
 }
 ```
+
+Each `handle` inside a `route` that holds its own `reverse_proxy` is its own
+route, with its own upstream pool and proxy policy, and the blocks are still
+tried in the order they are written. Before 0.2.3 every proxied request in the
+block reached the first block's upstream. A `route` that puts shared
+directives in front of several proxying `handle` blocks cannot be split that
+way and is refused at load; give each `reverse_proxy` its own top-level
+`handle` instead.
 
 ## tls
 

@@ -10,7 +10,7 @@ This page explains how to serve a directory with `root` and `file_server`,
 configure compression and cache headers, and support range requests and
 single-page applications.
 
-📌 This page describes **v0.2.2**.
+📌 This page describes **v0.2.3**.
 
 ## 🧾 Before you start
 

@@ -10,7 +10,7 @@ A reverse proxy exposes one public address for one or more application
 instances. This page explains single and multiple upstreams, health checks,
 timeouts, backup upstreams, and the headers forwarded to the application.
 
-📌 This page describes **v0.2.2**.
+📌 This page describes **v0.2.3**.
 
 ## 🧾 Before you start
 

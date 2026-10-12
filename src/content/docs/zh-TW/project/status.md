@@ -4,11 +4,11 @@ h1_emoji: '📌'
 description: 目前的發行版支援什麼、刻意拒絕什麼、有哪些已知的限制與缺陷，以及升級時需要檢查的變更。
 ---
 
-本頁列出 **v0.2.2** 的支援功能、設定限制與已知缺陷，方便部署前確認。
+本頁列出 **v0.2.3** 的支援功能、設定限制與已知缺陷，方便部署前確認。
 
-## 📌 0.2.2 發行版
+## 📌 0.2.3 發行版
 
-目前的發行版是 **v0.2.2**，0.2 系列最新的修補版本。[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)記錄每個發行版的變更，以及標記版本時已知的缺陷。0.2.1 與 0.2.2 不需要調整設定：`handle_path` 與沒有參數的 `handle` 並列時，由符合請求的路由回答；listener 可以允許名稱含底線的請求欄位；重新載入後新增的存取日誌 channel 會收到記錄。0.3 開發線位於 `main`，不屬於這個發行版。
+目前的發行版是 **v0.2.3**，0.2 系列最新的修補版本。[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)記錄每個發行版的變更，以及標記版本時已知的缺陷。0.2.1、0.2.2 與 0.2.3 不需要調整設定：`handle_path` 與沒有參數的 `handle` 並列時，由符合請求的路由回答；listener 可以允許名稱含底線的請求欄位；重新載入後新增的存取日誌 channel 會收到記錄；`route` 區塊裡的每個 `reverse_proxy` 現在都會連到自己的上游，不再全部送到第一個區塊的上游（0.2.3）。0.3 開發線位於 `main`，不屬於這個發行版。
 
 `v0.1.x` 系列已停止維護：沒有修正、沒有回溯移植，也不會發布安全公告。請升級離開它：`v0.1.x` 會解析 Admin API 的 `api_key` 欄位，卻從來不讀取，所以它的 Admin API 實際上沒有驗證任何人。
 
@@ -31,7 +31,7 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。尚未支援的名�
 會在載入檔案時被拒絕，錯誤訊息會指出缺少的是哪一項功能；
 含有這類名稱的設定無法啟動。
 
-以下完整清單來自 0.2.2 中的登錄表，列出 Pingclair 能辨識為 Caddy 語法、
+以下完整清單來自 0.2.3 中的登錄表，列出 Pingclair 能辨識為 Caddy 語法、
 但尚未在該上下文中實作的名稱。
 
 **指令：**
@@ -69,7 +69,7 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。尚未支援的名�
 
 憑證儲存區僅支援本機目錄，不支援共用儲存後端、外掛或 Caddy 原生 JSON 結構；第四層代理屬於 0.3 開發線。DNS-01 支援 Cloudflare，其他 provider 名稱會被拒絕，不會退回另一種驗證方式。`CONNECT` 與 `TRACE` 會得到附帶 `Allow` 的 `405`；格式錯誤的 CONNECT 目標得到 `400`。宣告的 request trailers 不會轉送；宣告 `Trailer` 的上游回應會保留其狀態與本文，trailer 欄位則被丟棄。
 
-## 🐛 0.2.2 的已知缺陷
+## 🐛 0.2.3 的已知缺陷
 
 [CHANGELOG 的已知缺陷章節](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#-known-defect--websocket-upgrades-under-load)記錄了以下限制，每一項都有對應的未關閉 issue。設定驗證不會偵測這些執行期缺陷。
 
@@ -81,7 +81,7 @@ Caddyfile 格式定義的名稱比 Pingclair 實作的多。尚未支援的名�
 - **`103 Early Hints`：** 上游的中間回應只會到達 HTTP/1.1 用戶端；HTTP/2 與 HTTP/3 會丟棄（#207）。
 - **HTTP/3 傳輸參數：** 77 項 h3spec 檢查中有 18 項失敗；修正屬於 QUIC 函式庫（#282）。
 
-## 🔁 升級至 0.2.2
+## 🔁 升級至 0.2.3
 
 [升級指南](/zh-TW/start/upgrade/)整理最可能影響 0.1.x 與候選版本設定的變動。[Before you upgrade 清單](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)是完整的發行檢查表。
 

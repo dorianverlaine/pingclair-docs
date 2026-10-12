@@ -6,7 +6,7 @@ sidebar:
 description: 用發行版二進位檔、Docker 或原始碼把 Pingclair 裝到 Linux 主機上，並確認服務有回應。
 ---
 
-Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.2.2** 的安裝步驟、檔案位置與服務檢查方式。
+Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.2.3** 的安裝步驟、檔案位置與服務檢查方式。
 
 ## 🧾 你需要準備的
 
@@ -68,7 +68,7 @@ curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 pingclair version
 ```
 
-0.2.2 發行版會顯示 `v0.2.2`。`pc version` 會顯示相同版本。接著檢查服務狀態：
+0.2.3 發行版會顯示 `v0.2.3`。`pc version` 會顯示相同版本。接著檢查服務狀態：
 
 ```bash
 pc service status
@@ -102,7 +102,7 @@ curl -i http://localhost/
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.2
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.3
     restart: unless-stopped
     ports:
       - "80:80"
