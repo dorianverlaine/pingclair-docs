@@ -196,15 +196,16 @@ const agentTextUrl = `/${entryPath || 'index'}.txt`;
 		margin-top: 0;
 		font-size: var(--sl-text-h1);
 		line-height: var(--sl-line-height-headings);
-		font-weight: 500;
-		letter-spacing: 0.01em;
+		/* The same heading treatment as every other h1 on this theme. */
+		font-weight: 700;
+		letter-spacing: -0.009em;
 		color: var(--sl-color-white);
 	}
 
 	.pc-page-header__emoji {
 		margin-inline-end: 0.25em;
-		/* The emoji comes from the platform's colour font, so keep it off the
-		   serif's optical sizing and tracking. */
+		/* The emoji comes from the platform's colour font, so keep it outside
+		   the heading's tight Latin tracking. */
 		font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 		font-weight: 400;
 		letter-spacing: 0;
