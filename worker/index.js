@@ -7,9 +7,9 @@
  * and the documentation servers an agent can query (`/mcp` and `/a2a`) — and
  * hands every other request straight back to it.
  *
- * 🧭 It also answers on the retired hostname, where every request becomes a
- * permanent redirect to the canonical origin, so links written before the move
- * keep working.
+ * 🧭 It also carries the retired-hostname guard: when that hostname is bound,
+ * every request becomes a permanent redirect to the canonical origin. The
+ * production redirect currently runs in Cloudflare before the Worker sees it.
  *
  * `wrangler.toml` sets `run_worker_first`, because assets-first routing would
  * answer the request before either behavior could see it.
@@ -22,9 +22,9 @@ const SERVER_INFO = { name: 'pingclair-docs', version: '0.1.0' };
 const CANONICAL_ORIGIN = 'https://pingclair.com';
 
 /**
- * 🔁 Hostnames the site has moved away from. They stay bound as custom domains
- * so old links land here instead of going dark, and every request on them is
- * redirected to `CANONICAL_ORIGIN`.
+ * 🔁 Hostnames the site has moved away from. If one is bound to this Worker,
+ * every request on it redirects to `CANONICAL_ORIGIN` rather than answering
+ * from the current documentation.
  */
 const RETIRED_HOSTS = new Set(['pingclair.aqeo.dev']);
 
