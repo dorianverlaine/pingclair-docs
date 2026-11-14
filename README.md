@@ -106,8 +106,9 @@ page it is supposed to match.
 
 The site is fully static and is deployed as **Cloudflare Workers static assets,
 built from this GitHub repository** (Workers Builds). The Worker answers on
-**https://cf.pingclair.com**, which `wrangler.toml` binds as a custom domain;
-**https://pingclair.com** is served by the Paris node.
+**https://pingclair.com**, **https://www.pingclair.com**, and
+**https://cf.pingclair.com**. `wrangler.toml` binds all three as custom domains;
+the public hostnames serve the same bundle and canonical links name the apex.
 
 One-time setup in the Cloudflare dashboard, under Workers & Pages → Create →
 import a repository:
@@ -123,11 +124,12 @@ import a repository:
 No output directory has to be configured in the dashboard: `wrangler.toml`
 declares `dist` as the assets directory, so `wrangler deploy` uploads it as
 static assets. Pushes to `main` build and deploy; other branches get preview
-URLs. The same file declares only `cf.pingclair.com` as a custom domain. The
-retired `pingclair.aqeo.dev` is not listed: its DNS records are managed outside
-the Worker, and its existing Cloudflare response already redirects every method
-to the canonical origin. Claiming it as a custom domain made otherwise
-successful asset uploads fail at the final route update.
+URLs. The same file declares `pingclair.com`, `www.pingclair.com`, and
+`cf.pingclair.com` as custom domains. The retired `pingclair.aqeo.dev` is not
+listed: its DNS records are managed outside the Worker, and its existing
+Cloudflare response already redirects every method to the canonical origin.
+Claiming it as a custom domain made otherwise successful asset uploads fail at
+the final route update.
 
 To deploy to **Pages** instead, replace `[assets]` with
 `pages_build_output_dir = "dist"` and remove the `routes` entry, which also drops

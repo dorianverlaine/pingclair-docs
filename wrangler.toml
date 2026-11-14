@@ -9,24 +9,22 @@ compatibility_date = "2026-09-01"
 # deploy` makes the Worker's custom domains match this list: a domain bound only
 # in the dashboard is detached, DNS record and all, by the next deploy.
 #
-# - `cf.pingclair.com` is the Worker's own hostname. The Paris node proxies
-#   `pingclair.com/mcp` and `/a2a` to it. 🤡 It was bound only in the dashboard,
-#   so the deploy of 46edcd8 (2026-10-12 01:12 +0800) removed it, and those two
-#   endpoints answered nothing until it was listed here.
+# - `pingclair.com` and `www.pingclair.com` are the public documentation
+#   hostnames. Both serve the same Worker bundle and the canonical links name
+#   the apex.
+# - `cf.pingclair.com` is the Worker's own hostname, kept for direct checks.
 # - `pingclair.aqeo.dev` is deliberately absent. Its DNS records are managed
 #   outside the Worker's custom-domain binding and its existing Cloudflare
 #   response already redirects every method to the canonical origin. Listing it
 #   made an otherwise successful asset upload fail while Wrangler tried to claim
 #   the hostname.
 #
-# `pingclair.com` is deliberately absent: since October 2026 the apex is served
-# straight from the Paris node, and a custom-domain route on a name that does
-# not point at Cloudflare makes every deploy fail at the route step — after the
-# assets have already uploaded, so the check reports red on a deployment that in
-# fact went live. Each route's zone must live in the same Cloudflare account:
-# Wrangler creates the DNS record and the certificate for the hostname.
+# Each route's zone must live in the same Cloudflare account: Wrangler creates
+# the DNS record and the certificate for the hostname.
 # Top-level, not inside [assets]: TOML tables swallow every key that follows.
 routes = [
+	{ pattern = "pingclair.com", custom_domain = true },
+	{ pattern = "www.pingclair.com", custom_domain = true },
 	{ pattern = "cf.pingclair.com", custom_domain = true },
 ]
 
