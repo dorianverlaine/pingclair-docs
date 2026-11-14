@@ -30,17 +30,16 @@ Alpha 新增 Layer 4；既有 HTTP 指令沒有移除。務必以新二進位檔
 
 ## 📦 安裝預覽版
 
-安裝器沒有指定版本的旗標，仍會選取最新穩定版。請從 GitHub release 下載精確的預覽版
-產物、驗證公布的 SHA-256，並在校驗成功後才替換二進位檔。
-
-[安裝](/zh-TW/start/install/#-install-the-preview)包含依架構下載的完整命令。既有安裝
-最後的步驟是：
+在安裝器加上 `--prerelease` 後，它會跟隨 R2 上的預先發行頻道，並用該頻道公布的
+SHA-256 驗證選取的封存檔：
 
 ```bash
-sudo pc service stop
-sudo install -m 0755 pingclair /usr/local/bin/pingclair
-sudo pc service start
+curl -fsSL https://releases.pingclair.com/pingclair/install.sh | sudo bash -s -- --prerelease
 ```
+
+目前頻道指定 `v0.3.0-alpha.1`。安裝器會保留既有設定與 TLS store。
+[安裝](/zh-TW/start/install/#-install-the-preview)說明共用的安裝器行為。無法連到
+R2 時，安裝器會改用 GitHub 上最新的預先發行版，並驗證其校驗和檔案。
 
 容器請固定精確的預先發行版標籤：
 

@@ -34,19 +34,17 @@ new binary's `validate` against the deployment's actual configuration.
 
 ## 📦 Install the preview
 
-The installer has no version-pinning flag and continues to select the latest
-stable release. Download the exact preview assets from the GitHub release,
-verify the published SHA-256 value, and replace the binary only after the
-checksum succeeds.
-
-[Install](/start/install/#-install-the-preview) contains the architecture-aware
-download commands. On an existing installation, the final sequence is:
+The installer follows the R2 prerelease channel when passed `--prerelease`.
+It verifies the selected archive against the SHA-256 in that channel:
 
 ```bash
-sudo pc service stop
-sudo install -m 0755 pingclair /usr/local/bin/pingclair
-sudo pc service start
+curl -fsSL https://releases.pingclair.com/pingclair/install.sh | sudo bash -s -- --prerelease
 ```
+
+The current channel names `v0.3.0-alpha.1`. The installer preserves the existing
+configuration and TLS store. [Install](/start/install/#-install-the-preview)
+describes the shared installer behavior. If R2 is unavailable, the installer
+falls back to the newest GitHub prerelease and verifies its checksum file.
 
 For containers, pin the exact prerelease tag:
 

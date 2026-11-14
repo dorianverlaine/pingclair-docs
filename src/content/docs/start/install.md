@@ -24,41 +24,6 @@ installation, installed files, and service verification for the
 macOS builds from source and is supported for development. macOS is not a
 shipping platform.
 
-## 🔌 Install the preview
-
-The normal installer selects the latest stable release. It does not install a
-prerelease. To test `v0.3.0-alpha.1` on an existing installation, download the
-exact release asset, verify its checksum, stop the service, replace the binary,
-and start the service again.
-
-```bash
-version=v0.3.0-alpha.1
-case "$(uname -m)" in
-    x86_64) arch=x86_64 ;;
-    aarch64) arch=aarch64 ;;
-    *) echo "unsupported architecture" >&2; exit 1 ;;
-esac
-
-base="https://github.com/dorianverlaine/pingclair/releases/download/${version}"
-curl -fLO "${base}/pingclair-linux-${arch}.tar.gz"
-curl -fLO "${base}/SHA256SUMS-${arch}.txt"
-if command -v sha256sum >/dev/null; then
-    sha256sum -c "SHA256SUMS-${arch}.txt"
-else
-    shasum -a 256 -c "SHA256SUMS-${arch}.txt"
-fi
-tar -xzf "pingclair-linux-${arch}.tar.gz"
-
-sudo pc service stop
-sudo install -m 0755 pingclair /usr/local/bin/pingclair
-sudo pc service start
-```
-
-For a new host, install the stable package first to create the service user,
-directories, and systemd unit, then replace the binary with the verified
-preview. Keep the existing configuration and TLS store. The preview is not a
-production support channel.
-
 ## 📦 Install the latest stable release
 
 ```bash
@@ -73,6 +38,24 @@ checksum file published beside the archive, so the install does not depend on
 one provider. It then creates the service user, grants that user the capability
 to bind low ports, writes the default configuration, installs the unit, and
 starts the service.
+
+## 🔌 Install the preview
+
+The same installer follows the R2 prerelease channel with `--prerelease`:
+
+```bash
+curl -fsSL https://releases.pingclair.com/pingclair/install.sh | sudo bash -s -- --prerelease
+```
+
+The command reads `channels/prerelease` from `releases.pingclair.com` and
+verifies the selected archive against the SHA-256 in that channel. The current
+preview is `v0.3.0-alpha.1`. It works on a new host and upgrades an existing
+installation while preserving the configuration and TLS store. The preview is
+not a production support channel. If the R2 host cannot be reached, the
+installer selects the newest GitHub release marked as a prerelease and verifies
+its published checksum file.
+
+## 🛠️ Install an unreleased `main` build
 
 To run an unreleased fix, build `main` on the host instead:
 
@@ -126,9 +109,9 @@ Check the installed version:
 pingclair version
 ```
 
-For the `v0.3.0-alpha.1` preview, the version is `v0.3.0-alpha.1`; a stable
-installation reports `v0.2.3`. `pc version` reports the same version. Check the
-service status next:
+A stable installation reports `v0.2.3`; `--prerelease` currently reports
+`v0.3.0-alpha.1`. `pc version` reports the same version. Check the service
+status next:
 
 ```bash
 pc service status
@@ -166,7 +149,7 @@ default command is `run /etc/pingclair/Pingclairfile`. The image declares
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.3.0-alpha.1
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.3
     restart: unless-stopped
     ports:
       - "80:80"
@@ -196,8 +179,9 @@ Three points require attention:
 - **Mount all of `/var/lib/pingclair`, not only the certificate directory.**
   The store keeps state beside the certificates, and a container recreated
   with only part of it mounted loses that state.
-- **Pin a released tag.** `latest` follows the newest release; production should
-  name the version, as the example does. Published tags are listed on the
+- **Pin a released tag.** `latest` follows the newest stable release; production
+  should name the version, as the example does. Use `v0.3.0-alpha.1` to test the
+  current preview. Published tags are listed on the
   [package page](https://github.com/dorianverlaine/pingclair/pkgs/container/pingclair).
 
 On a host where your user is not in the `docker` group, prefix the commands with

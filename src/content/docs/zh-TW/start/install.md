@@ -18,38 +18,6 @@ v0.2.3 穩定版的安裝步驟、檔案位置與服務檢查方式。
 
 macOS 可以從原始碼編譯，並支援用於開發，但不是正式發布的平台。
 
-## 🔌 安裝預覽版
-
-一般安裝器會選取最新穩定版，不安裝預先發行版。若要在既有安裝測試
-`v0.3.0-alpha.1`，請下載精確的發行產物、驗證校驗碼、停止服務、替換二進位檔，
-再啟動服務。
-
-```bash
-version=v0.3.0-alpha.1
-case "$(uname -m)" in
-    x86_64) arch=x86_64 ;;
-    aarch64) arch=aarch64 ;;
-    *) echo "unsupported architecture" >&2; exit 1 ;;
-esac
-
-base="https://github.com/dorianverlaine/pingclair/releases/download/${version}"
-curl -fLO "${base}/pingclair-linux-${arch}.tar.gz"
-curl -fLO "${base}/SHA256SUMS-${arch}.txt"
-if command -v sha256sum >/dev/null; then
-    sha256sum -c "SHA256SUMS-${arch}.txt"
-else
-    shasum -a 256 -c "SHA256SUMS-${arch}.txt"
-fi
-tar -xzf "pingclair-linux-${arch}.tar.gz"
-
-sudo pc service stop
-sudo install -m 0755 pingclair /usr/local/bin/pingclair
-sudo pc service start
-```
-
-全新主機請先安裝穩定版套件，建立服務使用者、目錄與 systemd unit，再以驗證過的預覽版
-二進位檔替換。保留既有設定與 TLS store。預覽版不是正式生產支援通道。
-
 ## 📦 安裝最新穩定版
 
 ```bash
@@ -57,6 +25,22 @@ curl -fsSL https://pingclair.com/install.sh | sudo bash
 ```
 
 這支腳本會讀取 `releases.pingclair.com` 上的發行頻道，印出即將安裝的 tag，並用該頻道為這個封存檔公布的 SHA-256 進行比對——不相符的封存檔會被拒絕，不會解開。如果連不到那台主機，它會退回使用 GitHub releases API 與封存檔旁公布的校驗和檔案，所以安裝不必依賴單一供應商。接著它會建立服務使用者、授予該使用者綁定低號連接埠的 capability、寫入預設設定、安裝 unit，並啟動服務。
+
+## 🔌 安裝預覽版
+
+同一個安裝器使用 `--prerelease` 跟隨 R2 上的預先發行頻道：
+
+```bash
+curl -fsSL https://releases.pingclair.com/pingclair/install.sh | sudo bash -s -- --prerelease
+```
+
+命令會讀取 `releases.pingclair.com` 上的 `channels/prerelease`，並用該頻道公布的
+SHA-256 驗證選取的封存檔。目前的預覽版是 `v0.3.0-alpha.1`。這也可用於全新主機，
+或在既有安裝上升級，同時保留設定與 TLS store。預覽版不是正式生產支援通道。
+如果無法連到 R2 主機，安裝器會選取 GitHub 上標記為 prerelease 的最新發行版，並驗證
+其公布的校驗和檔案。
+
+## 🛠️ 安裝尚未發行的 `main` 建置
 
 若要使用尚未發行的修正，請改為在主機上編譯 `main`：
 
@@ -101,8 +85,8 @@ curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 pingclair version
 ```
 
-`v0.3.0-alpha.1` 預覽版會顯示 `v0.3.0-alpha.1`；穩定版安裝會顯示 `v0.2.3`。
-`pc version` 會顯示相同版本。接著檢查服務狀態：
+穩定版安裝會顯示 `v0.2.3`；使用 `--prerelease` 時，目前會顯示
+`v0.3.0-alpha.1`。`pc version` 會顯示相同版本。接著檢查服務狀態：
 
 ```bash
 pc service status
@@ -136,7 +120,7 @@ curl -i http://localhost/
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.3.0-alpha.1
+    image: ghcr.io/dorianverlaine/pingclair:v0.2.3
     restart: unless-stopped
     ports:
       - "80:80"
@@ -163,7 +147,9 @@ curl -i http://localhost/
 
 - **不要加 `command:`。** 映像檔的預設值已經是 `run /etc/pingclair/Pingclairfile`，覆寫它就會取代這個命令。
 - **掛載整個 `/var/lib/pingclair`，而不只是憑證目錄。** 儲存區會在憑證旁邊保存狀態，只掛載一部分的容器在重建後就會遺失這些狀態。
-- **固定使用已發行的 tag。** `latest` 會跟著最新的發行版走；正式環境應該像範例一樣寫明版本。公開的 tag 列在[套件頁面](https://github.com/dorianverlaine/pingclair/pkgs/container/pingclair)上。
+- **固定使用已發行的 tag。** `latest` 會跟著最新的穩定發行版走；正式環境應該像範例一樣
+  寫明版本。若目前要測試預覽版，請使用 `v0.3.0-alpha.1`。公開的 tag 列在
+  [套件頁面](https://github.com/dorianverlaine/pingclair/pkgs/container/pingclair)上。
 
 如果你的使用者不在 `docker` 群組裡，請在命令前加上 `sudo`，或用 `sudo usermod -aG docker "$USER"` 加入群組一次，再開啟新的登入工作階段。在 Ubuntu 上，`docker compose` 外掛來自 `docker-compose-v2` 套件。
 
