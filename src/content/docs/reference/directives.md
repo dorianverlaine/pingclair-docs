@@ -10,7 +10,7 @@ Each entry opens with a fixed header: the syntax, the default when the
 directive is absent, and where the directive may appear. It then describes what the
 directive does, what it refuses, and where it differs from Caddy.
 
-📌 This page describes **v0.2.3**. Behavior that changed from the 0.1.x line
+📌 This page describes **v0.3.0-alpha.1**. Behavior that changed from the 0.1.x line
 and the 0.2.0 release candidates is marked **Changed in 0.2.0**;
 [Upgrading](/start/upgrade/#️-what-changes-in-020) collects those changes in one
 place.
@@ -591,6 +591,92 @@ example.com {
 }
 ```
 
+## layer4
+
+```text
+Syntax:   layer4 {
+              <address> {
+                  <listener-option> <value>
+                  @name <matcher> ...
+                  route [@name ...] {
+                      proxy <address>
+                  }
+              }
+          }
+Default:  disabled
+Context:  global options
+```
+
+Starts a raw TCP listener that forwards TLS or other byte streams without
+terminating them. This is the bounded Layer 4 support introduced in
+**v0.3.0-alpha.1**. The block uses a Caddy-style `layer4` structure and nginx
+stream semantics for limits and forwarding.
+
+Each listener block names one address. A route names zero or more matcher sets
+and contains one `proxy` handler. Routes are evaluated in declaration order; an
+empty matcher list is unconditional. Matchers within one set are combined with
+AND, and several matcher sets on one route are combined with OR.
+
+Supported matchers:
+
+| Matcher | Form |
+| --- | --- |
+| TLS presence | `@name tls` |
+| TLS SNI and ALPN | `@name tls sni <name> ... alpn <id> ...` or a `tls { … }` block |
+| Source address | `@name remote_ip <address-or-cidr> ...` |
+
+Listener options:
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `max_connections` | `1024` | Concurrent sessions for this listener, from 1 through 4096. A process-wide ceiling of 4096 also applies. |
+| `preread_timeout` | `30s` | Maximum time to classify a connection before closing it. |
+| `preread_buffer_size` | `16k` | Maximum retained ClientHello bytes. |
+| `proxy_connect_timeout` | `60s` | Total upstream connection budget. |
+| `proxy_timeout` | `600s` | Maximum inactivity between reads or writes. |
+| `proxy_buffer_size` | `16k` | Capacity of each relay direction. |
+| `proxy_half_close` | `off` | Permit independent EOF propagation with `on`. |
+| `log` | disabled | One unnamed session-access logger. |
+
+Durations use nginx stream syntax, including a bare integer in seconds.
+Buffer sizes use binary `k` and `m` units.
+
+`proxy` accepts one static host and port or one `dynamic a` source. A dynamic
+source accepts `name`, `port`, `resolvers`, `versions`, `valid`, `stale`, and
+`allow_ip`. A static hostname is resolved at load or reload; `dynamic a`
+refreshes DNS in the background.
+
+Invalid addresses, duplicate options, undefined matchers, malformed durations
+or sizes, more than one listener address in a block, and unsupported caddy-l4
+handlers or proxy options are refused.
+
+Alpha boundaries: TCP only; no UDP, TLS termination, PROXY protocol, wildcard
+SNI matching, multiple upstreams, health checks, or weighted balancing. This is
+not full caddy-l4 syntax compatibility.
+
+```caddyfile
+{
+    layer4 {
+        :8443 {
+            preread_timeout 10s
+            proxy_timeout 10m
+
+            @app tls sni app.example.com
+            route @app {
+                proxy 127.0.0.1:9443
+            }
+
+            route {
+                proxy 127.0.0.1:9444
+            }
+        }
+    }
+}
+```
+
+See [Route TCP with Layer 4](/guides/layer4/) for dynamic DNS, logging,
+metrics, verification, and reload behavior.
+
 ## listen
 
 ```text
@@ -1120,6 +1206,7 @@ Caddy nests under `servers { … }` are accepted there.
 | `email` | `email <address>` | ACME account email. |
 | `grace_period` | `grace_period <duration>` | How long a graceful stop lets running requests finish. The default is `30s`. The process exits as soon as the last request ends. |
 | `http_port`, `https_port` | `http_port <port>` | The ports that scheme-only addresses (`http://example.com`, `https://example.com`) and automatic HTTPS use. The defaults are 80 and 443. |
+| `layer4` | `layer4 { <address> { … } }` | Raw TCP listeners with TLS SNI or ALPN and source-IP matchers. See [`layer4`](#layer4). |
 | `log` | `log [<name>] { … }` | An unnamed block configures the process log; a named block declares an access-log channel ([`log`](#log)). |
 | `metrics` | `metrics [{ per_host; observe_catchall_hosts }]` | Turns metrics collection on. Without it, nothing is collected and the scrape endpoints answer empty. `per_host` adds a `host` label for the hosts the configuration serves. |
 | `order` | `order <directive> first\|last\|before <d>\|after <d>` | Moves a directive in the directive order. |

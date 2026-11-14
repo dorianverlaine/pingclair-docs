@@ -6,7 +6,8 @@ sidebar:
 description: 用發行版二進位檔、Docker 或原始碼把 Pingclair 裝到 Linux 主機上，並確認服務有回應。
 ---
 
-Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.2.3** 的安裝步驟、檔案位置與服務檢查方式。
+Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.3.0-alpha.1** 預覽版與
+v0.2.3 穩定版的安裝步驟、檔案位置與服務檢查方式。
 
 ## 🧾 你需要準備的
 
@@ -17,7 +18,39 @@ Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.2.3** 的安裝
 
 macOS 可以從原始碼編譯，並支援用於開發，但不是正式發布的平台。
 
-## 📦 從發行版二進位檔安裝
+## 🔌 安裝預覽版
+
+一般安裝器會選取最新穩定版，不安裝預先發行版。若要在既有安裝測試
+`v0.3.0-alpha.1`，請下載精確的發行產物、驗證校驗碼、停止服務、替換二進位檔，
+再啟動服務。
+
+```bash
+version=v0.3.0-alpha.1
+case "$(uname -m)" in
+    x86_64) arch=x86_64 ;;
+    aarch64) arch=aarch64 ;;
+    *) echo "unsupported architecture" >&2; exit 1 ;;
+esac
+
+base="https://github.com/dorianverlaine/pingclair/releases/download/${version}"
+curl -fLO "${base}/pingclair-linux-${arch}.tar.gz"
+curl -fLO "${base}/SHA256SUMS-${arch}.txt"
+if command -v sha256sum >/dev/null; then
+    sha256sum -c "SHA256SUMS-${arch}.txt"
+else
+    shasum -a 256 -c "SHA256SUMS-${arch}.txt"
+fi
+tar -xzf "pingclair-linux-${arch}.tar.gz"
+
+sudo pc service stop
+sudo install -m 0755 pingclair /usr/local/bin/pingclair
+sudo pc service start
+```
+
+全新主機請先安裝穩定版套件，建立服務使用者、目錄與 systemd unit，再以驗證過的預覽版
+二進位檔替換。保留既有設定與 TLS store。預覽版不是正式生產支援通道。
+
+## 📦 安裝最新穩定版
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash
@@ -68,7 +101,8 @@ curl -fsSL https://pingclair.com/install.sh | sudo bash -s -- --main
 pingclair version
 ```
 
-0.2.3 發行版會顯示 `v0.2.3`。`pc version` 會顯示相同版本。接著檢查服務狀態：
+`v0.3.0-alpha.1` 預覽版會顯示 `v0.3.0-alpha.1`；穩定版安裝會顯示 `v0.2.3`。
+`pc version` 會顯示相同版本。接著檢查服務狀態：
 
 ```bash
 pc service status
@@ -102,7 +136,7 @@ curl -i http://localhost/
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.3
+    image: ghcr.io/dorianverlaine/pingclair:v0.3.0-alpha.1
     restart: unless-stopped
     ports:
       - "80:80"

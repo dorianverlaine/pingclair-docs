@@ -7,7 +7,8 @@ description: Install Pingclair on Linux from a release binary, with Docker, or f
 ---
 
 Pingclair is distributed as a single Linux binary. This page describes
-installation, installed files, and service verification for **v0.2.3**.
+installation, installed files, and service verification for the
+**v0.3.0-alpha.1** preview and the v0.2.3 stable release.
 
 ## 🧾 What you need
 
@@ -23,7 +24,42 @@ installation, installed files, and service verification for **v0.2.3**.
 macOS builds from source and is supported for development. macOS is not a
 shipping platform.
 
-## 📦 Install from a release binary
+## 🔌 Install the preview
+
+The normal installer selects the latest stable release. It does not install a
+prerelease. To test `v0.3.0-alpha.1` on an existing installation, download the
+exact release asset, verify its checksum, stop the service, replace the binary,
+and start the service again.
+
+```bash
+version=v0.3.0-alpha.1
+case "$(uname -m)" in
+    x86_64) arch=x86_64 ;;
+    aarch64) arch=aarch64 ;;
+    *) echo "unsupported architecture" >&2; exit 1 ;;
+esac
+
+base="https://github.com/dorianverlaine/pingclair/releases/download/${version}"
+curl -fLO "${base}/pingclair-linux-${arch}.tar.gz"
+curl -fLO "${base}/SHA256SUMS-${arch}.txt"
+if command -v sha256sum >/dev/null; then
+    sha256sum -c "SHA256SUMS-${arch}.txt"
+else
+    shasum -a 256 -c "SHA256SUMS-${arch}.txt"
+fi
+tar -xzf "pingclair-linux-${arch}.tar.gz"
+
+sudo pc service stop
+sudo install -m 0755 pingclair /usr/local/bin/pingclair
+sudo pc service start
+```
+
+For a new host, install the stable package first to create the service user,
+directories, and systemd unit, then replace the binary with the verified
+preview. Keep the existing configuration and TLS store. The preview is not a
+production support channel.
+
+## 📦 Install the latest stable release
 
 ```bash
 curl -fsSL https://pingclair.com/install.sh | sudo bash
@@ -90,8 +126,9 @@ Check the installed version:
 pingclair version
 ```
 
-For the 0.2.3 release, the version is `v0.2.3`. `pc version` reports the same
-version. Check the service status next:
+For the `v0.3.0-alpha.1` preview, the version is `v0.3.0-alpha.1`; a stable
+installation reports `v0.2.3`. `pc version` reports the same version. Check the
+service status next:
 
 ```bash
 pc service status
@@ -129,7 +166,7 @@ default command is `run /etc/pingclair/Pingclairfile`. The image declares
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.3
+    image: ghcr.io/dorianverlaine/pingclair:v0.3.0-alpha.1
     restart: unless-stopped
     ports:
       - "80:80"

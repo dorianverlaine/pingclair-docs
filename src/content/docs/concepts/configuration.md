@@ -7,7 +7,7 @@ description: How a Pingclairfile is structured, how it is compiled and validated
 Pingclair compiles the Pingclairfile when it loads the configuration. Address
 parsing and matcher compilation are completed before requests are processed,
 and unsupported or invalid settings are rejected at load time. This page
-describes configuration loading and reload behavior in **v0.2.3**.
+describes configuration loading and reload behavior in **v0.3.0-alpha.1**.
 
 ## 🗂️ A file is global options followed by site blocks
 
@@ -28,17 +28,24 @@ example.com {
 
 - **Global options** go in an unnamed block at the top of the file. They
   configure what is not specific to one site: the ACME account email, the Admin
-  API, automatic HTTPS, trusted proxies, and DNS refresh for hostname
-  upstreams. The [directive reference](/reference/directives/#global-options)
-  lists them.
+  API, automatic HTTPS, trusted proxies, DNS refresh for hostname upstreams,
+  and raw TCP routing under `layer4`. The
+  [directive reference](/reference/directives/#global-options) lists them.
 - **Site blocks** are named by address: a host, a port, or both. The port is
   part of the address rather than a separate directive, so the address and the
   listener cannot disagree.
 - **Directives** are the statements inside a site block. Some take arguments,
   some take a nested block, and some take both.
 - **Comments** start with `#` and run to the end of the line.
-- **Values that contain spaces are quoted.** Durations carry a unit: `30s` is
-  thirty seconds, and a bare `30` is refused where a duration is expected.
+- **Values that contain spaces are quoted.** Most durations carry a unit:
+  `30s` is thirty seconds, and a bare `30` is refused where an HTTP or site
+  duration is expected. Layer 4 stream options follow nginx and interpret a
+  bare integer as seconds.
+
+A `layer4` listener is a global option rather than a site block. It owns TCP
+matchers, route order, upstream selection, forwarding limits, and an optional
+session log. It does not share HTTP route or proxy policy. See
+[Route TCP with Layer 4](/guides/layer4/).
 
 ## 🧭 Matchers select the requests a directive applies to
 
@@ -153,6 +160,10 @@ and keeps the old configuration rather than applying part of it:
   `trusted_proxies`, apply to the whole process, so changing those policies requires a restart. Process-log settings can reload.
 - **Certificate topology.** Adding a TLS hostname, or changing how a site gets
   its certificate, requires a restart.
+- **Layer 4.** Route, matcher, upstream, DNS, timeout, buffer, and log changes
+  apply to new TCP connections. Adding or moving a Layer 4 listener, changing
+  `max_connections`, or changing listener overlap requires a restart.
+  Established tunnels keep their original route and upstream.
 
 The refusal names the change, for example `listener topology changed (added:
 …, removed: …)`, and `sudo pc service restart` applies it.

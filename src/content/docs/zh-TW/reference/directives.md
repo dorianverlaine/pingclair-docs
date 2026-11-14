@@ -8,7 +8,7 @@ description: 本參考涵蓋的 Pingclairfile 指令與全域選項：語法、�
 
 每個條目都以固定的表頭開始：語法、沒寫這個指令時的預設值，以及它可以出現的位置。接著說明指令做什麼、拒絕什麼，以及與 Caddy 的不同之處。
 
-📌 本頁描述的是 **v0.2.3**。與 0.1.x 系列及 0.2.0 候選版不同的行為，會以 **0.2.0 變更** 標示；[升級](/zh-TW/start/upgrade/#️-020-的變更) 把這些變更集中在同一處。
+📌 本頁描述的是 **v0.3.0-alpha.1**。與 0.1.x 系列及 0.2.0 候選版不同的行為，會以 **0.2.0 變更** 標示；[升級](/zh-TW/start/upgrade/#️-020-的變更) 把這些變更集中在同一處。
 
 📖 本頁只涵蓋語言的一部分。沒有列在這裡的指令仍會由 `pingclair validate` 檢查，而伺服器沒有實作的指令會被指名拒絕，而不是接受後忽略。
 
@@ -406,6 +406,86 @@ example.com {
 }
 ```
 
+## layer4
+
+```text
+Syntax:   layer4 {
+              <address> {
+                  <listener-option> <value>
+                  @name <matcher> ...
+                  route [@name ...] {
+                      proxy <address>
+                  }
+              }
+          }
+Default:  disabled
+Context:  global options
+```
+
+啟動原始 TCP 監聽器，轉送 TLS 或其他位元組串流而不終止它們。這是
+**v0.3.0-alpha.1** 首次提供的有限 Layer 4 支援。區塊沿用 Caddy 形式的
+`layer4` 結構；限制與轉送使用 nginx stream 語意。
+
+每個監聽器區塊指定一個位址。路由可指定零或多組匹配器，且只有一個 `proxy`
+處理常式。路由依宣告順序評估；空匹配器清單沒有條件。同一組匹配器內的條件以 AND
+組合，同一路由的多組匹配器以 OR 組合。
+
+支援的匹配器：
+
+| 匹配器 | 形式 |
+| --- | --- |
+| TLS 存在 | `@name tls` |
+| TLS SNI 與 ALPN | `@name tls sni <name> ... alpn <id> ...` 或 `tls { … }` 區塊 |
+| 來源位址 | `@name remote_ip <address-or-cidr> ...` |
+
+監聽器選項：
+
+| 選項 | 預設值 | 行為 |
+| --- | --- | --- |
+| `max_connections` | `1024` | 此監聽器的並行工作階段，範圍 1 至 4096；另受行程上限 4096 限制。 |
+| `preread_timeout` | `30s` | 分類連線的最長時間，逾時後關閉。 |
+| `preread_buffer_size` | `16k` | 保留的 ClientHello 位元組上限。 |
+| `proxy_connect_timeout` | `60s` | 連接上游的總時間。 |
+| `proxy_timeout` | `600s` | 讀寫之間允許的最長閒置時間。 |
+| `proxy_buffer_size` | `16k` | 每個轉送方向的緩衝容量。 |
+| `proxy_half_close` | `off` | 設為 `on` 時，兩個方向可獨立傳播 EOF。 |
+| `log` | 停用 | 一個未命名的工作階段存取記錄器。 |
+
+時間使用 nginx stream 語法，單獨整數代表秒數。緩衝大小使用二進位的 `k` 與
+`m` 單位。
+
+`proxy` 接受一個靜態 host 與 port，或一個 `dynamic a` 來源。動態來源接受
+`name`、`port`、`resolvers`、`versions`、`valid`、`stale` 與 `allow_ip`。
+靜態主機名稱在載入或重新載入時解析；`dynamic a` 會在背景重新整理 DNS。
+
+無效位址、重複選項、未定義匹配器、格式錯誤的時間或大小、同一區塊內多個監聽位址，
+以及不支援的 caddy-l4 處理常式或 proxy 選項，都會被拒絕。
+
+Alpha 邊界：僅支援 TCP；不支援 UDP、TLS 終止、PROXY protocol、萬用字元
+SNI 比對、多個上游、健康檢查或加權負載平衡。這不是完整的 caddy-l4 語法相容性。
+
+```caddyfile
+{
+    layer4 {
+        :8443 {
+            preread_timeout 10s
+            proxy_timeout 10m
+
+            @app tls sni app.example.com
+            route @app {
+                proxy 127.0.0.1:9443
+            }
+
+            route {
+                proxy 127.0.0.1:9444
+            }
+        }
+    }
+}
+```
+
+動態 DNS、記錄、指標、驗證與重新載入行為見[使用 Layer 4 路由 TCP](/zh-TW/guides/layer4/)。
+
 ## listen
 
 ```text
@@ -785,6 +865,7 @@ http://:8080 {
 | `email` | `email <address>` | ACME 帳號的電子郵件。 |
 | `grace_period` | `grace_period <duration>` | 平順停止時讓進行中的請求完成的時間。預設為 `30s`。最後一個請求結束後，程序就會立即結束。 |
 | `http_port`、`https_port` | `http_port <port>` | 只寫配置方式的位址（`http://example.com`、`https://example.com`）與自動 HTTPS 所使用的連接埠。預設為 80 與 443。 |
+| `layer4` | `layer4 { <address> { … } }` | 依 TLS SNI 或 ALPN 與來源 IP 匹配器轉送原始 TCP。另見 [`layer4`](#layer4)。 |
 | `log` | `log [<name>] { … }` | 未命名的區塊設定程序日誌；具名區塊宣告一個存取日誌通道（[`log`](#log)）。 |
 | `metrics` | `metrics [{ per_host; observe_catchall_hosts }]` | 開啟指標收集。沒有它就不收集任何指標，抓取端點會回應空的內容。`per_host` 為設定中提供服務的主機加上 `host` 標籤。 |
 | `order` | `order <directive> first\|last\|before <d>\|after <d>` | 調整某個指令在指令順序中的位置。 |

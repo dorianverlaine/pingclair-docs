@@ -3,69 +3,51 @@ title: 升級與移除
 h1_emoji: '🧹'
 sidebar:
   order: 5
-description: 將 0.1.x 或候選版本的設定升級至 0.2 系列，保留憑證儲存區、驗證新版本，並準備回復。
+description: 安裝 v0.3 alpha 預覽版、保留穩定通道、驗證既有設定、保存憑證儲存區，並規劃回退。
 ---
 
-**0.2.0** 改變既有設定的路由、綁定位址、壓縮與用戶端識別行為。從 **0.2.0-rc.N** 升級也需要檢查。修補版本 0.2.1、0.2.2 與 0.2.3 不需要調整原本運作正常的設定；0.2.3 會拒絕一種原本就無法正確運作的寫法，說明見下文。替換二進位檔之前，請閱讀完整的 [Before you upgrade 清單](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)及各項連結。以下整理最可能影響部署的變動。
+**v0.3.0-alpha.1** 是 0.3 系列的預覽版。最新穩定版仍是 **v0.2.3**；預設安裝器
+與 `latest` 容器標籤繼續跟隨穩定版。
 
-## ⚠️ 0.2.0 的變更
+替換二進位檔之前，請閱讀完整的
+[升級前清單](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)。
+先在預備環境測試，保留目前二進位檔與完整 TLS store，並保留穩定版能載入的設定。
 
-| 檢查項目 | 需要調整或預期的結果 |
+## ⚠️ 預覽版的變更
+
+| 領域 | 需要檢查的內容 |
 | --- | --- |
-| 路由 | 依指令順序選出第一條匹配路由。全域匹配的 `redir`、`route` 或 `handle` 可排在較具體的 `respond` 之前。使用互斥的 `handle` 區塊或明確的 `route` 順序。 |
-| 路徑 | 忽略 ASCII 大小寫，並解碼一次百分比編碼。`handle_path` 與 URI 移除也忽略大小寫。大括號是字面值；擷取群組或區分大小寫時使用 `path_regexp`。等長的同層路徑保留檔案順序。 |
-| 區塊匹配器 | `handle`、`handle_path` 與 `route` 只接受 `*`、`/path` 或 `@name`。將 `handle *.php` 改成具名的 `path *.php` 匹配器。 |
-| 監聽器 | `bind` 適用於明確位址、連接埠及自動重新導向。`listen` 保留指定的 IP。`bind` 與 `default_bind` 只接受一個位址。同一連接埠共用監聽器；受 bind 限制的網站與全介面監聽器並存時會被拒絕。 |
-| 位址 | 具名網站帶連接埠但沒有 scheme 時使用 HTTPS。明文請寫 `http://`。只有 scheme 的位址使用全域連接埠。`[::1]` 是網站名稱；同一連接埠的 `0.0.0.0` 與 `[::]` 合併為 IPv6 監聽器。 |
-| 用戶端識別 | `servers` 內每個範圍只寫一次 `trusted_proxies static …`。需要時將 `CF-Connecting-IP` 列入 `client_ip_headers`。`client_ip` 與 `{client_ip}` 是轉送的用戶端；`remote_ip` 與 `{remote_host}` 是對端。`{remote_ip}` 會被拒絕。 |
-| 請求限制 | 本文大小沒有預設上限；需要時設定 `request_body { max_size … }`。標頭完成與本文兩次讀取之間的停頓預設皆為 60 秒；安靜的上傳可能需要較長的 `limits { body_timeout … }`。 |
-| 錯誤頁 | `handle_errors` 現在也處理閘道、逾時與 `413` 錯誤。自己的 `root` 與 `file_server` 會以錯誤狀態提供頁面。必要時用狀態碼限制原本的全域錯誤區塊。 |
-| 編碼 | 沒有 `encode` 就不壓縮。區塊、gzip 等級（預設 5）、回應匹配器與最小長度皆生效。`encode off` 不接受區塊。靜態回應一律依編碼變化；有 encode 的網站代理回應亦同。重新編碼弱化代理 ETag；靜態與 sidecar 驗證值會改變。`no-transform` 停用編碼。 |
-| 回應快取 | 新鮮度包含上游年齡。所有快取路由的 `max_size` 必須一致；重載會套用容量變更。`flush_interval -1` 不納入快取。所有 `Vary` 行都參與變體；無效 `Vary` 與 `Vary: *` 不儲存。 |
-| Admin API | 不存在的設定讀取回應 `200 null`。讀取會遮蔽機密，重新載入匯出內容前須還原。設定寫入遵守帶路徑的 `If-Match`；收到 `412` 後重新讀取該路徑與 ETag。重載期間仍可讀取。 |
-| 指標 | 加入全域 `metrics` 才會收集，否則擷取端點回應空本文。儀表板需改用[重新命名的 `caddy_*` 系列](/zh-TW/reference/admin-api/#-指標)。 |
-| 命令列 | 可用 `--config`／`-c` 與 `--adapter caddyfile\|json`，不可同時提供位置參數路徑。沒有預設檔案時 `run` 只啟動管理端點；檔案缺少必須失敗時請指定路徑。`validate` 現在解析 TLS 檔案並檢查金鑰配對。 |
-| TLS | 內部 CA 移至 `pki/authorities/local/`，不遷移舊資料；須重新信任根憑證。精確名稱不再繼承萬用字元的 `client_auth`，需要時明確加入。手動 TLS 必須有網站名稱。 |
-| 上游 | 權重 0 排空上游；大於 100 及所有主要上游皆為 0 會驗證失敗。`lb_try_duration` 限制新嘗試，不限制進行中的回應。上游可能收到請求後僅重試冪等方法。 |
-| 協定 | CONNECT 得到 `405` 並關閉 H1；沒有可用連接埠的目標得到 `400`。HTTP/1 格式錯誤的目標與 chunked 本文得到 `400` 並關閉連線。FastCGI HEAD 沒有本文、過大參數得到 `431`、損壞本文中止回應。 |
-| 生命週期 | HTTP、管理或 H3 UDP 連接埠被佔用時停止啟動。SIGTERM 在 `grace_period` 內排空。重啟仍有連線空窗，政策變更優先重載。 |
+| Layer 4 | 全域 `layer4` 區塊新增依 TLS SNI、ALPN 與來源位址路由原始 TCP，並支援靜態或動態 DNS 上游。既有 HTTP 設定不需要加入 Layer 4。 |
+| Caddyfile 驗證 | 網站位址與 TLS 位置更貼近目前的 Caddyfile 規則。把明文放在 HTTPS 連接埠，或 scheme 與連接埠組合不一致的設定，會在載入時被拒絕。 |
+| 錯誤路由 | `handle_errors` 現在可使用 `reverse_proxy`。請檢查原先依賴靜態 `respond` 的錯誤路由。 |
+| 變數與記錄 | `map`、`invoke`、`log_append` 與 `log_name` 新增請求範圍值與存取記錄欄位。既有路由維持原設定。 |
+| 路由代理 | `route` 區塊中的每個 `reverse_proxy` 會連到該區塊指定的上游。先前看似設定多個上游、實際全部連到第一個的設定，現在會照原意運作。 |
+| 格式化 | `pingclair fmt` 會保留註解並格式化原始文字。覆寫正式檔案前，先檢查輸出。 |
+| HTTP/3 | 格式錯誤的 transport 與 HTTP/3 輸入會收到 protocol close，不再等待逾時。設定不需要變更。 |
+| 生命週期 | 停滯的請求本文寫入與升級連線半關閉會在設定的邊界結束；已完整抵達的上游回應仍會保留。 |
 
-[已知發行缺陷](/zh-TW/project/status/#-023-的已知缺陷)仍然適用。內建代理錯誤產生的 `502` 或 `504` 帶有 `Proxy-Status`，自訂 `handle_errors` 回應不帶此欄位。未能重用 keepalive 的日誌等級由 `ERROR` 改為 `DEBUG`。
+Alpha 新增 Layer 4；既有 HTTP 指令沒有移除。務必以新二進位檔驗證部署實際使用的設定。
 
-## 🔀 0.2.3：同一個 `route` 區塊裡的代理
+## 📦 安裝預覽版
 
-`route` 區塊裡的每個 `reverse_proxy` 現在都會連到自己的上游。0.2.3 之前，區塊裡所有被代理的請求都會送到第一個區塊的上游，連 header 與 TLS 名稱也用它的，所以這種設定原本就無法照寫的方式運作，現在可以了。只有一種寫法改為在載入時拒絕：`route` 在多個代理 `handle` 前面放了共用指令（例如 `header`）。請把每個 `reverse_proxy` 移到各自的頂層 `handle`，並在每個 `handle` 裡重複寫上共用指令。
+安裝器沒有指定版本的旗標，仍會選取最新穩定版。請從 GitHub release 下載精確的預覽版
+產物、驗證公布的 SHA-256，並在校驗成功後才替換二進位檔。
 
-## 📦 保留原有安裝
-
-升級前備份設定、目前的二進位檔與整個 TLS 儲存區，保留擁有者資訊，並保護含私密金鑰的備份。安裝程式保留 `/etc/Pingclair/Pingclairfile`、`/var/lib/pingclair/.local/share/pingclair` 的憑證儲存區及網站檔案；替換二進位檔、範例設定與 systemd unit，然後重啟服務。設定中的 `storage file_system` 路徑優先於慣用儲存位置。
-
-保留舊儲存區備份以便回復。信任新根憑證不會讓舊用戶端自動信任它，只回復二進位檔也不會還原舊根憑證或設定結構。
-
-## 🛡️ 切換前先檢查
-
-使用尚未替換上線版本的 **新** 二進位檔對正式設定執行 `validate`。它不開啟監聽器，但執行者必須讀得到設定所列的每個憑證與金鑰。再於測試部署檢查受影響路由、大小寫變體、轉送用戶端身分、錯誤頁、上傳、壓縮與指標。
-
-`main` 原始碼建置回報 `v0.0.0-dev+<sha>`，沒有 checkout 時為 `v0.0.0-dev`；發行版回報自己的標記，例如 `v0.2.3`。安裝時檢查標記與發布的校驗值。dev 版本字串不代表已安裝穩定版。
-
-## ⬆️ 安裝穩定版
-
-安裝程式會選擇穩定版通道：
+[安裝](/zh-TW/start/install/#-install-the-preview)包含依架構下載的完整命令。既有安裝
+最後的步驟是：
 
 ```bash
-curl -fsSL https://pingclair.com/install.sh | sudo bash
-pingclair version
-pc service status
+sudo pc service stop
+sudo install -m 0755 pingclair /usr/local/bin/pingclair
+sudo pc service start
 ```
 
-確認 `pingclair version` 顯示 `v0.2.3`、服務正常執行，並檢查網站路由的回應。
-
-安裝程式沒有指定版本的旗標。容器請固定目標標記：
+容器請固定精確的預先發行版標籤：
 
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.3
+    image: ghcr.io/dorianverlaine/pingclair:v0.3.0-alpha.1
 ```
 
 ```bash
@@ -74,11 +56,39 @@ docker compose up -d
 docker compose logs pingclair
 ```
 
-保留設定與 TLS 儲存區的 volumes。`latest` 跟隨穩定版，alpha 預覽不會推進它。啟動前必須釋出主機連接埠。
+`latest` 不會前進到 alpha、beta 或 release candidate。
 
-## ⏪ 回復舊版
+## 📦 保留先前的安裝
 
-停止新服務，還原備份的二進位檔、設定與 TLS 儲存區及其擁有者，使用還原的二進位檔驗證後再啟動。0.2.0 寫出的設定可能無法由舊版本載入。不要以不完整備份覆寫執行中的憑證儲存區。
+安裝預覽版前，備份設定、目前二進位檔與完整 TLS store。保留擁有權，並保護含私密金鑰的
+備份。
+
+安裝器會保留 `/etc/Pingclair/Pingclairfile`、`/var/lib/pingclair/.local/share/pingclair`
+下的憑證儲存區與網站檔案。設定了 `storage file_system` 時，該路徑優先於預設儲存區。
+
+保留穩定版 `v0.2.3` 二進位檔與對應設定。預覽版設定可能使用穩定版無法載入的指令。
+
+## 🛡️ 切換前檢查
+
+舊二進位檔仍在時，先以預覽版二進位檔驗證正式設定：
+
+```bash
+./pingclair validate /etc/Pingclair/Pingclairfile
+```
+
+執行驗證的使用者必須能讀取檔案中的每個憑證與金鑰。驗證成功不會開啟監聽器，也不代表
+部署的 DNS、防火牆或 Layer 4 後端路由已正確。
+
+在預備環境測試部署使用的 HTTP 協定，以及每個新增的 Layer 4 監聽器。Layer 4 應確認
+目標 SNI 或來源位址會選取預期上游，且 TLS 握手由上游完成。
+
+## ⏪ 回退
+
+停止預覽版服務，以原始擁有權還原先前的二進位檔、設定與 TLS store，再以還原的二進位檔
+驗證後啟動。
+
+不要以不完整的備份覆寫執行中的憑證儲存區。完成回退決策之前，預覽版設定應與穩定版設定
+分開保存。
 
 ## 🧹 移除安裝
 
@@ -90,10 +100,20 @@ sudo systemctl daemon-reload
 sudo rm /usr/local/bin/pingclair /usr/local/bin/pc
 ```
 
-這些命令保留 `/etc/Pingclair`、`/var/lib/pingclair` 與 `/var/log/pingclair`，包括憑證與網站檔案。只有確定不再需要重新安裝或回復時，才刪除保留資料。
+這些命令會保留 `/etc/Pingclair`、`/var/lib/pingclair` 與 `/var/log/pingclair`，
+包括憑證與網站檔案。只有重新安裝或回退不再需要時，才刪除保留資料。
 
-## 🧭 下一步
+<span id="️-020-的變更"></span>
 
-- [安裝](/zh-TW/start/install/)：安裝位置與前提條件。
-- [以服務方式執行](/zh-TW/start/service/)：重載、重啟與日誌。
-- [專案狀態](/zh-TW/project/status/)：尚存的發行限制。
+## 🕰️ 從 0.1.x 或 0.2 升級
+
+[0.2.0 升級前章節](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)
+仍是 0.2 系列對路由順序、路徑正規化、監聽器綁定、用戶端識別、壓縮、快取、Admin API、
+指標、TLS、上游與生命週期變更的參考。套用這些變更前，先以預覽版驗證既有檔案並保留
+穩定版回退路徑。
+
+## 🧭 後續步驟
+
+- [安裝](/zh-TW/start/install/)：穩定版與預覽版安裝路徑。
+- [Layer 4 指南](/zh-TW/guides/layer4/)：TCP 路由設定與邊界。
+- [專案狀態](/zh-TW/project/status/)：預覽版的已知限制。

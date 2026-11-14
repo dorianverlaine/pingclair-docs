@@ -4,7 +4,7 @@ h1_emoji: '🏗️'
 description: 組成伺服器的各個 crate、請求穿過它們的路徑，以及 HTTP/1.1、HTTP/2 與 HTTP/3 行為不同的地方。
 ---
 
-Pingclair 支援 HTTP/1.1、HTTP/2 與 HTTP/3。各傳輸層負責處理協定資料，共用的政策層則負責路由、標頭規則、速率限制與存取日誌。本頁說明 **v0.2.3** 的組成元件、請求處理流程與協定差異。
+Pingclair 支援 HTTP/1.1、HTTP/2 與 HTTP/3。各傳輸層負責處理協定資料，共用的政策層則負責路由、標頭規則、速率限制與存取日誌。本頁說明 **v0.3.0-alpha.1** 的組成元件、請求處理流程與協定差異。
 
 ## 🧱 伺服器是由幾個 crate 組成的單一二進位檔
 
@@ -15,6 +15,7 @@ Pingclair 是一個 Cargo workspace。`pingclair` 二進位檔連結了下列 cr
 | `pingclair` | 命令列進入點：參數解析、日誌、啟動、關閉與重載。 |
 | `pingclair-config` | 設定編譯器：讀取 Pingclairfile、檢查它，並產出伺服器實際執行的設定。 |
 | `pingclair-proxy` | 基於 Pingora 的 HTTP/1.1 與 HTTP/2、基於 quiche 的 HTTP/3、負載平衡，以及共用的請求政策層。 |
+| `pingclair-l4` | 原始 TCP 分類、有界預讀、靜態與動態上游選擇、轉送，以及 Layer 4 工作階段政策。 |
 | `pingclair-static` | 靜態檔案服務：讀檔、MIME 類型、range 與條件式請求，以及串流。 |
 | `pingclair-fastcgi` | `php_fastcgi` 用來連到 PHP-FPM 的 FastCGI 用戶端。 |
 | `pingclair-tls` | 憑證管理：憑證檔案、內部憑證授權單位，以及 ACME 簽發。 |
@@ -45,6 +46,34 @@ upstream or disk
 
 傳輸層轉接器把協定的 frame 組成一個請求，再往下交出去。路由、標頭規則、速率限制與存取日誌只在政策層實作一次，所以在 HTTP/1.1、HTTP/2 與 HTTP/3 上的行為都一樣。兩種傳輸層也透過同一個 connector 連到上游，因此連線池、上游 TLS 與逾時設定同樣是共用的。
 
+## 🔌 原始 TCP 連線使用獨立路徑
+
+Layer 4 監聽器不會建立 HTTP 請求。需要 TLS 中繼資料時，它會分類有界的
+ClientHello、選取一條路由、連接該路由的上游、重播已預讀的位元組，再轉送兩個方向：
+
+```text
+client
+  |
+  |  raw TCP
+  v
+Layer 4 listener       bounded admission and source-IP policy
+  |
+  v
+classifier             TLS presence, SNI, ALPN, or source address
+  |
+  v
+route                  first matching static or dynamic upstream
+  |
+  v
+relay                  bounded buffers and optional half-close
+  |
+  v
+upstream
+```
+
+TLS 保持端到端。HTTP 使用的 redirect 與 reverse-proxy 政策不適用於這條路徑。
+設定、動態 DNS、限制、記錄與指標見[Layer 4 指南](/zh-TW/guides/layer4/)。
+
 ## 🌊 每個請求都成立的事
 
 - **本文使用有界記憶體。** 代理預設串流傳送；明確設定的請求或回應緩衝會先保留到設定上限，再串流傳送其餘資料。`unlimited` 緩衝仍有 8 MiB 上限。壓縮與快取仍有[已知缺陷](/zh-TW/project/status/)，部署前請先確認。
@@ -55,17 +84,13 @@ upstream or disk
 
 有幾項行為會因協定而不同。列在這裡，免得有人在正式環境中才發現。
 
-| 領域 | v0.2.3 的行為 |
+| 領域 | v0.3.0-alpha.1 的行為 |
 | --- | --- |
 | Trailers | 任何協定都不轉送 request trailers。宣告了 trailers 的請求，會在回應開始前得到 `501`；若 HTTP/3 stream 的回應已經開始，則改為重設該 stream。上游回應若宣告了 trailers，會保留其狀態與本文，trailer 欄位則被丟棄。 |
 | `CONNECT` | 可用的 `host:port` 目標得到附帶 `Allow` 的 `405`，沒有可用連接埠的目標得到 `400`；HTTP/1.1 拒絕後關閉連線。 |
 | FastCGI | `php_fastcgi` 在每種協定上都能運作，包括 HTTP/3。 |
 
 📌 `TRACE` 同樣得到附帶 `Allow` 的 `405`。HTTP/1 格式錯誤的 chunked 本文、含原始空白或控制字元的目標，以及缺少 Host 的 HTTP/1.1 請求，皆得到 `400` 並關閉連線。
-
-## ⚠️ 負載下 WebSocket 升級會間歇性失敗
-
-Pingclair 可以代理 WebSocket，但機器忙碌時大約有 10–15% 的升級會失敗。從外部看，失敗的升級就是在 `101 Switching Protocols` 回應之後連線立刻被關閉。原因是上游 `pingora-proxy` crate 中的一個競態條件，而不是 Pingclair 的升級處理，也沒有任何設定能避開它。閒置的開發機很少能重現，所以特別在這裡說明。依據：[CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md)。
 
 ## 🧭 相關頁面
 

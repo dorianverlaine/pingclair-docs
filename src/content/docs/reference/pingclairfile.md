@@ -11,7 +11,7 @@ unchanged. This page describes the language; the
 [directive reference](/reference/directives/) describes what each directive
 does.
 
-📌 This page describes **v0.2.3**.
+📌 This page describes **v0.3.0-alpha.1**.
 
 ## 🔤 Lexical rules
 
@@ -64,6 +64,31 @@ The configuration is refused when sites on one port need different socket
 policy: a site restricted by `bind` or `default_bind` beside one that listens
 everywhere, a plaintext site beside a TLS site, or PROXY protocol on only one
 of them.
+
+### 🔌 Layer 4 listeners live in the global block
+
+Raw TCP forwarding uses a global `layer4` block rather than a site address. A
+Layer 4 listener has its own matchers, routes, upstream, limits, and optional
+session log:
+
+```caddyfile
+{
+    layer4 {
+        :8443 {
+            @app tls sni app.example.com
+            route @app {
+                proxy 127.0.0.1:9443
+            }
+        }
+    }
+}
+```
+
+The block uses a caddy-l4-style structure and nginx stream terminology for
+timeouts and buffers. It is a bounded TCP subset: one listener address per
+block, one upstream per route, and no TLS termination, UDP, or PROXY protocol.
+See [Route TCP with Layer 4](/guides/layer4/) and the
+[directive reference](/reference/directives/#layer4).
 
 ## 🧭 Matchers
 

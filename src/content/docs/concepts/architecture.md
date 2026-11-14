@@ -7,7 +7,7 @@ description: The crates that make up the server, the path a request takes throug
 Pingclair supports HTTP/1.1, HTTP/2, and HTTP/3. Each transport handles protocol
 I/O, while a shared policy layer applies routing, header rules, rate limits,
 and access logging. This page describes the components, the request path, and
-protocol differences in **v0.2.3**.
+protocol differences in **v0.3.0-alpha.1**.
 
 ## 🧱 The server is one binary built from a few crates
 
@@ -19,6 +19,7 @@ each one owns a single responsibility.
 | `pingclair` | Command-line entry point: argument parsing, logging, startup, shutdown, and reload. |
 | `pingclair-config` | Configuration compiler: reads the Pingclairfile, checks it, and produces the configuration the server runs. |
 | `pingclair-proxy` | HTTP/1.1 and HTTP/2 on Pingora, HTTP/3 on quiche, load balancing, and the shared request policy layer. |
+| `pingclair-l4` | Raw TCP classification, bounded preread, static and dynamic upstream selection, relay, and Layer 4 session policy. |
 | `pingclair-static` | Static file serving: file reads, MIME types, range and conditional requests, and streaming. |
 | `pingclair-fastcgi` | The FastCGI client that `php_fastcgi` uses to reach PHP-FPM. |
 | `pingclair-tls` | Certificate management: certificate files, the internal certificate authority, and ACME issuance. |
@@ -53,6 +54,36 @@ limiting, and access logging across HTTP/1.1, HTTP/2, and HTTP/3. Both
 transports also reach upstreams through the same connector, so connection
 pooling, upstream TLS, and timeouts are shared as well.
 
+## 🔌 Raw TCP connections use a separate path
+
+Layer 4 listeners do not create an HTTP request. They classify a bounded
+ClientHello when TLS metadata is required, choose one route, connect to that
+route's upstream, replay the preread bytes, and relay both directions:
+
+```text
+client
+  |
+  |  raw TCP
+  v
+Layer 4 listener       bounded admission and source-IP policy
+  |
+  v
+classifier             TLS presence, SNI, ALPN, or source address
+  |
+  v
+route                  first matching static or dynamic upstream
+  |
+  v
+relay                  bounded buffers and optional half-close
+  |
+  v
+upstream
+```
+
+TLS remains end to end. HTTP redirect and reverse-proxy policy do not apply to
+this path. The [Layer 4 guide](/guides/layer4/) describes configuration,
+dynamic DNS, limits, logging, and metrics.
+
 ## 🌊 What holds for every request
 
 - **Bodies use bounded memory.** Proxy bodies stream by default. Explicit
@@ -72,21 +103,13 @@ pooling, upstream TLS, and timeouts are shared as well.
 A few behaviors differ by protocol. They are listed here so that operators can
 account for them before deployment.
 
-| Area | Behavior in v0.2.3 |
+| Area | Behavior in v0.3.0-alpha.1 |
 | --- | --- |
 | Trailers | Request trailers are not forwarded on any protocol. A request that declares them is answered `501` before the response starts; an HTTP/3 stream whose response has already started is reset instead. An upstream response that advertises trailers keeps its status and body; the trailer fields are dropped. |
 | `CONNECT` | A usable `host:port` target receives `405` with `Allow`; a target without a usable port receives `400`. HTTP/1.1 closes after refusal. |
 | FastCGI | `php_fastcgi` works on every protocol, HTTP/3 included. |
 
 📌 `TRACE` also receives `405` with `Allow`. Malformed HTTP/1 chunked bodies, raw whitespace or controls in request targets, and HTTP/1.1 requests without Host receive `400` and close.
-
-## ⚠️ WebSocket upgrades fail intermittently under load
-
-Pingclair proxies WebSocket, but roughly 10-15% of upgrades fail when the
-machine is busy. From the outside, a failed upgrade is a connection closed
-immediately after the `101 Switching Protocols` response. The cause is a race
-in the upstream `pingora-proxy` crate, not in Pingclair's upgrade handling, and
-no configuration avoids it. The failure is less frequent on an idle machine. [CHANGELOG](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md).
 
 ## 🧭 Related pages
 

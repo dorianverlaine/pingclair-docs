@@ -446,6 +446,10 @@ This page records measurements collected on October 11–12, 2026, using the spe
 
 Subsequent fixes or improvements do not retroactively change these results. Any conclusions about newer versions require fresh measurements.
 
+The `v0.3.0-alpha.1` preview, including its Layer 4 TCP path, is outside this
+measurement set. These figures do not establish the preview's throughput,
+latency, resource use, or Layer 4 capacity.
+
 ## 🧾 Methodology and Sources
 
 The Pingclair repository documents the general benchmarking methodology, validation rules, and supporting test tools. This page's measurement method — environment, candidate versions, container setup, and commands — is recorded in:

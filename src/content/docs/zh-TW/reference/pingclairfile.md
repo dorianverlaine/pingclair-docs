@@ -6,7 +6,7 @@ description: Pingclairfile 的詞法、網站位址、匹配器、佔位符、�
 
 Pingclairfile 使用 Caddyfile 語言，由可省略的全域選項區塊與網站區塊組成。只使用支援語法的 Caddyfile 可直接載入。[指令參考](/zh-TW/reference/directives/)說明各指令的作用。
 
-📌 本頁描述 **v0.2.3**。
+📌 本頁描述 **v0.3.0-alpha.1**。
 
 ## 🔤 詞法規則
 
@@ -41,6 +41,29 @@ http://[::1]:8080 {    # Plaintext HTTP for the host [::1].
 同一連接埠的網站共用 socket，以 Host 區分。明確 IP 位址與全介面網站合併後，前者也能從其他介面以相符 Host 存取；需要隔離時請用獨立連接埠。載入時會記錄合併。`0.0.0.0` 與 `[::]` 合併後使用 IPv6。
 
 若同一連接埠的 socket 政策不一致，設定會被拒絕：例如 `bind`／`default_bind` 限制的網站與全介面網站、明文與 TLS，或只有其中一個要求 PROXY protocol。
+
+### 🔌 Layer 4 監聽器位於全域區塊
+
+原始 TCP 轉送使用全域 `layer4` 區塊，而不是網站位址。Layer 4 監聽器有自己的匹配器、
+路由、上游、限制與選用的工作階段記錄：
+
+```caddyfile
+{
+    layer4 {
+        :8443 {
+            @app tls sni app.example.com
+            route @app {
+                proxy 127.0.0.1:9443
+            }
+        }
+    }
+}
+```
+
+此區塊使用 caddy-l4 形式的結構，時間與緩衝則使用 nginx stream 術語。支援範圍是有限的
+TCP 子集：每個區塊一個監聽位址、每條路由一個上游，且不支援 TLS 終止、UDP
+或 PROXY protocol。另見[使用 Layer 4 路由 TCP](/zh-TW/guides/layer4/)與
+[指令參考](/zh-TW/reference/directives/#layer4)。
 
 ## 🧭 匹配器
 

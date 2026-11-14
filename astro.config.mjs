@@ -26,7 +26,7 @@ export default defineConfig({
 		starlight({
 			title: 'Pingclair',
 			description:
-				'Documentation for Pingclair, a reverse proxy and static file server written in Rust.',
+				'Documentation for Pingclair, an HTTP reverse proxy, Layer 4 TCP router, and static file server written in Rust.',
 			logo: {
 				src: './src/assets/logo.png',
 				alt: 'Pingclair',

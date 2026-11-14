@@ -3,100 +3,57 @@ title: Upgrading and removing
 h1_emoji: '🧹'
 sidebar:
   order: 5
-description: Prepare a 0.1.x or release-candidate configuration for the 0.2 line, preserve the certificate store, check the new binary, and plan rollback.
+description: Install the v0.3 alpha preview without replacing the stable channel, validate an existing configuration, preserve the certificate store, and plan rollback.
 ---
 
-Version **0.2.0** changes how existing configurations route, bind, compress,
-and identify clients. These changes also apply when upgrading from
-**0.2.0-rc.N**. The patch releases 0.2.1, 0.2.2 and 0.2.3 change no working configuration;
-0.2.3 refuses one shape that was already broken, described below.
+Version **v0.3.0-alpha.1** is a preview of the 0.3 line. The latest stable
+release remains **v0.2.3**, and the default installer and `latest` container
+tag continue to follow stable releases.
+
 Read the complete
 [Before you upgrade list](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)
-and its linked entries before replacing a binary. The summary below covers the
-changes most likely to affect a deployment.
+before replacing a binary. Use a staging deployment first, keep the current
+binary and complete TLS store, and retain a configuration that the stable
+binary can load.
 
-## ⚠️ What changes in 0.2.0
+## ⚠️ What changes in the preview
 
-| Review | What to change or expect |
+| Area | What to review |
 | --- | --- |
-| Routing | Directive order decides the first matching route. A catch-all `redir`, `route`, or `handle` can precede a specific `respond`. Use exclusive `handle` blocks or explicit `route` order. |
-| Paths | ASCII case is ignored and escapes are decoded once. `handle_path` and URI stripping also ignore case. Braces are literal; use `path_regexp` for captures and case-sensitive routing. Equal-length sibling paths retain file order. |
-| Block matchers | `handle`, `handle_path`, and `route` accept only `*`, `/path`, or `@name`. Replace `handle *.php` with a named `path *.php` matcher. |
-| Listeners | `bind` applies even with explicit addresses and ports, including the automatic redirect. `listen` retains its IP address. `bind` and `default_bind` allow one address. Sites on one port share a listener; a bind-restricted site beside a wildcard listener is refused. |
-| Addresses | A named site with a port and no scheme uses HTTPS. Write `http://` for plaintext. Scheme-only addresses use global ports. `[::1]` names a site, and `0.0.0.0` with `[::]` on one port folds to IPv6. |
-| Client identity | In `servers`, write `trusted_proxies static …` once per scope. List `CF-Connecting-IP` in `client_ip_headers` when needed. Use `client_ip` and `{client_ip}` for the forwarded client; `remote_ip` and `{remote_host}` mean the peer. `{remote_ip}` is refused. |
-| Request limits | There is no default body-size ceiling. Set `request_body { max_size … }` if needed. Header completion and pauses between body reads default to 60 seconds; uploads with long pauses may need a longer `limits { body_timeout … }`. |
-| Error pages | `handle_errors` now handles gateway, timeout, and `413` errors too. Its `root` and `file_server` serve the page with the error status. Restrict a catch-all block by status if appropriate. |
-| Encoding | No compression without `encode`. Blocks, gzip levels (default 5), response matchers, and minimum length take effect. `encode off` cannot have a block. Static responses always vary by encoding; proxy responses do so on encode sites. Re-encoding weakens proxy ETags; static and sidecar validators change. `no-transform` disables encoding. |
-| Response cache | Freshness includes upstream age. All caching routes must agree on `max_size`; reload applies budget changes. `flush_interval -1` bypasses admission. Every `Vary` line participates in variants; invalid `Vary` and `Vary: *` prevent storage. |
-| Admin API | Missing config reads return `200 null`. Reads mask secrets, so restore them before loading an export. Config writes honor path-qualified `If-Match`; after `412`, read the path and its ETag again. Reads remain available through reload. |
-| Metrics | Add global `metrics` to collect. Scrapes are empty without it. Update dashboards to the [renamed `caddy_*` families](/reference/admin-api/#-metrics). |
-| CLI | Use `--config`/`-c` and `--adapter caddyfile\|json`; do not also supply a positional path. With no default file, `run` starts admin-only. Give an explicit path if absence must fail. `validate` now parses TLS files and checks key pairs. |
-| TLS | The internal CA moves to `pki/authorities/local/` without migration: trust the new root again. Exact names no longer inherit wildcard `client_auth`; add an explicit block if required. Manual TLS requires a named site. |
-| Upstreams | Weight 0 drains, weights above 100 and all-zero primary pools fail validation. `lb_try_duration` bounds new attempts, not an active response. Retries after delivery are limited to idempotent methods. |
-| Protocols | CONNECT receives `405` and closes H1; a target without a usable port receives `400`. Malformed HTTP/1 targets and chunked bodies receive `400` and close. FastCGI HEAD has no body, oversized parameters receive `431`, and malformed bodies abort the response. |
-| Lifecycle | Occupied HTTP, admin, and H3 UDP ports prevent startup. SIGTERM drains within `grace_period`. Restart still has a connection gap; reload is preferable for policy changes. |
+| Layer 4 | A global `layer4` block adds raw TCP routing by TLS SNI, ALPN, and source address, with static or dynamic DNS upstreams. Existing HTTP configurations do not need a Layer 4 block. |
+| Caddyfile validation | Site addresses and TLS placement follow the current Caddyfile rules more closely. A configuration that places plaintext on the HTTPS port, or combines a scheme and port inconsistently, is refused at load. |
+| Error routes | `reverse_proxy` can now serve from `handle_errors`. Review an error route that previously relied on a static `respond`. |
+| Variables and logs | `map`, `invoke`, `log_append`, and `log_name` add request-scoped values and access-log fields. Existing routes continue to use their previous configuration. |
+| Route proxies | Each `reverse_proxy` in a `route` block reaches the upstream named by that block. A configuration that appeared to use several upstreams but always reached the first now behaves as written. |
+| Formatting | `pingclair fmt` preserves comments and formats the source text. Review its output before overwriting a production file. |
+| HTTP/3 | Malformed transport and HTTP/3 inputs receive protocol close messages instead of waiting for timeout. No configuration change is required. |
+| Lifecycle | Stalled request-body writes and upgraded half-closes now end at their configured boundary. A complete upstream response that already arrived remains valid. |
 
-The [known release defects](/project/status/#-known-defects-in-023) still apply.
-A `502` or `504` generated by the built-in proxy error path carries
-`Proxy-Status`; a custom `handle_errors` response does not. A missed keepalive
-reuse is logged at `DEBUG` rather than `ERROR`.
+The alpha adds Layer 4; existing HTTP directives are not removed. Always run the
+new binary's `validate` against the deployment's actual configuration.
 
-## 🔀 0.2.3: proxies in one `route` block
+## 📦 Install the preview
 
-Each `reverse_proxy` in a `route` block now reaches its own upstream. Before
-0.2.3, every proxied request in the block reached the first block's upstream,
-with its headers and TLS name, so such a configuration did not work as written
-and now does. One shape is refused at load instead: a `route` that puts shared
-directives, such as `header`, in front of several proxying `handle` blocks.
-Move each `reverse_proxy` into its own top-level `handle`, and repeat the shared
-directives inside each one.
+The installer has no version-pinning flag and continues to select the latest
+stable release. Download the exact preview assets from the GitHub release,
+verify the published SHA-256 value, and replace the binary only after the
+checksum succeeds.
 
-## 📦 Preserve the previous installation
-
-Back up the configuration, the current binary, and the entire TLS store before
-upgrading. Preserve their ownership and protect backups containing private
-keys. The installer keeps `/etc/Pingclair/Pingclairfile`, the certificate store
-at `/var/lib/pingclair/.local/share/pingclair`, and the site's files. It replaces
-the binary, example configuration, and systemd unit, then restarts the service.
-A configured `storage file_system` path takes precedence over the usual store.
-
-Keep the old store backup for rollback: trusting the new internal root does not
-make old clients trust it, and rolling back only the binary does not restore the
-old root or configuration format.
-
-## 🛡️ Check before switching
-
-Run the **new** binary's `validate` against the production configuration while
-it is still staged, before replacing the running binary. It opens no listeners,
-but its user must be able to read every certificate and key the file names.
-Then test the affected routes, case variants, forwarded client identity, error
-pages, uploads, compression, and metrics in a staging deployment.
-
-A source build of `main` reports `v0.0.0-dev+<sha>` (or `v0.0.0-dev` without a
-checkout); a release binary reports its tag, such as `v0.2.3`. Check the tag and
-published checksum when installing. A dev version string is not evidence that
-the stable release is installed.
-
-## ⬆️ Install the stable release
-
-The installer selects the stable channel:
+[Install](/start/install/#-install-the-preview) contains the architecture-aware
+download commands. On an existing installation, the final sequence is:
 
 ```bash
-curl -fsSL https://pingclair.com/install.sh | sudo bash
-pingclair version
-pc service status
+sudo pc service stop
+sudo install -m 0755 pingclair /usr/local/bin/pingclair
+sudo pc service start
 ```
 
-Confirm that `pingclair version` reports `v0.2.3`, the service is running, and
-your routes respond as expected.
-
-The installer has no version-pinning flag. For containers, pin the intended tag:
+For containers, pin the exact prerelease tag:
 
 ```yaml
 services:
   pingclair:
-    image: ghcr.io/dorianverlaine/pingclair:v0.2.3
+    image: ghcr.io/dorianverlaine/pingclair:v0.3.0-alpha.1
 ```
 
 ```bash
@@ -105,15 +62,47 @@ docker compose up -d
 docker compose logs pingclair
 ```
 
-Keep the configuration and TLS store volumes. `latest` follows stable releases;
-alpha previews do not advance it. Host ports must be free before startup.
+`latest` does not advance to an alpha, beta, or release candidate.
+
+## 📦 Preserve the previous installation
+
+Back up the configuration, current binary, and complete TLS store before
+installing the preview. Preserve ownership and protect backups containing
+private keys.
+
+The installer preserves `/etc/Pingclair/Pingclairfile`, the certificate store
+under `/var/lib/pingclair/.local/share/pingclair`, and the site files. A
+configured `storage file_system` path takes precedence over the default store.
+
+Keep the stable `v0.2.3` binary and its matching configuration. A preview
+configuration may use directives that the stable binary cannot load.
+
+## 🛡️ Check before switching
+
+Run the preview binary's `validate` against the production file while the old
+binary remains installed:
+
+```bash
+./pingclair validate /etc/Pingclair/Pingclairfile
+```
+
+The validating user must be able to read every certificate and key named by the
+file. A successful validation opens no listeners and does not prove the
+deployment's DNS, firewall, or Layer 4 backend routing.
+
+In staging, test the HTTP protocols used by the deployment and every new Layer
+4 listener. For Layer 4, confirm that the intended SNI or source address selects
+the expected upstream and that the upstream performs the TLS handshake.
 
 ## ⏪ Roll back
 
-Stop the new service, restore the backed-up binary, configuration, and TLS
+Stop the preview service, restore the previous binary, configuration, and TLS
 store with their original ownership, then validate with the restored binary
-before starting. A configuration written by 0.2.0 may not load in an earlier
-version. Do not overwrite a running certificate store with a partial backup.
+before starting it.
+
+Do not overwrite a running certificate store with a partial backup. Keep the
+preview's configuration separate from the stable configuration until the
+rollback decision is complete.
 
 ## 🧹 Remove the installation
 
@@ -129,8 +118,18 @@ These commands preserve `/etc/Pingclair`, `/var/lib/pingclair`, and
 `/var/log/pingclair`, including certificates and site files. Delete retained
 data only when it is no longer needed for reinstall or rollback.
 
+<span id="️-what-changes-in-020"></span>
+
+## 🕰️ Upgrading from 0.1.x or 0.2
+
+The [0.2.0 Before you upgrade section](https://github.com/dorianverlaine/pingclair/blob/main/CHANGELOG.md#️-before-you-upgrade)
+remains the reference for routing order, path normalization, listener binding,
+client identity, compression, cache, Admin API, metrics, TLS, upstream, and
+lifecycle changes introduced by the 0.2 line. Validate the existing file with
+the preview binary and keep a stable rollback before applying those changes.
+
 ## 🧭 Next steps
 
-- [Install](/start/install/): installation layout and prerequisites.
-- [Run it as a service](/start/service/): reload, restart, and logs.
-- [Project status](/project/status/): remaining release limitations.
+- [Install](/start/install/): stable and preview installation paths.
+- [Layer 4 guide](/guides/layer4/): TCP routing configuration and boundaries.
+- [Project status](/project/status/): known limitations in the preview.
