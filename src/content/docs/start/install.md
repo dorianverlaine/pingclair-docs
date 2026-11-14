@@ -8,7 +8,7 @@ description: Install Pingclair on Linux from a release binary, with Docker, or f
 
 Pingclair is distributed as a single Linux binary. This page describes
 installation, installed files, and service verification for the
-**v0.3.0-alpha.1** preview and the v0.2.3 stable release.
+**v0.2.3** stable release and the v0.3.0-alpha.1 preview.
 
 ## 🧾 What you need
 

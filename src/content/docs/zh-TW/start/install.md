@@ -6,8 +6,8 @@ sidebar:
 description: 用發行版二進位檔、Docker 或原始碼把 Pingclair 裝到 Linux 主機上，並確認服務有回應。
 ---
 
-Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.3.0-alpha.1** 預覽版與
-v0.2.3 穩定版的安裝步驟、檔案位置與服務檢查方式。
+Pingclair 以單一 Linux 二進位檔發布。本頁說明 **v0.2.3** 穩定版與
+v0.3.0-alpha.1 預覽版的安裝步驟、檔案位置與服務檢查方式。
 
 ## 🧾 你需要準備的
 
